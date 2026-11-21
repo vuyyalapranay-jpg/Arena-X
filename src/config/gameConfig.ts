@@ -1,5 +1,6 @@
 // src/config/gameConfig.ts
-import { AttackData, GameSettings } from '../types';
+import { GameSettings } from '../types';
+import { CHARACTER_PROFILES, COMBAT_ATTACKS } from '../game/characters/CharacterConfig';
 
 export const GAME_CONFIG = {
   // Arena Geometry & Bounds
@@ -47,59 +48,9 @@ export const GAME_CONFIG = {
     HIT_FREEZE_DURATION: 0.06, // hitstop in seconds
   },
 
-  // Attacks
-  ATTACKS: {
-    PUNCH: {
-      name: 'Straight Jab',
-      type: 'PUNCH',
-      damage: 8,
-      startupTime: 0.08,
-      activeTime: 0.12,
-      recoveryTime: 0.18,
-      reach: 1.25,
-      knockback: 1.8,
-      height: 'HIGH',
-    } as AttackData,
-    KICK: {
-      name: 'High Roundhouse',
-      type: 'KICK',
-      damage: 14,
-      startupTime: 0.14,
-      activeTime: 0.16,
-      recoveryTime: 0.28,
-      reach: 1.55,
-      knockback: 3.2,
-      height: 'MID',
-    } as AttackData,
-  },
-
-  // Fighter archetypes / colors
-  FIGHTERS: {
-    P1: {
-      name: 'VORTEX',
-      subtitle: 'Crimson Striker',
-      colors: {
-        primary: '#ff1a4b',      // Electric Crimson
-        secondary: '#161922',    // Dark Titanium
-        accent: '#ff5c26',       // Molten Amber
-        emissive: '#ff003c',     // Red Visor / Core
-      },
-      spawnX: -3.5,
-      facing: 1 as const,
-    },
-    P2: {
-      name: 'ION',
-      subtitle: 'Cobalt Vanguard',
-      colors: {
-        primary: '#00f0ff',      // Electric Cyan
-        secondary: '#131b26',    // Dark Cobalt
-        accent: '#0066ff',       // Deep Royal Blue
-        emissive: '#00e5ff',     // Cyan Visor / Core
-      },
-      spawnX: 3.5,
-      facing: -1 as const,
-    },
-  },
+  // Combat Attacks & Fighter Archetypes
+  ATTACKS: COMBAT_ATTACKS,
+  FIGHTERS: CHARACTER_PROFILES,
 
   // Default Game Settings
   DEFAULT_SETTINGS: {

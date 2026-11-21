@@ -151,7 +151,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <header className="menu-header">
           <div className="logo-badge">
             <span className="badge-dot" />
-            <span>2.5D FIGHTING ENGINE • PHASE 1</span>
+            <span>2.5D FIGHTING ENGINE • PHASE 2</span>
           </div>
 
           <div className="arena-logo-wrapper">
@@ -171,7 +171,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
 
           <p className="menu-tagline">
-            NEXT-GEN WEB 3D FIGHTING PROTOTYPE • ARTICULATED HUMANOIDS • RAPIER PHYSICS
+            NEXT-GEN 3D SKELETAL FIGHTERS • 21-ANIMATION SUITE • RAPIER 3D PHYSICS
           </p>
         </header>
 
@@ -215,26 +215,23 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </div>
           </button>
 
-          {/* 3. CHARACTER STUDIO (Coming Phase 2) */}
+          {/* 3. CHARACTER STUDIO (Phase 2 Active Showcase) */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => 
-              openComingSoon(
-                'CHARACTER STUDIO',
-                'Phase 2 replaces articulated placeholder geometry with fully rigged 3D GLTF models, skeletal skinning, custom shaders, armor attachments, and color customizations.',
-                'PHASE 2: RIGGED FIGHTERS & CUSTOMIZATION'
-              )
-            }
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setActiveModal('CHARACTER_STUDIO');
+            }}
           >
             <div className="btn-content">
               <Wrench className="btn-icon" size={22} />
               <div className="btn-text">
                 <span className="title">CHARACTER STUDIO</span>
-                <span className="sub">Fighter loadouts, armor customization & palettes</span>
+                <span className="sub">Inspect 3D Skeletal Rigs & 21-Animation Suite</span>
               </div>
             </div>
-            <span className="status-tag phase2">COMING PHASE 2</span>
+            <span className="status-tag phase2 active-tag">PHASE 2 ACTIVE</span>
           </button>
 
           {/* 4. TOURNAMENT (Coming Phase 4) */}
@@ -303,18 +300,102 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* FOOTER INFO BAR */}
         <footer className="menu-footer">
           <div className="footer-item">
-            <span>VERSION:</span> <strong className="highlight">0.1.0-ALPHA</strong>
+            <span>VERSION:</span> <strong className="highlight">0.2.0-ALPHA</strong>
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
-            <span>ENGINE:</span> <strong>THREE.JS & RAPIER 3D</strong>
+            <span>ENGINE:</span> <strong>THREE.JS SKELETAL & RAPIER 3D</strong>
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
-            <span>BUILD:</span> <strong>PHASE 1 VERIFIED</strong>
+            <span>BUILD:</span> <strong>PHASE 2 VERIFIED</strong>
           </div>
         </footer>
       </div>
+
+      {/* --- MODAL 0: CHARACTER STUDIO (PHASE 2 SHOWCASE) --- */}
+      {activeModal === 'CHARACTER_STUDIO' && (
+        <div className="modal-backdrop">
+          <div className="feature-preview-card character-studio-card">
+            <button className="modal-close-btn" onClick={() => setActiveModal(null)}>
+              <X size={20} />
+            </button>
+            <div className="preview-phase-pill">PHASE 2: 3D SKELETAL FIGHTERS & RIGS</div>
+            <h2 className="preview-title">CHARACTER STUDIO</h2>
+            <div className="preview-divider" />
+            <p className="preview-description">
+              Professional 21-bone humanoid skeletal rigs with 21 distinct fighting-game animations and unique athletic aesthetics.
+            </p>
+
+            <div className="studio-fighter-grid">
+              {/* Fighter 1 Showcase */}
+              <div className="studio-fighter-panel p1-panel">
+                <div className="panel-badge p1-badge">PLAYER 1</div>
+                <h3 className="fighter-title">VORTEX</h3>
+                <span className="fighter-subtitle">CRIMSON STRIKER</span>
+                <ul className="fighter-specs">
+                  <li><strong>Aesthetic:</strong> Athletic Martial Artist</li>
+                  <li><strong>Hair:</strong> Spiked Black Hair & Red Headband</li>
+                  <li><strong>Outfit:</strong> Open Combat Gi Vest with Dragon Crest</li>
+                  <li><strong>Hands:</strong> Wrapped Red Martial Arts Tapes</li>
+                  <li><strong>Legs:</strong> Black Fighting Pants & Steel-Toe Boots</li>
+                </ul>
+              </div>
+
+              {/* Fighter 2 Showcase */}
+              <div className="studio-fighter-panel p2-panel">
+                <div className="panel-badge p2-badge">PLAYER 2</div>
+                <h3 className="fighter-title">ION</h3>
+                <span className="fighter-subtitle">COBALT VANGUARD</span>
+                <ul className="fighter-specs">
+                  <li><strong>Aesthetic:</strong> Cyber Kickboxer</li>
+                  <li><strong>Hair:</strong> Undercut Fade with Cyan Edge</li>
+                  <li><strong>Outfit:</strong> High-Collar Combat Jacket & Blue Piping</li>
+                  <li><strong>Hands:</strong> Tactical Fingerless Cyber Gloves</li>
+                  <li><strong>Legs:</strong> Armored Cargo Trousers & Neon Sneakers</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="animation-suite-list">
+              <h4>21-ANIMATION SKELETAL SYSTEM:</h4>
+              <div className="anim-chips">
+                <span>Idle</span>
+                <span>Breathing</span>
+                <span>Walk Fwd</span>
+                <span>Walk Bwd</span>
+                <span>Run</span>
+                <span>Jump</span>
+                <span>Fall</span>
+                <span>Land</span>
+                <span>Crouch</span>
+                <span>Lead Jab</span>
+                <span>Cross</span>
+                <span>Overhand Smash</span>
+                <span>Front Kick</span>
+                <span>Roundhouse</span>
+                <span>Low Sweep</span>
+                <span>Guard Block</span>
+                <span>Hit Reaction</span>
+                <span>Knockback</span>
+                <span>Stagger</span>
+                <span>Victory</span>
+                <span>Defeat</span>
+              </div>
+            </div>
+
+            <button 
+              className="arena-btn primary-btn full-width"
+              onClick={() => {
+                soundManager.playMenuSelect();
+                setActiveModal(null);
+              }}
+            >
+              CLOSE STUDIO
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* --- MODAL 1: COMING SOON PREVIEW --- */}
       {activeModal === 'COMING_SOON' && (

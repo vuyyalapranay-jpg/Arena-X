@@ -2,8 +2,8 @@
 
 **Project Name:** Arena X  
 **Repository:** ARENA-X  
-**Version:** 0.1.0-alpha (Phase 1 Playable 3D Prototype)  
-**Primary Engine:** Three.js (WebGL) + Rapier 3D Physics (WASM) + React + TypeScript + Vite  
+**Version:** 0.2.0-alpha (Phase 2 Professional 3D Models & Animation System)  
+**Primary Engine:** Three.js (WebGL, AnimationMixer, Skeletal Rigs) + Rapier 3D Physics (WASM) + React 18 + TypeScript + Vite  
 
 ---
 
@@ -18,7 +18,7 @@ Arena X is engineered as a high-performance, modular 2.5D fighting game engine r
 |  +------------------------+  +-----------------------------------------------+  |
 |  |     REACT UI LAYER     |  |             GAME ENGINE CORE                  |  |
 |  |                        |  |                                               |  |
-|  |  * MainMenu            |  |  * GameEngine (RAF Loop, Delta-Time Step)     |  |
+|  |  * MainMenu (Studio)   |  |  * GameEngine (RAF Loop, Delta-Time Step)     |  |
 |  |  * FightHUD            |  |  * SoundManager (Web Audio API Synthesizer)   |  |
 |  |  * ControlsOverlay     |  |  * FightCamera (Dynamic 2.5D Tracking & Zoom) |  |
 |  |  * TouchControls       |  |  * ParticleSystem (Hit/Block/Embers)          |  |
@@ -29,12 +29,14 @@ Arena X is engineered as a high-performance, modular 2.5D fighting game engine r
 |                                  |                                              |
 |                                  v                                              |
 |  +---------------------------------------------------------------------------+  |
-|  |                        FIGHTER & COMBAT SUBSYSTEM                         |  |
+|  |              PROFESSIONAL SKELETAL & COMBAT SUBSYSTEM                     |  |
 |  |                                                                           |  |
-|  |  * Fighter State Machine (IDLE, WALK, CROUCH, JUMP, PUNCH, KICK, BLOCK)   |  |
-|  |  * ArticulatedHumanoid (19 Articulated Segment Hierarchy & Shaders)       |  |
-|  |  * Hitbox / Hurtbox / Pushbox Collision System                            |  |
-|  |  * Hitstop Freeze & Screen Shake Controller                               |  |
+|  |  * RiggedHumanoidBuilder (21-Bone Skeleton, Humanoid Proportions & Gear)  |  |
+|  |  * CharacterLoader (GLTFLoader Pipeline + Built-in Humanoid Rig Fallback) |  |
+|  |  * FighterAnimationClips (21 Keyframe AnimationClips with Biomechanics)   |  |
+|  |  * AnimationStateMachine (Priority Tiers, Interrupt Rules, Loop Specs)    |  |
+|  |  * CharacterAnimator (AnimationMixer, Crossfade Blending, Events)        |  |
+|  |  * Fighter (Locomotion, Combat Moves, Hitbox/Hurtbox, Pushbox Separation) |  |
 |  +-------------------------------------+-------------------------------------+  |
 |                                        |                                        |
 |  +-------------------------------------+-------------------------------------+  |
@@ -54,42 +56,49 @@ Arena X is engineered as a high-performance, modular 2.5D fighting game engine r
 ```
 arena-x/
 ├── docs/
-│   └── architecture.md            # Technical specifications & roadmap
+│   └── architecture.md               # Technical specifications & roadmap
 ├── public/
-│   └── arena-x-icon.svg           # High-resolution vector brand icon
+│   ├── arena-x-icon.svg              # High-resolution vector brand icon
+│   └── assets/
+│       └── characters/               # Ready for custom GLTF/GLB character drop-in
 ├── src/
-│   ├── assets/                    # Static assets & textures
-│   ├── components/                # Shared UI widgets
-│   │   └── OrientationWarning.tsx # Mobile landscape orientation prompt
+│   ├── assets/                       # Static assets & textures
+│   ├── components/                   # Shared UI widgets
+│   │   └── OrientationWarning.tsx    # Mobile landscape orientation prompt
 │   ├── config/
-│   │   └── gameConfig.ts          # Core constants (Physics, Camera, Fighters, Attacks)
+│   │   └── gameConfig.ts             # Core constants (Physics, Camera, Fighters, Attacks)
 │   ├── game/
 │   │   ├── arena/
-│   │   │   ├── Arena3D.ts         # 3D stage geometry, background cityscape, lights
-│   │   │   └── ParticleSystem.ts  # Additive particle sparks & hit effects
+│   │   │   ├── Arena3D.ts            # 3D stage geometry, background cityscape, lights
+│   │   │   └── ParticleSystem.ts     # Additive particle sparks & hit effects
 │   │   ├── camera/
-│   │   │   └── FightCamera.ts     # Dynamic 2.5D midpoint camera & screen shake
+│   │   │   └── FightCamera.ts        # Dynamic 2.5D midpoint camera & screen shake
 │   │   ├── characters/
-│   │   │   ├── ArticulatedHumanoid.ts # 3D articulated humanoid geometry & poses
-│   │   │   └── Fighter.ts         # Character state machine & collision boxes
+│   │   │   ├── AnimationStateMachine.ts # State transition rules, priority & loops
+│   │   │   ├── CharacterAnimator.ts  # Three.js AnimationMixer & action controller
+│   │   │   ├── CharacterConfig.ts    # Fighter visual profiles & attack tables
+│   │   │   ├── CharacterLoader.ts    # GLTFLoader pipeline with procedural fallback
+│   │   │   ├── Fighter.ts            # Fighter controller, movement & combat engine
+│   │   │   ├── FighterAnimationClips.ts # 21 professional AnimationClips
+│   │   │   └── RiggedHumanoidBuilder.ts # 21-bone humanoid skeleton & 3D gear
 │   │   ├── controls/
-│   │   │   └── InputManager.ts    # Dual-player keyboard & virtual touch bridge
+│   │   │   └── InputManager.ts       # Dual-player keyboard & virtual touch bridge
 │   │   ├── core/
-│   │   │   ├── GameEngine.ts      # Primary game loop, combat resolution, rules
-│   │   │   └── SoundManager.ts    # Procedural Web Audio API sound generator
+│   │   │   ├── GameEngine.ts         # Primary game loop, combat resolution, rules
+│   │   │   └── SoundManager.ts       # Procedural Web Audio API sound generator
 │   │   ├── physics/
-│   │   │   └── PhysicsWorld.ts    # Rapier 3D WebAssembly physics engine
+│   │   │   └── PhysicsWorld.ts       # Rapier 3D WebAssembly physics engine
 │   │   └── ui/
-│   │       └── FightHUD.tsx       # Slanted health bars, timer, controls & modals
+│   │       └── FightHUD.tsx          # Slanted health bars, timer, controls & modals
 │   ├── pages/
-│   │   ├── GameArenaPage.tsx      # Fighting arena canvas wrapper & HUD connector
-│   │   └── MainMenu.tsx           # Dark cinematic main menu with particle canvas
+│   │   ├── GameArenaPage.tsx         # Fighting arena canvas wrapper & HUD connector
+│   │   └── MainMenu.tsx              # Dark cinematic main menu & Character Studio
 │   ├── styles/
-│   │   └── index.css              # Fighting game typography & styling
+│   │   └── index.css                 # Fighting game typography & styling
 │   ├── types/
-│   │   └── index.ts               # TypeScript data models & game interfaces
-│   ├── App.tsx                    # Root application router & state manager
-│   └── main.tsx                   # React 18 bootstrap
+│   │   └── index.ts                  # TypeScript data models & game interfaces
+│   ├── App.tsx                       # Root application router & state manager
+│   └── main.tsx                      # React 18 bootstrap
 ├── .env.example
 ├── .gitignore
 ├── index.html
@@ -101,53 +110,67 @@ arena-x/
 
 ---
 
-## 3. Core Subsystems
+## 3. Phase 2 Character Models & Visual Identity
 
-### 3.1 Physics & Movement Plane
-- **2.5D Constrained Fighting Plane:** Movement is locked to the X-Y plane (Z = 0) with arena boundaries at X = [-10.5, 10.5].
-- **Rapier 3D Integration:** Uses `@dimforge/rapier3d-compat` running WebAssembly. Includes static colliders for stage platform and boundaries, with raycasting for ground verification.
-- **Pushbox Separation:** Prevents fighters from passing through or clipping each other during close-quarters combat.
+### 3.1 Player 1 — VORTEX (Crimson Striker)
+- **Archetype:** Athletic Martial Artist.
+- **Hair & Face:** Spiked black hair with crimson highlights, flowing red combat headband with trailing ribbons, sculpted jawline, nose bridge, and red LED fighter visor.
+- **Outfit:** Open sleeveless black combat gi vest with crimson lapels, rear dragon crest, black martial arts sash belt with emissive power buckle.
+- **Arms & Hands:** Athletic biceps with wrapped/taped red martial arts wraps covering wrists and knuckles.
+- **Legs & Footwear:** Loose black fighting trousers with crimson side racing stripes, reinforced steel-toe red & black kick boots.
 
-### 3.2 Articulated Humanoid Fighter System
-- Built from an articulated 19-segment mesh hierarchy:
-  - Pelvis & Spine Joint
-  - Armored Chestplate & Emissive Power Core
-  - Angular Cyber Helmet with illuminated visor
-  - Shoulders, Biceps, Elbows, Armored Forearms, Fists
-  - Hips, Thighs, Knees, Armored Shins, Boots
-  - Forearm Energy Shield mesh (active during Block state)
-- **Procedural Animation Engine:** Computes frame-rate independent procedural poses for:
-  - `IDLE`: Staggered guard stance with rhythmic breathing oscillation.
-  - `WALK_FWD` & `WALK_BWD`: Dynamic leg strides, counter-arm swinging, and torso tilt.
-  - `JUMP`: Airborne tuck with reactive landing anticipation.
-  - `CROUCH`: Low-profile defensive crouch.
-  - `PUNCH`: Rapid jab/cross extending lead fist, torso torque, and snappy retraction.
-  - `KICK`: High roundhouse kick with counter-balance torso tilt.
-  - `BLOCK`: High cross-arm guard with glowing cyan energy field.
-  - `HIT_STAGGER`: Torso and head recoil with emissive flash.
-  - `KNOCKDOWN`: Supine knockdown pose on canvas.
-- **Ready for Phase 2 Rigged Models:** Structured cleanly to drop in skinned GLTF/GLB humanoid skeletons without breaking combat logic.
-
-### 3.3 Dynamic 2.5D Fight Camera
-- **Midpoint Tracking:** Smoothly tracks the X-Y center between both fighters.
-- **Dynamic Zoom:** Smoothly zooms in (min distance: 6.8m) when fighters engage up close, and zooms out (max distance: 11.5m) when fighters separate.
-- **Screen Shake:** Frequency-decayed camera rumble on heavy impacts.
-
-### 3.4 Procedural Sound Synthesis (Web Audio API)
-- Zero external audio files required — immune to missing asset 404s and network latency.
-- Custom synthesized punch whooshes, crunch impacts, kick whooshes, heavy bass kicks, energy shield resonant clanks, jump swooshes, menu blips, and round start/K.O. gongs.
-
-### 3.5 Mobile-First & Adaptive Performance
-- **Adaptive Pixel Ratio:** Automatically clamps DPR between 1.0 and 2.0 based on graphics quality preset and mobile detection.
-- **Quality Presets:** Low, Medium, High (adjusting shadow map resolution, antialiasing, and particle counts).
-- **Virtual Touch Controls:** Complete dual-control support with left virtual D-pad and right action buttons.
-- **Landscape Warning:** Automatic portrait mode detector prompting device rotation.
+### 3.2 Player 2 — ION (Cobalt Vanguard)
+- **Archetype:** Cybernetic Kickboxer / Street Striker.
+- **Hair & Face:** Modern undercut fade with glowing cyan tips, sculpted jawline with cybernetic optical eye implant and blue accent eye.
+- **Outfit:** High-collar tactical cyber combat jacket in dark charcoal with glowing electric blue piping and back thermal power vent.
+- **Arms & Hands:** Dark tactical sleeves with fingerless cyber combat gloves and cyan glowing knuckle nodes.
+- **Legs & Footwear:** Reinforced dark carbon cargo trousers with tactical blue knee pads, high-top cyber kickboxing sneakers with glowing cyan soles.
 
 ---
 
-## 4. Phase Roadmap
+## 4. 21-Animation Skeletal System
 
-- **Phase 1 (Complete):** Project foundation, 3D fighting arena, 2 articulated humanoid fighters, local 2-player controls, camera tracking, Rapier physics, particle combat effects, sound engine, HUD, mobile touch support.
-- **Phase 2 (Upcoming):** Rigged 3D GLTF models, skeletal bone animations, Character Studio customization, special move meter & EX moves.
-- **Phase 3 (Upcoming):** Extended combo system, juggle physics, frame data visualization, hit stun scaling, wall bounces, sound packs.
-- **Phase 4 (Upcoming):** WebRTC multiplayer rollback netcode, tournament brackets, AI difficulty levels, player profiles & ranked ladder.
+Built on the official Three.js `AnimationMixer`, `AnimationAction`, and `AnimationClip` architecture with 21 distinct clips targeting standard humanoid bone tracks (`QuaternionKeyframeTrack` and `VectorKeyframeTrack`):
+
+| Category | Animation State | Clip Name | Loop Style | Priority | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Locomotion** | `IDLE` | `idle` | LoopRepeat | 0 | Dynamic combat stance with body sway and breathing |
+| | `BREATHING` | `breathing` | LoopRepeat | 0 | Deep chest and shoulder heave |
+| | `WALK_FWD` | `walk_fwd` | LoopRepeat | 1 | Tactical forward stride with arm swinging |
+| | `WALK_BWD` | `walk_bwd` | LoopRepeat | 1 | Defensive backstep with raised high guard |
+| | `RUN` | `run` | LoopRepeat | 1 | Aggressive forward sprint with driving knee strides |
+| | `CROUCH` | `crouch` | LoopRepeat | 1 | Defensive low-profile crouched guard |
+| **Traversal** | `JUMP` | `jump` | LoopOnce | 2 | Leaping takeoff with airborne knee tuck |
+| | `FALL` | `fall` | LoopRepeat | 2 | Downward descent in air with stabilizing limbs |
+| | `LAND` | `land` | LoopOnce | 2 | Ground impact shock absorption with knee bend |
+| **Combat** | `PUNCH_LEFT` | `punch_left` | LoopOnce | 4 | Snappy lead jab with shoulder drive |
+| | `PUNCH_RIGHT` | `punch_right` | LoopOnce | 4 | Powerful rear cross with torso rotation |
+| | `PUNCH_HEAVY` | `punch_heavy` | LoopOnce | 4 | Overhand power smash with forward step |
+| | `KICK_FRONT` | `kick_front` | LoopOnce | 4 | Front snap kick thrusting ball of foot |
+| | `KICK_HIGH` | `kick_high` | LoopOnce | 4 | High roundhouse kick with counter-balance tilt |
+| | `KICK_LOW` | `kick_low` | LoopOnce | 4 | Low shin sweep from crouch |
+| | `BLOCK` | `block` | LoopRepeat | 3 | Crossed-arm high guard with glowing energy shield |
+| **Hit Reactions**| `HIT_STAGGER` | `hit_reaction` | LoopOnce | 5 | Snappy torso recoil and head snap |
+| | `KNOCKBACK` | `knockback` | LoopOnce | 6 | Heavy strike stumble backwards |
+| | `STAGGER` | `stagger` | LoopOnce | 5 | Dazed unsteady reel |
+| **Match End** | `VICTORY` | `victory` | LoopOnce | 7 | Triumphant victory pose with raised fist |
+| | `DEFEAT` | `defeat` | LoopOnce | 7 | Knockdown collapse to the canvas |
+
+---
+
+## 5. Animation State Management & Blending
+
+- **Crossfade Blending:** `CharacterAnimator` uses `crossFadeFrom` with state-tuned blend durations (e.g., 0.05s for snappy jabs, 0.04s for hit reactions, 0.12s for locomotion transitions) eliminating any visual snapping.
+- **Priority & Interruption Rules:**
+  - Standard attacks (`Priority 4`) cannot interrupt themselves until completed, but can be interrupted by `HIT_REACTION` (`Priority 5`), `KNOCKBACK` (`Priority 6`), or `DEFEAT` (`Priority 7`).
+  - `JUMP` transitions seamlessly into `FALL` upon downward vertical velocity, and into `LAND` upon ground contact.
+- **Mixer Finished Callbacks:** Actions configured with `THREE.LoopOnce` notify `CharacterAnimator` on completion to automatically transition back to `IDLE` without stalling.
+
+---
+
+## 6. Phase Roadmap
+
+- [x] **Phase 1:** Project foundation, 3D fighting arena, Rapier physics, camera tracking, combat HUD, mobile touch support.
+- [x] **Phase 2:** Professional 3D character models, 21-bone skeletal rigs, 21-animation suite, Character Studio showcase, crossfading controller, GLTFLoader pipeline.
+- [ ] **Phase 3:** Advanced combo system, EX meter & super moves, juggle physics, frame data analyzer.
+- [ ] **Phase 4:** WebRTC multiplayer rollback netcode, tournament brackets, AI difficulty levels, player career profiles.

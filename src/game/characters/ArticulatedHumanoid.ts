@@ -478,7 +478,9 @@ export class ArticulatedHumanoid {
         break;
       }
 
-      case 'PUNCH': {
+      case 'PUNCH_LEFT':
+      case 'PUNCH_RIGHT':
+      case 'PUNCH_HEAVY': {
         // Quick explosive jab / cross
         // actionProgress runs from 0 to 1
         const strikePhase = Math.sin(actionProgress * Math.PI); // 0 -> 1 -> 0
@@ -500,7 +502,9 @@ export class ArticulatedHumanoid {
         break;
       }
 
-      case 'KICK': {
+      case 'KICK_FRONT':
+      case 'KICK_HIGH':
+      case 'KICK_LOW': {
         // Dynamic martial arts high kick
         const kickPhase = Math.sin(actionProgress * Math.PI); // 0 -> 1 -> 0
 
@@ -546,7 +550,8 @@ export class ArticulatedHumanoid {
         break;
       }
 
-      case 'HIT_STAGGER': {
+      case 'HIT_STAGGER':
+      case 'STAGGER': {
         // Reeling backwards from impact
         this.pelvisGroup.position.y = 0.94;
         this.spineGroup.rotation.x = -0.45;
@@ -562,7 +567,8 @@ export class ArticulatedHumanoid {
         break;
       }
 
-      case 'KNOCKDOWN': {
+      case 'KNOCKBACK':
+      case 'DEFEAT': {
         // Down on the canvas
         this.pelvisGroup.position.y = 0.18;
         this.spineGroup.rotation.x = -1.45;

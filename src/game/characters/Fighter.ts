@@ -1,26 +1,17 @@
 // src/game/characters/Fighter.ts
 import * as THREE from 'three';
-import { FighterInputs, FighterState, FighterStats, PlayerId } from '../../types';
+import { AttackData, AttackType, FighterInputs, FighterState, FighterStats, PlayerId } from '../../types';
 import { GAME_CONFIG } from '../../config/gameConfig';
-import { ArticulatedHumanoid } from './ArticulatedHumanoid';
-
-export interface FighterConfig {
-  name: string;
-  subtitle: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    emissive: string;
-  };
-  spawnX: number;
-  facing: 1 | -1;
-}
+import { CHARACTER_PROFILES, COMBAT_ATTACKS, FighterVisualProfile } from './CharacterConfig';
+import { CharacterLoader, LoadedFighterModel } from './CharacterLoader';
+import { CharacterAnimator } from './CharacterAnimator';
 
 export class Fighter {
   public id: PlayerId;
   public name: string;
-  public model: ArticulatedHumanoid;
+  public profile: FighterVisualProfile;
+  public modelRoot: THREE.Group;
+  public animator!: CharacterAnimator;
   public position: THREE.Vector3;
   public velocity: THREE.Vector2; // vx, vy
 
@@ -32,43 +23,73 @@ export class Fighter {
   public roundsWon = 0;
 
   // Attack & Action tracking
-  private currentActionProgress = 0;
-  private actionDuration = 0;
-  private actionTimer = 0;
-  private currentAttackType: 'PUNCH' | 'KICK' | null = null;
+  private currentAttackData: AttackData | null = null;
+  private attackTimer = 0;
   public hasHitCurrentAttack = false;
+  private comboStep = 0;
+  private lastAttackTime = 0;
 
-  // Stun / hit-stun
+  // Stun tracking
   private hitStunTimer = 0;
+  private landingTimer = 0;
 
-  // Colors
-  public colorScheme: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    emissive: string;
-  };
+  // Visual effects
+  private shieldMesh: THREE.Mesh | null = null;
+  private loadedModel: LoadedFighterModel | null = null;
+  private flashTimer = 0;
 
-  constructor(id: PlayerId, config: FighterConfig) {
+  constructor(id: PlayerId, profile?: FighterVisualProfile) {
     this.id = id;
-    this.name = config.name;
-    this.colorScheme = config.colors;
+    this.profile = profile || (id === 'P1' ? CHARACTER_PROFILES.P1 : CHARACTER_PROFILES.P2);
+    this.name = this.profile.name;
     this.maxHealth = GAME_CONFIG.MATCH.DEFAULT_MAX_HEALTH;
     this.currentHealth = this.maxHealth;
-    this.position = new THREE.Vector3(config.spawnX, GAME_CONFIG.ARENA.FLOOR_Y, GAME_CONFIG.ARENA.FIGHT_PLANE_Z);
+    this.position = new THREE.Vector3(this.profile.spawnX, GAME_CONFIG.ARENA.FLOOR_Y, GAME_CONFIG.ARENA.FIGHT_PLANE_Z);
     this.velocity = new THREE.Vector2(0, 0);
-    this.facing = config.facing;
+    this.facing = this.profile.facing;
 
-    this.model = new ArticulatedHumanoid({
-      primaryColor: config.colors.primary,
-      secondaryColor: config.colors.secondary,
-      accentColor: config.colors.accent,
-      emissiveColor: config.colors.emissive,
-      isPlayer1: id === 'P1',
+    this.modelRoot = new THREE.Group();
+    this.modelRoot.position.copy(this.position);
+    this.modelRoot.rotation.y = this.facing === 1 ? Math.PI / 2 : -Math.PI / 2;
+
+    this.initModel();
+  }
+
+  private initModel(): void {
+    CharacterLoader.loadFighter(this.profile, this.id === 'P1').then((loaded) => {
+      this.loadedModel = loaded;
+      this.animator = loaded.animator;
+      this.shieldMesh = loaded.shieldMesh;
+      this.modelRoot.add(loaded.root);
+
+      // Register animation completion listener
+      this.animator.setOnFinishedCallback((finishedState) => {
+        this.handleAnimationFinished(finishedState);
+      });
+
+      this.animator.playState('IDLE', true);
     });
+  }
 
-    this.model.root.position.copy(this.position);
-    this.model.setFacing(this.facing);
+  private handleAnimationFinished(finishedState: FighterState): void {
+    // If attack finished, return to IDLE
+    if (
+      finishedState.startsWith('PUNCH_') ||
+      finishedState.startsWith('KICK_') ||
+      finishedState === 'LAND' ||
+      finishedState === 'HIT_STAGGER' ||
+      finishedState === 'KNOCKBACK' ||
+      finishedState === 'STAGGER'
+    ) {
+      if (this.currentHealth > 0) {
+        this.state = 'IDLE';
+        this.currentAttackData = null;
+        this.hasHitCurrentAttack = false;
+        if (this.animator) {
+          this.animator.playState('IDLE');
+        }
+      }
+    }
   }
 
   public reset(spawnX: number, facing: 1 | -1): void {
@@ -77,85 +98,145 @@ export class Fighter {
     this.facing = facing;
     this.state = 'IDLE';
     this.currentHealth = this.maxHealth;
-    this.currentActionProgress = 0;
-    this.actionTimer = 0;
+    this.attackTimer = 0;
     this.hitStunTimer = 0;
+    this.landingTimer = 0;
     this.isGrounded = true;
     this.hasHitCurrentAttack = false;
-    this.currentAttackType = null;
+    this.currentAttackData = null;
+    this.comboStep = 0;
 
-    this.model.root.position.copy(this.position);
-    this.model.setFacing(this.facing);
-    this.model.update(0.016, this.state, 0);
+    this.modelRoot.position.copy(this.position);
+    this.modelRoot.rotation.y = this.facing === 1 ? Math.PI / 2 : -Math.PI / 2;
+
+    if (this.shieldMesh) {
+      (this.shieldMesh.material as THREE.MeshBasicMaterial).opacity = 0;
+    }
+
+    if (this.animator) {
+      this.animator.playState('IDLE', true);
+    }
   }
 
   public handleInput(inputs: FighterInputs, opponent: Fighter): void {
-    // Cannot act while in hit stagger or knocked down
-    if (this.state === 'HIT_STAGGER' || this.state === 'KNOCKDOWN') {
+    // Cannot act while stunned or defeated
+    if (
+      this.state === 'HIT_STAGGER' ||
+      this.state === 'KNOCKBACK' ||
+      this.state === 'STAGGER' ||
+      this.state === 'DEFEAT' ||
+      this.state === 'VICTORY'
+    ) {
       return;
     }
 
-    // Dynamic Facing check: face opponent if grounded and not mid-attack
-    if (this.isGrounded && this.state !== 'PUNCH' && this.state !== 'KICK') {
+    // Dynamic Facing: face opponent when grounded and not mid-attack
+    const isAttacking = this.state.startsWith('PUNCH_') || this.state.startsWith('KICK_');
+    if (this.isGrounded && !isAttacking && this.state !== 'LAND') {
       const dirToOpponent = opponent.position.x > this.position.x ? 1 : -1;
       if (this.facing !== dirToOpponent) {
         this.facing = dirToOpponent;
-        this.model.setFacing(this.facing);
       }
     }
 
-    // Active Attack in progress
-    if (this.state === 'PUNCH' || this.state === 'KICK') {
+    // If currently locked in attack or landing, prevent movement overrides
+    if (isAttacking || this.state === 'LAND') {
       return;
     }
 
-    // 1. Attacks (Punch / Kick)
+    const now = performance.now();
+
+    // 1. COMBAT ATTACKS (Punch Variations)
     if (inputs.punch && this.isGrounded) {
-      this.startAttack('PUNCH');
+      if (inputs.crouch) {
+        this.startAttack('PUNCH_LEFT'); // Low jab
+      } else if (inputs.moveRight && this.facing === 1 || inputs.moveLeft && this.facing === -1) {
+        this.startAttack('PUNCH_HEAVY'); // Forward heavy punch
+      } else {
+        // Alternating combo chain: Jab -> Cross
+        if (now - this.lastAttackTime < 500 && this.comboStep === 1) {
+          this.startAttack('PUNCH_RIGHT');
+          this.comboStep = 0;
+        } else {
+          this.startAttack('PUNCH_LEFT');
+          this.comboStep = 1;
+        }
+      }
+      this.lastAttackTime = now;
       return;
     }
 
+    // 2. COMBAT ATTACKS (Kick Variations)
     if (inputs.kick && this.isGrounded) {
-      this.startAttack('KICK');
+      if (inputs.crouch) {
+        this.startAttack('KICK_LOW'); // Low shin sweep
+      } else if (inputs.moveRight && this.facing === 1 || inputs.moveLeft && this.facing === -1) {
+        this.startAttack('KICK_HIGH'); // Forward high roundhouse
+      } else {
+        this.startAttack('KICK_FRONT'); // Neutral front snap kick
+      }
+      this.lastAttackTime = now;
       return;
     }
 
-    // 2. Block
+    // 3. DEFENSIVE GUARD (Block)
     if (inputs.block && this.isGrounded) {
       this.state = 'BLOCK';
       this.velocity.x = 0;
+      if (this.animator) {
+        this.animator.playState('BLOCK');
+      }
+      if (this.shieldMesh) {
+        (this.shieldMesh.material as THREE.MeshBasicMaterial).opacity = 0.55;
+      }
       return;
+    } else if (this.shieldMesh) {
+      (this.shieldMesh.material as THREE.MeshBasicMaterial).opacity = 0;
     }
 
-    // 3. Jump
+    // 4. JUMP
     if (inputs.jump && this.isGrounded) {
       this.velocity.y = GAME_CONFIG.PHYSICS.JUMP_IMPULSE;
       this.isGrounded = false;
       this.state = 'JUMP';
+      if (this.animator) {
+        this.animator.playState('JUMP');
+      }
       return;
     }
 
-    // 4. Crouch
+    // 5. CROUCH
     if (inputs.crouch && this.isGrounded) {
       this.state = 'CROUCH';
       this.velocity.x = 0;
+      if (this.animator) {
+        this.animator.playState('CROUCH');
+      }
       return;
     }
 
-    // 5. Left / Right Movement
+    // 6. LATERAL LOCOMOTION (Walk / Run)
     if (this.isGrounded) {
+      const isRunning = !!inputs.run;
+      const speed = isRunning ? GAME_CONFIG.PHYSICS.DASH_SPEED : GAME_CONFIG.PHYSICS.WALK_SPEED;
+
       if (inputs.moveLeft) {
-        this.velocity.x = -GAME_CONFIG.PHYSICS.WALK_SPEED;
-        this.state = this.facing === 1 ? 'WALK_BWD' : 'WALK_FWD';
+        this.velocity.x = -speed;
+        const moveState = this.facing === 1 ? 'WALK_BWD' : isRunning ? 'RUN' : 'WALK_FWD';
+        this.state = moveState;
+        if (this.animator) this.animator.playState(moveState);
       } else if (inputs.moveRight) {
-        this.velocity.x = GAME_CONFIG.PHYSICS.WALK_SPEED;
-        this.state = this.facing === 1 ? 'WALK_FWD' : 'WALK_BWD';
+        this.velocity.x = speed;
+        const moveState = this.facing === 1 ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+        this.state = moveState;
+        if (this.animator) this.animator.playState(moveState);
       } else {
         this.velocity.x = 0;
         this.state = 'IDLE';
+        if (this.animator) this.animator.playState('IDLE');
       }
     } else {
-      // In air lateral drift
+      // In-air lateral drift
       if (inputs.moveLeft) {
         this.velocity.x = -GAME_CONFIG.PHYSICS.WALK_SPEED * 0.85;
       } else if (inputs.moveRight) {
@@ -164,66 +245,99 @@ export class Fighter {
     }
   }
 
-  private startAttack(type: 'PUNCH' | 'KICK'): void {
+  private startAttack(type: AttackType): void {
     this.state = type;
-    this.currentAttackType = type;
-    this.actionTimer = 0;
+    this.currentAttackData = COMBAT_ATTACKS[type];
+    this.attackTimer = 0;
     this.hasHitCurrentAttack = false;
-    const config = type === 'PUNCH' ? GAME_CONFIG.ATTACKS.PUNCH : GAME_CONFIG.ATTACKS.KICK;
-    this.actionDuration = config.startupTime + config.activeTime + config.recoveryTime;
-    this.velocity.x = 0; // stop moving while attacking
+    this.velocity.x = 0;
+
+    if (this.animator) {
+      this.animator.playState(type as FighterState, true);
+    }
   }
 
   public update(dt: number, opponent: Fighter): void {
-    // 1. Process Stun Timer
+    // 1. Process Hit Flash
+    if (this.flashTimer > 0) {
+      this.flashTimer -= dt;
+    }
+
+    // 2. Process Hit Stun / Recovery
     if (this.hitStunTimer > 0) {
       this.hitStunTimer -= dt;
       if (this.hitStunTimer <= 0) {
         this.state = 'IDLE';
+        if (this.animator) this.animator.playState('IDLE');
       }
     }
 
-    // 2. Process Attack Progress
-    if (this.state === 'PUNCH' || this.state === 'KICK') {
-      this.actionTimer += dt;
-      this.currentActionProgress = Math.min(1, this.actionTimer / this.actionDuration);
+    // 3. Process Attack Progress
+    if (this.currentAttackData) {
+      this.attackTimer += dt;
+      const totalDuration =
+        this.currentAttackData.startupTime +
+        this.currentAttackData.activeTime +
+        this.currentAttackData.recoveryTime;
 
-      if (this.actionTimer >= this.actionDuration) {
+      if (this.attackTimer >= totalDuration) {
         this.state = 'IDLE';
-        this.currentAttackType = null;
+        this.currentAttackData = null;
         this.hasHitCurrentAttack = false;
-        this.currentActionProgress = 0;
+        if (this.animator) this.animator.playState('IDLE');
       }
     }
 
-    // 3. Gravity and Vertical Movement
+    // 4. Gravity and Vertical Movement
     if (!this.isGrounded) {
       this.velocity.y += GAME_CONFIG.PHYSICS.GRAVITY * dt;
       this.position.y += this.velocity.y * dt;
+
+      // In-air state transition to FALL
+      if (this.velocity.y < -1.5 && this.state === 'JUMP') {
+        this.state = 'FALL';
+        if (this.animator) this.animator.playState('FALL');
+      }
 
       // Landing check
       if (this.position.y <= GAME_CONFIG.ARENA.FLOOR_Y) {
         this.position.y = GAME_CONFIG.ARENA.FLOOR_Y;
         this.velocity.y = 0;
         this.isGrounded = true;
-        if (this.state === 'JUMP') {
-          this.state = 'IDLE';
-        }
+
+        // Transition to LAND animation
+        this.state = 'LAND';
+        this.landingTimer = 0.18;
+        if (this.animator) this.animator.playState('LAND', true);
       }
     }
 
-    // 4. Horizontal Movement & Arena Clamping
-    this.position.x += this.velocity.x * dt;
+    // Process landing recovery
+    if (this.state === 'LAND') {
+      this.landingTimer -= dt;
+      if (this.landingTimer <= 0) {
+        this.state = 'IDLE';
+        if (this.animator) this.animator.playState('IDLE');
+      }
+    }
 
+    // 5. Horizontal Movement & Arena Clamping
+    this.position.x += this.velocity.x * dt;
     if (this.position.x < GAME_CONFIG.ARENA.WALL_LIMIT_LEFT) {
       this.position.x = GAME_CONFIG.ARENA.WALL_LIMIT_LEFT;
     } else if (this.position.x > GAME_CONFIG.ARENA.WALL_LIMIT_RIGHT) {
       this.position.x = GAME_CONFIG.ARENA.WALL_LIMIT_RIGHT;
     }
 
-    // 5. Sync 3D Model position & animation
-    this.model.root.position.copy(this.position);
-    this.model.update(dt, this.state, this.currentActionProgress);
+    // 6. Sync Model Position and Smooth Facing
+    this.modelRoot.position.copy(this.position);
+    const targetYRot = this.facing === 1 ? Math.PI / 2 : -Math.PI / 2;
+    this.modelRoot.rotation.y = THREE.MathUtils.lerp(this.modelRoot.rotation.y, targetYRot, 0.25);
+
+    // 7. Update Skeletal Animation Mixer
+    if (this.animator) {
+      this.animator.update(dt);
+    }
   }
 
   public getActiveHitbox(): {
@@ -232,45 +346,37 @@ export class Fighter {
     radius: number;
     damage: number;
     knockback: number;
-    type: 'PUNCH' | 'KICK';
+    type: AttackType;
   } | null {
-    if (!this.currentAttackType || this.hasHitCurrentAttack) return null;
+    if (!this.currentAttackData || this.hasHitCurrentAttack) return null;
 
-    const attackData = this.currentAttackType === 'PUNCH' 
-      ? GAME_CONFIG.ATTACKS.PUNCH 
-      : GAME_CONFIG.ATTACKS.KICK;
+    const startup = this.currentAttackData.startupTime;
+    const activeEnd = startup + this.currentAttackData.activeTime;
 
-    const startup = attackData.startupTime;
-    const activeWindow = startup + attackData.activeTime;
-
-    // Only active during the active window
-    if (this.actionTimer >= startup && this.actionTimer <= activeWindow) {
-      const reach = attackData.reach;
+    if (this.attackTimer >= startup && this.attackTimer <= activeEnd) {
+      const reach = this.currentAttackData.reach;
       const hitX = this.position.x + this.facing * reach;
-      const hitY = this.currentAttackType === 'PUNCH' ? this.position.y + 1.45 : this.position.y + 1.15;
-      const radius = this.currentAttackType === 'PUNCH' ? 0.45 : 0.55;
+      let hitY = this.position.y + 1.25;
+
+      if (this.currentAttackData.height === 'HIGH') hitY = this.position.y + 1.48;
+      if (this.currentAttackData.height === 'LOW') hitY = this.position.y + 0.35;
 
       return {
         x: hitX,
         y: hitY,
-        radius,
-        damage: attackData.damage,
-        knockback: attackData.knockback,
-        type: this.currentAttackType,
+        radius: 0.52,
+        damage: this.currentAttackData.damage,
+        knockback: this.currentAttackData.knockback,
+        type: this.currentAttackData.type,
       };
     }
 
     return null;
   }
 
-  public getHurtbox(): {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } {
-    const isCrouched = this.state === 'CROUCH';
-    const height = isCrouched ? 1.2 : GAME_CONFIG.PHYSICS.CHARACTER_HEIGHT;
+  public getHurtbox(): { x: number; y: number; width: number; height: number } {
+    const isCrouched = this.state === 'CROUCH' || this.state === 'KICK_LOW';
+    const height = isCrouched ? 1.15 : GAME_CONFIG.PHYSICS.CHARACTER_HEIGHT;
     return {
       x: this.position.x - 0.4,
       y: this.position.y,
@@ -289,21 +395,43 @@ export class Fighter {
 
   public takeHit(damage: number, knockback: number, isBlocked: boolean, attackerFacing: number): boolean {
     if (isBlocked) {
-      // Chip damage / block effect
       this.currentHealth = Math.max(0, this.currentHealth - Math.round(damage * 0.15));
-      this.position.x += attackerFacing * (knockback * 0.35);
-      this.model.flashHit();
+      this.position.x += attackerFacing * (knockback * 0.3);
       return false; // blocked
     }
 
-    // Full hit
     this.currentHealth = Math.max(0, this.currentHealth - damage);
-    this.state = this.currentHealth <= 0 ? 'KNOCKDOWN' : 'HIT_STAGGER';
-    this.hitStunTimer = 0.28;
     this.velocity.x = 0;
     this.position.x += attackerFacing * knockback;
-    this.model.flashHit();
+
+    if (this.currentHealth <= 0) {
+      this.state = 'DEFEAT';
+      if (this.animator) this.animator.playState('DEFEAT', true);
+    } else if (knockback > 2.8) {
+      this.state = 'KNOCKBACK';
+      this.hitStunTimer = 0.42;
+      if (this.animator) this.animator.playState('KNOCKBACK', true);
+    } else {
+      this.state = 'HIT_STAGGER';
+      this.hitStunTimer = 0.28;
+      if (this.animator) this.animator.playState('HIT_STAGGER', true);
+    }
+
     return true; // clean hit
+  }
+
+  public playVictory(): void {
+    this.state = 'VICTORY';
+    if (this.animator) {
+      this.animator.playState('VICTORY', true);
+    }
+  }
+
+  public playDefeat(): void {
+    this.state = 'DEFEAT';
+    if (this.animator) {
+      this.animator.playState('DEFEAT', true);
+    }
   }
 
   public getStats(): FighterStats {
@@ -316,11 +444,13 @@ export class Fighter {
       isGrounded: this.isGrounded,
       facing: this.facing,
       state: this.state,
-      colorScheme: this.colorScheme,
+      colorScheme: this.profile.colors,
     };
   }
 
   public dispose(): void {
-    this.model.dispose();
+    if (this.loadedModel) {
+      this.loadedModel.dispose();
+    }
   }
 }

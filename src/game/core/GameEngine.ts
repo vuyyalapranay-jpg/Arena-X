@@ -99,10 +99,10 @@ export class GameEngine {
     this.scene.add(this.particles.group);
 
     // 6. Fighters
-    this.fighterP1 = new Fighter('P1', GAME_CONFIG.FIGHTERS.P1);
-    this.fighterP2 = new Fighter('P2', GAME_CONFIG.FIGHTERS.P2);
-    this.scene.add(this.fighterP1.model.root);
-    this.scene.add(this.fighterP2.model.root);
+    this.fighterP1 = new Fighter('P1');
+    this.fighterP2 = new Fighter('P2');
+    this.scene.add(this.fighterP1.modelRoot);
+    this.scene.add(this.fighterP2.modelRoot);
 
     // 7. Event listeners
     window.addEventListener('resize', this.handleResize);
@@ -311,14 +311,15 @@ export class GameEngine {
           soundManager.playBlockClank();
           this.hitFreezeTimer = 0.04;
         } else {
-          const sparkColor = p1Hitbox.type === 'PUNCH' ? 0xff3355 : 0xff9900;
+          const isPunch = p1Hitbox.type.startsWith('PUNCH');
+          const sparkColor = isPunch ? 0xff3355 : 0xff9900;
           this.particles.emitHitSparks(p1Hitbox.x, p1Hitbox.y, 0, sparkColor);
-          if (p1Hitbox.type === 'PUNCH') {
+          if (isPunch) {
             soundManager.playPunchHit();
           } else {
             soundManager.playKickHit();
           }
-          this.cameraManager.addScreenShake(p1Hitbox.type === 'PUNCH' ? 0.22 : 0.35, 0.18);
+          this.cameraManager.addScreenShake(isPunch ? 0.22 : 0.35, 0.18);
           this.hitFreezeTimer = GAME_CONFIG.MATCH.HIT_FREEZE_DURATION;
         }
 
@@ -347,14 +348,15 @@ export class GameEngine {
           soundManager.playBlockClank();
           this.hitFreezeTimer = 0.04;
         } else {
-          const sparkColor = p2Hitbox.type === 'PUNCH' ? 0x00f0ff : 0x0088ff;
+          const isPunch = p2Hitbox.type.startsWith('PUNCH');
+          const sparkColor = isPunch ? 0x00f0ff : 0x0088ff;
           this.particles.emitHitSparks(p2Hitbox.x, p2Hitbox.y, 0, sparkColor);
-          if (p2Hitbox.type === 'PUNCH') {
+          if (isPunch) {
             soundManager.playPunchHit();
           } else {
             soundManager.playKickHit();
           }
-          this.cameraManager.addScreenShake(p2Hitbox.type === 'PUNCH' ? 0.22 : 0.35, 0.18);
+          this.cameraManager.addScreenShake(isPunch ? 0.22 : 0.35, 0.18);
           this.hitFreezeTimer = GAME_CONFIG.MATCH.HIT_FREEZE_DURATION;
         }
 
@@ -386,9 +388,13 @@ export class GameEngine {
     if (winner === 'P1') {
       this.matchState.p1RoundsWon++;
       this.matchState.announcement = 'K.O.! PLAYER 1 WINS ROUND';
+      this.fighterP1.playVictory();
+      this.fighterP2.playDefeat();
     } else {
       this.matchState.p2RoundsWon++;
       this.matchState.announcement = 'K.O.! PLAYER 2 WINS ROUND';
+      this.fighterP2.playVictory();
+      this.fighterP1.playDefeat();
     }
 
     this.roundTransitionTimer = 2.4;
@@ -403,9 +409,13 @@ export class GameEngine {
     if (this.fighterP1.currentHealth > this.fighterP2.currentHealth) {
       this.matchState.p1RoundsWon++;
       this.matchState.announcement = 'TIME UP! PLAYER 1 WINS';
+      this.fighterP1.playVictory();
+      this.fighterP2.playDefeat();
     } else if (this.fighterP2.currentHealth > this.fighterP1.currentHealth) {
       this.matchState.p2RoundsWon++;
       this.matchState.announcement = 'TIME UP! PLAYER 2 WINS';
+      this.fighterP2.playVictory();
+      this.fighterP1.playDefeat();
     } else {
       this.matchState.announcement = 'TIME UP! DRAW ROUND';
     }
@@ -420,7 +430,6 @@ export class GameEngine {
     const dir = this.fighterP1.position.x > this.fighterP2.position.x ? 1 : -1;
     if (this.fighterP2.facing !== dir) {
       this.fighterP2.facing = dir;
-      this.fighterP2.model.setFacing(dir);
     }
   }
 
