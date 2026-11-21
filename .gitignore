@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production build
+dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Legacy and external project directories
+_legacy_projects/
+aieditor/
+uploads/
+*.mp4
+*.wav
+*.lnk
+*.png
+*.html
+!index.html
+animation.html
+realworld_3d.html
+server.js
+capture_*.js
+render_*.js
+generate_*.py
