@@ -671,17 +671,52 @@ export class GameEngine {
 
     // Generous side margin (in world space) so full body, limbs, and combat poses
     // never get clipped by the viewport edges (sprite width is ~200-240px)
-    const margin = 155;
+    const margin = 195;
+
+    // Enforce maximum fighting engagement separation
+    const maxSep = AnimeFighter2D.MAX_SEPARATION;
+    const p1Left = this.fighterP1.x <= this.fighterP2.x;
+    const currentDist = Math.abs(this.fighterP2.x - this.fighterP1.x);
+    if (currentDist > maxSep) {
+      const mid = (this.fighterP1.x + this.fighterP2.x) * 0.5;
+      if (p1Left) {
+        this.fighterP1.x = mid - maxSep * 0.5;
+        this.fighterP2.x = mid + maxSep * 0.5;
+      } else {
+        this.fighterP1.x = mid + maxSep * 0.5;
+        this.fighterP2.x = mid - maxSep * 0.5;
+      }
+    }
 
     const minAllowedX = Math.max(WorldCoordinateSystem.STAGE_BOUND_LEFT + margin, bounds.minX + margin);
     const maxAllowedX = Math.min(WorldCoordinateSystem.STAGE_BOUND_RIGHT - margin, bounds.maxX - margin);
 
     // Screen edge wall clamping
-    if (this.fighterP1.x < minAllowedX) this.fighterP1.x = minAllowedX;
-    if (this.fighterP1.x > maxAllowedX) this.fighterP1.x = maxAllowedX;
+    if (this.fighterP1.x < minAllowedX) {
+      this.fighterP1.x = minAllowedX;
+      if (this.fighterP2.x - this.fighterP1.x > maxSep) {
+        this.fighterP2.x = minAllowedX + maxSep;
+      }
+    }
+    if (this.fighterP1.x > maxAllowedX) {
+      this.fighterP1.x = maxAllowedX;
+      if (this.fighterP1.x - this.fighterP2.x > maxSep) {
+        this.fighterP2.x = maxAllowedX - maxSep;
+      }
+    }
 
-    if (this.fighterP2.x < minAllowedX) this.fighterP2.x = minAllowedX;
-    if (this.fighterP2.x > maxAllowedX) this.fighterP2.x = maxAllowedX;
+    if (this.fighterP2.x < minAllowedX) {
+      this.fighterP2.x = minAllowedX;
+      if (this.fighterP1.x - this.fighterP2.x > maxSep) {
+        this.fighterP1.x = minAllowedX + maxSep;
+      }
+    }
+    if (this.fighterP2.x > maxAllowedX) {
+      this.fighterP2.x = maxAllowedX;
+      if (this.fighterP2.x - this.fighterP1.x > maxSep) {
+        this.fighterP1.x = maxAllowedX - maxSep;
+      }
+    }
 
     // Corner wall pushbox collision: prevent fighters from overlapping when pushed into corner
     const dist = this.fighterP2.x - this.fighterP1.x;

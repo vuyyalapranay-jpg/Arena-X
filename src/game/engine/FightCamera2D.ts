@@ -24,8 +24,8 @@ export class FightCamera2D {
   public zoom = 1.0;
 
   // Zoom limits optimized for high-res 2D fighting game action
-  // Prevents fighters from shrinking into distant specks or camera zooming out excessively
-  public minZoom = 0.76;
+  // Prevents fighters from shrinking into distant specks while accommodating mobile & desktop viewports
+  public minZoom = 0.68;
   public maxZoom = 1.12;
 
   // Screen Shake

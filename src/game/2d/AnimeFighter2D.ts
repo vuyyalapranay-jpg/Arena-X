@@ -626,6 +626,16 @@ export class AnimeFighter2D {
 
     // 7. Horizontal Movement & Arena Bounds Clamping
     this.x += this.vx * dt;
+
+    // Hard Clamping to Stage and Maximum Separation
+    // In competitive 2D fighting games, fighters can never drift apart into separate screens
+    const distToOpp = this.x - opponent.x;
+    if (Math.abs(distToOpp) > AnimeFighter2D.MAX_SEPARATION) {
+      const sign = distToOpp > 0 ? 1 : -1;
+      this.x = opponent.x + sign * AnimeFighter2D.MAX_SEPARATION;
+      this.vx = 0;
+    }
+
     if (this.x < this.minX) this.x = this.minX;
     if (this.x > this.maxX) this.x = this.maxX;
 
