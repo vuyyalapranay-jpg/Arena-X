@@ -9,10 +9,18 @@ import {
   VolumeX, 
   Maximize2, 
   HelpCircle,
-  Smartphone
+  Smartphone,
+  Trophy,
+  Coins,
+  Sparkles,
+  Award,
+  User
 } from 'lucide-react';
 import { FighterStats, GameState, MatchState, PlayerId } from '../../types';
 import { soundManager } from '../core/SoundManager';
+import { progressionManager } from '../progression/ProgressionManager';
+import { MatchRewards } from '../progression/ProgressionTypes';
+import { PlayerProfileModal } from '../../components/PlayerProfileModal';
 
 interface FightHUDProps {
   p1Stats: FighterStats;
@@ -46,6 +54,33 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   // Delayed ghost health bar for impactful fighting-game hit feedback
   const [p1GhostHealth, setP1GhostHealth] = useState(100);
   const [p2GhostHealth, setP2GhostHealth] = useState(100);
+  const [matchRewards, setMatchRewards] = useState<MatchRewards | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [hasRecordedMatch, setHasRecordedMatch] = useState(false);
+
+  // Auto-record progression on match over
+  useEffect(() => {
+    if (gameState === 'MATCH_OVER' && !hasRecordedMatch) {
+      setHasRecordedMatch(true);
+      const isP1Win = matchState.winner === 'P1';
+      const rewards = progressionManager.recordMatchResult({
+        gameMode: 'VERSUS',
+        playerFighter: (p1Stats.name || 'KAI') as any,
+        opponentFighter: (p2Stats.name || 'SHADOW') as any,
+        opponentName: p2Stats.name || 'SHADOW',
+        stageId: 'ANCIENT_TEMPLE',
+        playerScore: matchState.p1RoundsWon,
+        opponentScore: matchState.p2RoundsWon,
+        durationSeconds: 45,
+        isPerfectRound: p1Stats.currentHealth === p1Stats.maxHealth,
+        isUltimateFinisher: isP1Win && matchState.announcement?.includes('ULTIMATE'),
+      });
+      setMatchRewards(rewards);
+    } else if (gameState !== 'MATCH_OVER' && hasRecordedMatch) {
+      setHasRecordedMatch(false);
+      setMatchRewards(null);
+    }
+  }, [gameState, hasRecordedMatch, matchState, p1Stats, p2Stats]);
 
   // Auto-detect touch device
   useEffect(() => {
@@ -479,18 +514,59 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       )}
 
       {/* ============================================================== */}
-      {/* 7. MATCH OVER MODAL                                            */}
+      {/* 7. MATCH OVER MODAL WITH PROGRESSION REWARDS                     */}
       {/* ============================================================== */}
       {gameState === 'MATCH_OVER' && (
         <div className="modal-backdrop">
-          <div className="match-over-card">
-            <div className="winner-crown">ARENA X CHAMPION</div>
+          <div className="match-over-card progression-match-card">
+            <div className="winner-crown">
+              <Trophy size={16} /> ARENA X CHAMPION
+            </div>
             <h2 className={`winner-title ${matchState.winner === 'P1' ? 'p1-winner' : 'p2-winner'}`}>
-              {matchState.winner === 'P1' ? 'KAI WINS' : 'ZEN WINS'}
+              {matchState.winner === 'P1' ? `${p1Stats.name} VICTORIOUS!` : `${p2Stats.name} VICTORIOUS!`}
             </h2>
             <p className="match-score-summary">
-              KAI [{matchState.p1RoundsWon}] — [{matchState.p2RoundsWon}] ZEN
+              {p1Stats.name} [{matchState.p1RoundsWon}] — [{matchState.p2RoundsWon}] {p2Stats.name}
             </p>
+
+            {/* Progression & Rewards Box */}
+            {matchRewards && (
+              <div className="post-match-rewards-grid">
+                <div className="reward-item-badge xp-badge">
+                  <span className="reward-label">XP EARNED</span>
+                  <span className="reward-value">+{matchRewards.xpEarned} XP</span>
+                  {matchRewards.didLevelUp && (
+                    <span className="level-up-tag">
+                      <Sparkles size={12} /> LEVEL {matchRewards.newLevel}!
+                    </span>
+                  )}
+                </div>
+
+                <div className="reward-item-badge coins-badge">
+                  <span className="reward-label">AX COINS</span>
+                  <span className="reward-value">
+                    <Coins size={14} color="#ffd700" /> +{matchRewards.coinsEarned}
+                  </span>
+                </div>
+
+                <div className="reward-item-badge rp-badge">
+                  <span className="reward-label">RANK RATING</span>
+                  <span className="reward-value" style={{ color: matchRewards.rpChange >= 0 ? '#69f0ae' : '#ff5252' }}>
+                    {matchRewards.rpChange >= 0 ? `+${matchRewards.rpChange}` : matchRewards.rpChange} RP
+                  </span>
+                  <span className="tier-tag">{matchRewards.newRank}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Unlocked Achievements Alert */}
+            {matchRewards?.unlockedAchievements && matchRewards.unlockedAchievements.length > 0 && (
+              <div className="match-achievements-banner">
+                <Award size={16} color="#ffd700" />
+                <span>ACHIEVEMENT UNLOCKED: {matchRewards.unlockedAchievements[0].title}!</span>
+              </div>
+            )}
+
             <div className="modal-divider" />
             <div className="modal-button-stack">
               <button 
@@ -501,6 +577,15 @@ export const FightHUD: React.FC<FightHUDProps> = ({
                 }}
               >
                 <RotateCcw size={18} /> REMATCH
+              </button>
+              <button 
+                className="arena-btn profile-btn"
+                onClick={() => {
+                  soundManager.playMenuSelect();
+                  setIsProfileOpen(true);
+                }}
+              >
+                <User size={18} /> VIEW PROFILE
               </button>
               <button 
                 className="arena-btn secondary-btn"
@@ -515,6 +600,12 @@ export const FightHUD: React.FC<FightHUDProps> = ({
           </div>
         </div>
       )}
+
+      {/* Profile Modal */}
+      <PlayerProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </div>
   );
 };

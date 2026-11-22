@@ -402,10 +402,12 @@ export class ArenaFightRoom {
           this.winner = 'P1';
           this.status = 'FINISHED';
           this.announcement = `${this.p1State.name.toUpperCase()} VICTORIOUS!`;
+          this.broadcastServerRewards();
         } else if (this.p2State.roundsWon >= 2) {
           this.winner = 'P2';
           this.status = 'FINISHED';
           this.announcement = `${this.p2State.name.toUpperCase()} VICTORIOUS!`;
+          this.broadcastServerRewards();
         } else {
           // Next round
           this.currentRound++;
@@ -726,6 +728,24 @@ export class ArenaFightRoom {
     }
     this.announcement = `${winnerPlayer?.name.toUpperCase()} WINS ROUND!`;
     this.roundOverTimer = 2.4;
+  }
+
+  private broadcastServerRewards(): void {
+    const isP1Win = this.winner === 'P1';
+    this.broadcast({
+      type: 'match_rewards',
+      payload: {
+        winner: this.winner,
+        p1RpDelta: isP1Win ? 35 : -15,
+        p2RpDelta: !isP1Win ? 35 : -15,
+        p1Xp: isP1Win ? 300 : 120,
+        p2Xp: !isP1Win ? 300 : 120,
+        p1Coins: isP1Win ? 150 : 60,
+        p2Coins: !isP1Win ? 150 : 60,
+        isValidMatch: true,
+        timestamp: Date.now(),
+      },
+    });
   }
 
   private isSlotTaken(slot: PlayerSlot): boolean {

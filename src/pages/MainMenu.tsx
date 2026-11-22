@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { GameMode, GameSettings, GraphicsQuality } from '../types';
 import { soundManager } from '../game/core/SoundManager';
+import { PlayerProfileModal } from '../components/PlayerProfileModal';
 
 interface MainMenuProps {
   onStartGame: (mode: GameMode) => void;
@@ -49,6 +50,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
   const [modalPhase, setModalPhase] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Animated background cyber canvas
   useEffect(() => {
@@ -355,26 +357,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <span className="status-tag phase4">COMING PHASE 4</span>
           </button>
 
-          {/* 5. PROFILE (Coming Phase 4) */}
+          {/* 5. PROFILE (Phase 9 Active) */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => 
-              openComingSoon(
-                'FIGHTER PROFILE',
-                'Track win rates, damage statistics, match replays, unlocked titles, and competitive player rankings.',
-                'PHASE 4: CAREER & STATS'
-              )
-            }
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setIsProfileOpen(true);
+            }}
           >
             <div className="btn-content">
               <User className="btn-icon" size={22} />
               <div className="btn-text">
                 <span className="title">PROFILE</span>
-                <span className="sub">Fighter career stats, win/loss history & titles</span>
+                <span className="sub">Player overview, XP rank, fighter unlocks & match history</span>
               </div>
             </div>
-            <span className="status-tag phase4">COMING PHASE 4</span>
+            <span className="status-tag active" style={{ color: '#00e5ff', borderColor: '#00e5ff' }}>
+              ACTIVE
+            </span>
           </button>
 
           {/* 6. SETTINGS */}
@@ -723,6 +724,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
         </div>
       )}
+
+      {/* --- MODAL 3: PLAYER PROFILE MODAL --- */}
+      <PlayerProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </div>
   );
 };
