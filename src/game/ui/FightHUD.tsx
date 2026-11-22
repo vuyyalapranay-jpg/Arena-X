@@ -43,11 +43,11 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   const [showControls, setShowControls] = useState(true);
   const [showTouchControls, setShowTouchControls] = useState(false);
 
-  // Ghost health bars for smooth fighting game hit feel
+  // Delayed ghost health bar for impactful fighting-game hit feedback
   const [p1GhostHealth, setP1GhostHealth] = useState(100);
   const [p2GhostHealth, setP2GhostHealth] = useState(100);
 
-  // Detect mobile touch
+  // Auto-detect touch device
   useEffect(() => {
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     if (isTouch) {
@@ -59,14 +59,14 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       setP1GhostHealth(p1Stats.currentHealth);
-    }, 400);
+    }, 380);
     return () => clearTimeout(timer);
   }, [p1Stats.currentHealth]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setP2GhostHealth(p2Stats.currentHealth);
-    }, 400);
+    }, 380);
     return () => clearTimeout(timer);
   }, [p2Stats.currentHealth]);
 
@@ -83,70 +83,106 @@ export const FightHUD: React.FC<FightHUDProps> = ({
     }
   };
 
-  const p1HealthPercent = (p1Stats.currentHealth / p1Stats.maxHealth) * 100;
-  const p1GhostPercent = (p1GhostHealth / p1Stats.maxHealth) * 100;
+  const p1HealthPercent = Math.max(0, (p1Stats.currentHealth / p1Stats.maxHealth) * 100);
+  const p1GhostPercent = Math.max(0, (p1GhostHealth / p1Stats.maxHealth) * 100);
 
-  const p2HealthPercent = (p2Stats.currentHealth / p2Stats.maxHealth) * 100;
-  const p2GhostPercent = (p2GhostHealth / p2Stats.maxHealth) * 100;
+  const p2HealthPercent = Math.max(0, (p2Stats.currentHealth / p2Stats.maxHealth) * 100);
+  const p2GhostPercent = Math.max(0, (p2GhostHealth / p2Stats.maxHealth) * 100);
 
   return (
     <div className="fight-hud-root">
-      {/* 1. TOP FIGHTING STATUS BAR */}
-      <header className="hud-top-bar">
-        {/* PLAYER 1 HEALTH & INFO */}
-        <div className="fighter-card p1-card">
-          <div className="fighter-header">
-            <span className="player-tag p1-tag">P1</span>
-            <div className="fighter-meta">
-              <span className="fighter-name p1-name">{p1Stats.name}</span>
-              <span className="fighter-sub">CRIMSON STRIKER</span>
-            </div>
-            <div className="round-dots">
-              <span className={`dot ${matchState.p1RoundsWon >= 1 ? 'won' : ''}`} />
-              <span className={`dot ${matchState.p1RoundsWon >= 2 ? 'won' : ''}`} />
-            </div>
+      {/* ============================================================== */}
+      {/* 1. TOP FIGHTING STATUS BAR (MATCHING VISUAL TARGET)            */}
+      {/* ============================================================== */}
+      <header className="target-hud-top-bar">
+        {/* PLAYER 1: KAI */}
+        <div className="p1-fighter-card">
+          <div className="avatar-wrapper p1-avatar-ring">
+            <img 
+              src="/assets/sprites/portrait_kai.png" 
+              alt="Kai" 
+              className="avatar-img"
+              onError={(e) => {
+                // Fallback to stylized SVG if image missing
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            <div className="player-badge p1-badge">P1</div>
           </div>
-          {/* Health Bar Track */}
-          <div className="health-bar-container p1-bar">
-            <div className="health-bar-ghost" style={{ width: `${p1GhostPercent}%` }} />
-            <div className="health-bar-fill p1-fill" style={{ width: `${p1HealthPercent}%` }} />
-            <div className="health-bar-glare" />
+
+          <div className="fighter-status-block">
+            <div className="fighter-meta-line">
+              <span className="fighter-title-name">KAI</span>
+              <span className="fighter-subtitle-tag">CRIMSON STRIKER</span>
+              {/* Round Win Dots */}
+              <div className="round-dots-group">
+                <span className={`target-dot ${matchState.p1RoundsWon >= 1 ? 'dot-won-p1' : ''}`} />
+                <span className={`target-dot ${matchState.p1RoundsWon >= 2 ? 'dot-won-p1' : ''}`} />
+                <span className={`target-dot ${matchState.p1RoundsWon >= 3 ? 'dot-won-p1' : ''}`} />
+              </div>
+            </div>
+
+            {/* Angular Neon Green-to-Cyan Health Bar */}
+            <div className="target-health-bar p1-health-bar">
+              <div className="target-health-ghost" style={{ width: `${p1GhostPercent}%` }} />
+              <div className="target-health-fill p1-fill" style={{ width: `${p1HealthPercent}%` }} />
+              <div className="target-health-sheen" />
+            </div>
           </div>
         </div>
 
-        {/* CENTER MATCH TIMER & ROUND */}
-        <div className="hud-center-node">
-          <div className="round-badge">
+        {/* CENTER TOURNAMENT TIMER & ARENA X CREST */}
+        <div className="target-center-node">
+          <div className="target-logo-row">
+            <span className="logo-arena-text">ARENA</span>
+            <span className="logo-x-text">X</span>
+          </div>
+          <div className="target-round-pill">
             ROUND {matchState.round}
           </div>
-          <div className={`match-timer ${matchState.timeRemaining <= 10 ? 'timer-danger' : ''}`}>
+          <div className={`target-match-timer ${matchState.timeRemaining <= 10 ? 'timer-danger' : ''}`}>
             {Math.ceil(matchState.timeRemaining).toString().padStart(2, '0')}
           </div>
         </div>
 
-        {/* PLAYER 2 HEALTH & INFO */}
-        <div className="fighter-card p2-card">
-          <div className="fighter-header reversed">
-            <span className="player-tag p2-tag">P2</span>
-            <div className="fighter-meta">
-              <span className="fighter-name p2-name">{p2Stats.name}</span>
-              <span className="fighter-sub">COBALT VANGUARD</span>
-            </div>
-            <div className="round-dots">
-              <span className={`dot ${matchState.p2RoundsWon >= 1 ? 'won' : ''}`} />
-              <span className={`dot ${matchState.p2RoundsWon >= 2 ? 'won' : ''}`} />
-            </div>
+        {/* PLAYER 2: SHADOW */}
+        <div className="p2-fighter-card">
+          <div className="avatar-wrapper p2-avatar-ring">
+            <img 
+              src="/assets/sprites/portrait_shadow.png" 
+              alt="Shadow" 
+              className="avatar-img"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            <div className="player-badge p2-badge">P2</div>
           </div>
-          {/* Health Bar Track */}
-          <div className="health-bar-container p2-bar">
-            <div className="health-bar-ghost" style={{ width: `${p2GhostPercent}%` }} />
-            <div className="health-bar-fill p2-fill" style={{ width: `${p2HealthPercent}%` }} />
-            <div className="health-bar-glare" />
+
+          <div className="fighter-status-block reversed">
+            <div className="fighter-meta-line reversed">
+              <span className="fighter-title-name">SHADOW</span>
+              <span className="fighter-subtitle-tag">SHADOW FIGHTER</span>
+              <div className="round-dots-group">
+                <span className={`target-dot ${matchState.p2RoundsWon >= 1 ? 'dot-won-p2' : ''}`} />
+                <span className={`target-dot ${matchState.p2RoundsWon >= 2 ? 'dot-won-p2' : ''}`} />
+                <span className={`target-dot ${matchState.p2RoundsWon >= 3 ? 'dot-won-p2' : ''}`} />
+              </div>
+            </div>
+
+            {/* Angular Neon Green-to-Cyan Health Bar */}
+            <div className="target-health-bar p2-health-bar">
+              <div className="target-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
+              <div className="target-health-fill p2-fill" style={{ width: `${p2HealthPercent}%` }} />
+              <div className="target-health-sheen" />
+            </div>
           </div>
         </div>
       </header>
 
-      {/* 2. TOP RIGHT QUICK UTILITY BUTTONS */}
+      {/* ============================================================== */}
+      {/* 2. TOP UTILITY TOOLBAR (Mute, Fullscreen, Pause)               */}
+      {/* ============================================================== */}
       <div className="hud-utility-bar">
         {fps !== undefined && (
           <span className="fps-indicator">{fps} FPS</span>
@@ -156,39 +192,41 @@ export const FightHUD: React.FC<FightHUDProps> = ({
           onClick={toggleMute} 
           title={isMuted ? 'Unmute' : 'Mute'}
         >
-          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          {isMuted ? <VolumeX size={17} /> : <Volume2 size={17} />}
         </button>
         <button 
           className="hud-icon-btn" 
           onClick={() => setShowControls(!showControls)} 
           title="Toggle Controls Guide"
         >
-          <HelpCircle size={18} />
+          <HelpCircle size={17} />
         </button>
         <button 
           className="hud-icon-btn" 
           onClick={() => setShowTouchControls(!showTouchControls)} 
           title="Toggle Touch Controls"
         >
-          <Smartphone size={18} />
+          <Smartphone size={17} />
         </button>
         <button 
           className="hud-icon-btn" 
           onClick={toggleFullscreen} 
           title="Toggle Fullscreen"
         >
-          <Maximize2 size={18} />
+          <Maximize2 size={17} />
         </button>
         <button 
           className="hud-icon-btn pause-btn" 
           onClick={onPause} 
           title="Pause Match"
         >
-          <Pause size={18} />
+          <Pause size={17} />
         </button>
       </div>
 
-      {/* 3. CENTER BANNER ANNOUNCEMENT */}
+      {/* ============================================================== */}
+      {/* 3. CENTER BANNER ANNOUNCEMENT (ROUND 1, FIGHT!, K.O.)          */}
+      {/* ============================================================== */}
       {matchState.announcement && (
         <div className="hud-announcement-overlay">
           <div className="announcement-banner">
@@ -198,35 +236,43 @@ export const FightHUD: React.FC<FightHUDProps> = ({
         </div>
       )}
 
-      {/* 4. CONTROLS GUIDE OVERLAY (DESKTOP) */}
+      {/* ============================================================== */}
+      {/* 4. BOTTOM CONTROLS GUIDE (EXACTLY MATCHING TARGET IMAGE)       */}
+      {/* ============================================================== */}
       {showControls && (
-        <div className="controls-guide-bar">
-          <div className="control-column p1-controls">
-            <span className="col-title p1-accent">P1 CONTROLS:</span>
-            <span className="key-pill">A/D</span> Move
-            <span className="key-pill">W</span> Jump
-            <span className="key-pill">S</span> Crouch
-            <span className="key-pill">F</span> Punch
-            <span className="key-pill">G</span> Kick
-            <span className="key-pill">H</span> Block
+        <footer className="target-bottom-controls-bar">
+          {/* P1 CONTROLS */}
+          <div className="p1-controls-section">
+            <span className="p1-label">P1 CONTROLS:</span>
+            <div className="key-item"><span className="key-cap">A/D</span> Move</div>
+            <div className="key-item"><span className="key-cap">W</span> Jump</div>
+            <div className="key-item"><span className="key-cap">S</span> Crouch</div>
+            <div className="key-item"><span className="key-cap">F</span> Punch</div>
+            <div className="key-item"><span className="key-cap">G</span> Kick</div>
+            <div className="key-item"><span className="key-cap">H</span> Block</div>
           </div>
-          <div className="control-divider" />
-          <div className="control-column p2-controls">
-            <span className="col-title p2-accent">P2 CONTROLS:</span>
-            <span className="key-pill">← / →</span> Move
-            <span className="key-pill">↑</span> Jump
-            <span className="key-pill">↓</span> Crouch
-            <span className="key-pill">J</span> Punch
-            <span className="key-pill">K</span> Kick
-            <span className="key-pill">L</span> Block
+
+          <div className="controls-glow-divider" />
+
+          {/* P2 CONTROLS */}
+          <div className="p2-controls-section">
+            <span className="p2-label">P2 CONTROLS:</span>
+            <div className="key-item"><span className="key-cap">← / →</span> Move</div>
+            <div className="key-item"><span className="key-cap">↑</span> Jump</div>
+            <div className="key-item"><span className="key-cap">↓</span> Crouch</div>
+            <div className="key-item"><span className="key-cap">J</span> Punch</div>
+            <div className="key-item"><span className="key-cap">K</span> Kick</div>
+            <div className="key-item"><span className="key-cap">L</span> Block</div>
           </div>
-        </div>
+        </footer>
       )}
 
-      {/* 5. VIRTUAL TOUCH CONTROLS FOR MOBILE / TABLET */}
+      {/* ============================================================== */}
+      {/* 5. VIRTUAL TOUCH CONTROLS FOR MOBILE / TABLET                  */}
+      {/* ============================================================== */}
       {showTouchControls && (
         <div className="touch-controls-layer">
-          {/* Left Virtual D-Pad (Player 1 Movement) */}
+          {/* Left Virtual D-Pad (Directional Movement, Jump, Crouch) */}
           <div className="touch-dpad">
             <button
               className="dpad-btn up"
@@ -234,6 +280,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               onTouchEnd={() => onTouchInput('P1', 'jump', false)}
               onMouseDown={() => onTouchInput('P1', 'jump', true)}
               onMouseUp={() => onTouchInput('P1', 'jump', false)}
+              aria-label="Jump [W]"
             >
               ▲
             </button>
@@ -244,6 +291,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
                 onTouchEnd={() => onTouchInput('P1', 'moveLeft', false)}
                 onMouseDown={() => onTouchInput('P1', 'moveLeft', true)}
                 onMouseUp={() => onTouchInput('P1', 'moveLeft', false)}
+                aria-label="Move Left [A]"
               >
                 ◀
               </button>
@@ -254,6 +302,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
                 onTouchEnd={() => onTouchInput('P1', 'moveRight', false)}
                 onMouseDown={() => onTouchInput('P1', 'moveRight', true)}
                 onMouseUp={() => onTouchInput('P1', 'moveRight', false)}
+                aria-label="Move Right [D]"
               >
                 ▶
               </button>
@@ -264,13 +313,24 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               onTouchEnd={() => onTouchInput('P1', 'crouch', false)}
               onMouseDown={() => onTouchInput('P1', 'crouch', true)}
               onMouseUp={() => onTouchInput('P1', 'crouch', false)}
+              aria-label="Crouch [S]"
             >
               ▼
             </button>
           </div>
 
-          {/* Right Action Buttons (Combat Actions) */}
+          {/* Right Combat Action Buttons (Jump, Punch, Kick, Block) */}
           <div className="touch-action-buttons">
+            <button
+              className="action-btn jump-btn"
+              onTouchStart={() => onTouchInput('P1', 'jump', true)}
+              onTouchEnd={() => onTouchInput('P1', 'jump', false)}
+              onMouseDown={() => onTouchInput('P1', 'jump', true)}
+              onMouseUp={() => onTouchInput('P1', 'jump', false)}
+            >
+              <span>JUMP</span>
+              <small>[W]</small>
+            </button>
             <button
               className="action-btn punch-btn"
               onTouchStart={() => onTouchInput('P1', 'punch', true)}
@@ -305,7 +365,9 @@ export const FightHUD: React.FC<FightHUDProps> = ({
         </div>
       )}
 
-      {/* 6. PAUSE MODAL */}
+      {/* ============================================================== */}
+      {/* 6. PAUSE MODAL                                                 */}
+      {/* ============================================================== */}
       {gameState === 'PAUSED' && (
         <div className="modal-backdrop">
           <div className="pause-modal-card">
@@ -344,16 +406,18 @@ export const FightHUD: React.FC<FightHUDProps> = ({
         </div>
       )}
 
-      {/* 7. MATCH OVER MODAL */}
+      {/* ============================================================== */}
+      {/* 7. MATCH OVER MODAL                                            */}
+      {/* ============================================================== */}
       {gameState === 'MATCH_OVER' && (
         <div className="modal-backdrop">
           <div className="match-over-card">
-            <div className="winner-crown">VICTORY</div>
+            <div className="winner-crown">ARENA X CHAMPION</div>
             <h2 className={`winner-title ${matchState.winner === 'P1' ? 'p1-winner' : 'p2-winner'}`}>
-              {matchState.winner === 'P1' ? 'PLAYER 1 WINS' : 'PLAYER 2 WINS'}
+              {matchState.winner === 'P1' ? 'KAI WINS' : 'ZEN WINS'}
             </h2>
             <p className="match-score-summary">
-              {p1Stats.name} [{matchState.p1RoundsWon}] — [{matchState.p2RoundsWon}] {p2Stats.name}
+              KAI [{matchState.p1RoundsWon}] — [{matchState.p2RoundsWon}] ZEN
             </p>
             <div className="modal-divider" />
             <div className="modal-button-stack">

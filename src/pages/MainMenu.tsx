@@ -331,7 +331,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               {/* Fighter 1 Showcase */}
               <div className="studio-fighter-panel p1-panel">
                 <div className="panel-badge p1-badge">PLAYER 1</div>
-                <h3 className="fighter-title">VORTEX</h3>
+                <h3 className="fighter-title">KAI</h3>
                 <span className="fighter-subtitle">CRIMSON STRIKER</span>
                 <ul className="fighter-specs">
                   <li><strong>Aesthetic:</strong> Athletic Martial Artist</li>

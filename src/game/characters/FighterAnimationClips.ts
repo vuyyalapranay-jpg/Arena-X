@@ -33,990 +33,1059 @@ export class FighterAnimationClips {
   }
 
   /**
-   * Generates a complete library of 21 professional fighting-game AnimationClips
-   * for the 21-bone humanoid skeleton.
+   * Generates a complete library of 21 authentic, professional fighting-game AnimationClips
+   * strictly modeled after Tekken, Street Fighter, and Mortal Kombat mechanics.
+   * Every clip fully drives the Mixamo bone hierarchy (mixamorig:*).
    */
-  public static createClips(): Record<AnimationName, THREE.AnimationClip> {
+  public static createMixamoClips(
+    gltfAnimations: THREE.AnimationClip[] = []
+  ): Record<AnimationName, THREE.AnimationClip> {
     const clips: Partial<Record<AnimationName, THREE.AnimationClip>> = {};
 
-    // ==========================================
-    // 1. IDLE (Combat Stance with rhythmic sway)
-    // ==========================================
+    // Standard fighting stance base parameters:
+    // Hips: y ~ 98 (centimeters in Mixamo rig), knees bent ~30 deg for grounded center of gravity
+    // Guarded boxing/MMA arms: LeftArm forward guard, RightArm chin guard
+
+    // ==============================================================
+    // 1. IDLE (Authentic Deep Martial Arts Fighting Stance with breathing)
+    // ==============================================================
     {
-      const d = 1.6;
-      const t = [0, 0.4, 0.8, 1.2, 1.6];
+      const d = 1.4;
+      const t = [0, 0.35, 0.7, 1.05, 1.4];
       clips['idle'] = new THREE.AnimationClip('idle', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0, 0.965, 0.01],
-          [0, 0.98, 0],
-          [0, 0.965, 0.01],
-          [0, 0.98, 0],
+        // Rhythmic hips balance sway
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 94.5, 0],
+          [0, 96, 0],
+          [0, 94.5, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
+        // Torso & Spine angled into combat guard
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0.18, 0],
+          [0.08, 0.16, 0],
+          [0.10, 0.18, 0],
+          [0.08, 0.16, 0],
+          [0.10, 0.18, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine2', t, [
+          [0.08, 0.14, 0],
+          [0.06, 0.12, 0],
+          [0.08, 0.14, 0],
+          [0.06, 0.12, 0],
+          [0.08, 0.14, 0],
+        ]),
+        // Head kept level focused on opponent
+        this.quatTrack('mixamorig:Head', t, [
+          [-0.10, -0.22, 0],
+          [-0.08, -0.20, 0],
+          [-0.10, -0.22, 0],
+          [-0.08, -0.20, 0],
+          [-0.10, -0.22, 0],
+        ]),
+        // Lead Left Arm (Extended guard protecting chin and centerline)
+        this.quatTrack('mixamorig:LeftShoulder', t, [
+          [0.10, 0.15, 0],
           [0.08, 0.12, 0],
-          [0.06, 0.10, 0],
+          [0.10, 0.15, 0],
           [0.08, 0.12, 0],
-          [0.06, 0.10, 0],
-          [0.08, 0.12, 0],
+          [0.10, 0.15, 0],
         ]),
-        this.quatTrack('Spine2', t, [
-          [0.06, 0.08, 0],
-          [0.04, 0.06, 0],
-          [0.06, 0.08, 0],
-          [0.04, 0.06, 0],
-          [0.06, 0.08, 0],
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.55, -0.20, -0.85],
+          [0.50, -0.18, -0.80],
+          [0.55, -0.20, -0.85],
+          [0.50, -0.18, -0.80],
+          [0.55, -0.20, -0.85],
         ]),
-        this.quatTrack('Head', t, [
-          [-0.08, -0.15, 0],
-          [-0.06, -0.12, 0],
-          [-0.08, -0.15, 0],
-          [-0.06, -0.12, 0],
-          [-0.08, -0.15, 0],
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.35, 0],
+          [0, -1.30, 0],
+          [0, -1.35, 0],
+          [0, -1.30, 0],
+          [0, -1.35, 0],
         ]),
-        // Guarded boxing arms
-        this.quatTrack('LeftArm', t, [
-          [0.4, 0.6, -0.8],
-          [0.35, 0.55, -0.75],
-          [0.4, 0.6, -0.8],
-          [0.35, 0.55, -0.75],
-          [0.4, 0.6, -0.8],
+        // Rear Right Arm (Tight high guard protecting temple & jaw)
+        this.quatTrack('mixamorig:RightShoulder', t, [
+          [0.08, -0.12, 0],
+          [0.06, -0.10, 0],
+          [0.08, -0.12, 0],
+          [0.06, -0.10, 0],
+          [0.08, -0.12, 0],
         ]),
-        this.quatTrack('LeftForeArm', t, [
-          [0, 0.4, 1.4],
-          [0, 0.35, 1.35],
-          [0, 0.4, 1.4],
-          [0, 0.35, 1.35],
-          [0, 0.4, 1.4],
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [0.40, 0.12, 0.90],
+          [0.45, 0.15, 0.95],
+          [0.40, 0.12, 0.90],
+          [0.45, 0.15, 0.95],
         ]),
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [0.25, -0.45, 0.7],
-          [0.3, -0.5, 0.75],
-          [0.25, -0.45, 0.7],
-          [0.3, -0.5, 0.75],
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 1.40, 0],
+          [0, 1.45, 0],
+          [0, 1.40, 0],
+          [0, 1.45, 0],
         ]),
-        this.quatTrack('RightForeArm', t, [
-          [0, -0.3, -1.45],
-          [0, -0.25, -1.4],
-          [0, -0.3, -1.45],
-          [0, -0.25, -1.4],
-          [0, -0.3, -1.45],
+        // Balanced combat legs: knees bent for instant spring
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.35, 0.12, 0.08],
+          [-0.38, 0.12, 0.08],
+          [-0.35, 0.12, 0.08],
+          [-0.38, 0.12, 0.08],
+          [-0.35, 0.12, 0.08],
         ]),
-        // Staggered leg combat base
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.2, 0.1, 0.1],
-          [-0.22, 0.1, 0.1],
-          [-0.2, 0.1, 0.1],
-          [-0.22, 0.1, 0.1],
-          [-0.2, 0.1, 0.1],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.65, 0, 0],
+          [0.72, 0, 0],
+          [0.65, 0, 0],
+          [0.72, 0, 0],
+          [0.65, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.35, 0, 0],
-          [0.38, 0, 0],
-          [0.35, 0, 0],
-          [0.38, 0, 0],
-          [0.35, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, -0.12, -0.08],
+          [0.28, -0.12, -0.08],
+          [0.25, -0.12, -0.08],
+          [0.28, -0.12, -0.08],
+          [0.25, -0.12, -0.08],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, -0.1, -0.1],
-          [0.22, -0.1, -0.1],
-          [0.2, -0.1, -0.1],
-          [0.22, -0.1, -0.1],
-          [0.2, -0.1, -0.1],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.55, 0, 0],
+          [0.62, 0, 0],
+          [0.55, 0, 0],
+          [0.62, 0, 0],
+          [0.55, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.3, 0, 0],
-          [0.34, 0, 0],
-          [0.3, 0, 0],
-          [0.34, 0, 0],
-          [0.3, 0, 0],
+      ]);
+      clips['breathing'] = clips['idle'];
+    }
+
+    // ==============================================================
+    // 2. CROUCH (Defensive Low Guard Stance — FIXES BUG 1 & 2)
+    // When S / Down is held: Hips drop, knees bend deeply, torso lowers!
+    // ==============================================================
+    {
+      const d = 0.6;
+      const t = [0, 0.3, 0.6];
+      clips['crouch'] = new THREE.AnimationClip('crouch', d, [
+        // Hips sink deeply from 96 to 58 cm!
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 58, 0],
+          [0, 57, 0],
+          [0, 58, 0],
+        ]),
+        // Torso tilts forward compactly
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.38, 0.15, 0],
+          [0.38, 0.15, 0],
+          [0.38, 0.15, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine2', t, [
+          [0.28, 0.10, 0],
+          [0.28, 0.10, 0],
+          [0.28, 0.10, 0],
+        ]),
+        this.quatTrack('mixamorig:Head', t, [
+          [-0.30, -0.18, 0],
+          [-0.30, -0.18, 0],
+          [-0.30, -0.18, 0],
+        ]),
+        // Deep knee flexion: thighs angled up, shins angled back
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.95, 0.15, 0],
+          [-0.95, 0.15, 0],
+          [-0.95, 0.15, 0],
+        ]),
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [1.65, 0, 0],
+          [1.65, 0, 0],
+          [1.65, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [-0.90, -0.15, 0],
+          [-0.90, -0.15, 0],
+          [-0.90, -0.15, 0],
+        ]),
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [1.60, 0, 0],
+          [1.60, 0, 0],
+          [1.60, 0, 0],
+        ]),
+        // Tight low guard arms protecting chin and midsection
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.75, -0.15, -0.70],
+          [0.75, -0.15, -0.70],
+          [0.75, -0.15, -0.70],
+        ]),
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.55, 0],
+          [0, -1.55, 0],
+          [0, -1.55, 0],
+        ]),
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.65, 0.15, 0.75],
+          [0.65, 0.15, 0.75],
+          [0.65, 0.15, 0.75],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.60, 0],
+          [0, 1.60, 0],
+          [0, 1.60, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 2. BREATHING (Chest and shoulder heave)
-    // ==========================================
+    // ==============================================================
+    // 3. WALK FORWARD (Grounded Tactical Martial Arts Stride)
+    // ==============================================================
     {
-      const d = 2.0;
-      const t = [0, 1.0, 2.0];
-      clips['breathing'] = new THREE.AnimationClip('breathing', d, [
-        this.quatTrack('Spine2', t, [
-          [0, 0, 0],
-          [0.08, 0, 0],
-          [0, 0, 0],
-        ]),
-        this.quatTrack('LeftShoulder', t, [
-          [0, 0, 0],
-          [0.06, 0, -0.05],
-          [0, 0, 0],
-        ]),
-        this.quatTrack('RightShoulder', t, [
-          [0, 0, 0],
-          [0.06, 0, 0.05],
-          [0, 0, 0],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 3. WALK FORWARD (Tactical stride)
-    // ==========================================
-    {
-      const d = 0.9;
-      const t = [0, 0.225, 0.45, 0.675, 0.9];
+      const d = 0.8;
+      const t = [0, 0.2, 0.4, 0.6, 0.8];
       clips['walk_fwd'] = new THREE.AnimationClip('walk_fwd', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.96, 0],
-          [0, 0.99, 0],
-          [0, 0.96, 0],
-          [0, 0.99, 0],
-          [0, 0.96, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 98, 0],
+          [0, 96, 0],
+          [0, 98, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.15, 0.08, 0],
-          [0.14, 0, 0],
-          [0.15, -0.08, 0],
-          [0.14, 0, 0],
-          [0.15, 0.08, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.15, 0.14, 0],
+          [0.14, 0.05, 0],
+          [0.15, -0.05, 0],
+          [0.14, 0.05, 0],
+          [0.15, 0.14, 0],
         ]),
-        // Legs cycling
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.65, 0, 0],
-          [-0.1, 0, 0],
-          [0.55, 0, 0],
-          [0.1, 0, 0],
-          [-0.65, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.75, 0, 0],
+          [-0.10, 0, 0],
+          [0.45, 0, 0],
+          [0.10, 0, 0],
+          [-0.75, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.2, 0, 0],
-          [0.85, 0, 0],
-          [0.15, 0, 0],
-          [0.1, 0, 0],
-          [0.2, 0, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.35, 0, 0],
+          [0.95, 0, 0],
+          [0.30, 0, 0],
+          [0.25, 0, 0],
+          [0.35, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.55, 0, 0],
-          [0.1, 0, 0],
-          [-0.65, 0, 0],
-          [-0.1, 0, 0],
-          [0.55, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.45, 0, 0],
+          [0.10, 0, 0],
+          [-0.75, 0, 0],
+          [-0.10, 0, 0],
+          [0.45, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.15, 0, 0],
-          [0.1, 0, 0],
-          [0.2, 0, 0],
-          [0.85, 0, 0],
-          [0.15, 0, 0],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.30, 0, 0],
+          [0.25, 0, 0],
+          [0.35, 0, 0],
+          [0.95, 0, 0],
+          [0.30, 0, 0],
         ]),
-        // Arms counter-pumping
-        this.quatTrack('LeftArm', t, [
-          [0.3, 0.3, -0.6],
-          [0.5, 0.4, -0.7],
-          [0.7, 0.5, -0.8],
-          [0.5, 0.4, -0.7],
-          [0.3, 0.3, -0.6],
+        // Guard kept high during forward advance
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.60, -0.2, -0.80],
+          [0.55, -0.2, -0.75],
+          [0.60, -0.2, -0.80],
+          [0.55, -0.2, -0.75],
+          [0.60, -0.2, -0.80],
         ]),
-        this.quatTrack('RightArm', t, [
-          [0.7, -0.4, 0.8],
-          [0.5, -0.3, 0.7],
-          [0.3, -0.2, 0.6],
-          [0.5, -0.3, 0.7],
-          [0.7, -0.4, 0.8],
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.35, 0],
+          [0, -1.30, 0],
+          [0, -1.35, 0],
+          [0, -1.30, 0],
+          [0, -1.35, 0],
+        ]),
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.48, 0.15, 0.90],
+          [0.42, 0.12, 0.85],
+          [0.48, 0.15, 0.90],
+          [0.42, 0.12, 0.85],
+          [0.48, 0.15, 0.90],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 1.40, 0],
+          [0, 1.45, 0],
+          [0, 1.40, 0],
+          [0, 1.45, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 4. WALK BACKWARD (Defensive backstep)
-    // ==========================================
+    // ==============================================================
+    // 4. WALK BACKWARD (Defensive Back-Stepping Guard)
+    // ==============================================================
     {
-      const d = 0.95;
-      const t = [0, 0.237, 0.475, 0.712, 0.95];
+      const d = 0.85;
+      const t = [0, 0.21, 0.42, 0.63, 0.85];
       clips['walk_bwd'] = new THREE.AnimationClip('walk_bwd', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.97, 0],
-          [0, 0.99, 0],
-          [0, 0.97, 0],
-          [0, 0.99, 0],
-          [0, 0.97, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 98, 0],
+          [0, 96, 0],
+          [0, 98, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [-0.06, 0.05, 0],
-          [-0.05, 0, 0],
-          [-0.06, -0.05, 0],
-          [-0.05, 0, 0],
-          [-0.06, 0.05, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [-0.05, 0.10, 0],
+          [-0.04, 0, 0],
+          [-0.05, -0.08, 0],
+          [-0.04, 0, 0],
+          [-0.05, 0.10, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
           [0.45, 0, 0],
-          [0.1, 0, 0],
-          [-0.45, 0, 0],
-          [-0.1, 0, 0],
+          [0.10, 0, 0],
+          [-0.55, 0, 0],
+          [-0.10, 0, 0],
           [0.45, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.2, 0, 0],
-          [0.65, 0, 0],
-          [0.15, 0, 0],
-          [0.1, 0, 0],
-          [0.2, 0, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.30, 0, 0],
+          [0.75, 0, 0],
+          [0.35, 0, 0],
+          [0.25, 0, 0],
+          [0.30, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [-0.45, 0, 0],
-          [-0.1, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [-0.55, 0, 0],
+          [-0.10, 0, 0],
           [0.45, 0, 0],
-          [0.1, 0, 0],
-          [-0.45, 0, 0],
+          [0.10, 0, 0],
+          [-0.55, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.15, 0, 0],
-          [0.1, 0, 0],
-          [0.2, 0, 0],
-          [0.65, 0, 0],
-          [0.15, 0, 0],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.35, 0, 0],
+          [0.25, 0, 0],
+          [0.30, 0, 0],
+          [0.75, 0, 0],
+          [0.35, 0, 0],
         ]),
-        // Guard held high and defensive
-        this.quatTrack('LeftArm', t, [
-          [0.55, 0.6, -0.85],
-          [0.50, 0.55, -0.8],
-          [0.55, 0.6, -0.85],
-          [0.50, 0.55, -0.8],
-          [0.55, 0.6, -0.85],
+        // Elevated defensive guard held tight
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.70, -0.15, -0.75],
+          [0.65, -0.15, -0.70],
+          [0.70, -0.15, -0.75],
+          [0.65, -0.15, -0.70],
+          [0.70, -0.15, -0.75],
         ]),
-        this.quatTrack('RightArm', t, [
-          [0.45, -0.5, 0.8],
-          [0.40, -0.45, 0.75],
-          [0.45, -0.5, 0.8],
-          [0.40, -0.45, 0.75],
-          [0.45, -0.5, 0.8],
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.45, 0],
+          [0, -1.40, 0],
+          [0, -1.45, 0],
+          [0, -1.40, 0],
+          [0, -1.45, 0],
+        ]),
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.60, 0.15, 0.80],
+          [0.55, 0.12, 0.75],
+          [0.60, 0.15, 0.80],
+          [0.55, 0.12, 0.75],
+          [0.60, 0.15, 0.80],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.55, 0],
+          [0, 1.50, 0],
+          [0, 1.55, 0],
+          [0, 1.50, 0],
+          [0, 1.55, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 5. RUN (Forward aggressive sprint)
-    // ==========================================
+    // ==============================================================
+    // 5. RUN (Sprint Dash)
+    // ==============================================================
     {
-      const d = 0.65;
-      const t = [0, 0.162, 0.325, 0.487, 0.65];
+      const d = 0.55;
+      const t = [0, 0.137, 0.275, 0.412, 0.55];
       clips['run'] = new THREE.AnimationClip('run', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.93, 0],
-          [0, 0.98, 0],
-          [0, 0.93, 0],
-          [0, 0.98, 0],
-          [0, 0.93, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 92, 0],
+          [0, 96, 0],
+          [0, 92, 0],
+          [0, 96, 0],
+          [0, 92, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.28, 0.12, 0],
-          [0.25, 0, 0],
-          [0.28, -0.12, 0],
-          [0.25, 0, 0],
-          [0.28, 0.12, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.28, 0.15, 0],
+          [0.26, 0, 0],
+          [0.28, -0.15, 0],
+          [0.26, 0, 0],
+          [0.28, 0.15, 0],
         ]),
-        // Deep sprint leg drive
-        this.quatTrack('LeftUpLeg', t, [
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
           [-0.95, 0, 0],
-          [-0.1, 0, 0],
-          [0.75, 0, 0],
-          [0.1, 0, 0],
+          [-0.10, 0, 0],
+          [0.65, 0, 0],
+          [0.10, 0, 0],
           [-0.95, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.3, 0, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.35, 0, 0],
           [1.25, 0, 0],
-          [0.2, 0, 0],
-          [0.1, 0, 0],
-          [0.3, 0, 0],
+          [0.30, 0, 0],
+          [0.15, 0, 0],
+          [0.35, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.75, 0, 0],
-          [0.1, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.65, 0, 0],
+          [0.10, 0, 0],
           [-0.95, 0, 0],
-          [-0.1, 0, 0],
-          [0.75, 0, 0],
+          [-0.10, 0, 0],
+          [0.65, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.2, 0, 0],
-          [0.1, 0, 0],
-          [0.3, 0, 0],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.30, 0, 0],
+          [0.15, 0, 0],
+          [0.35, 0, 0],
           [1.25, 0, 0],
-          [0.2, 0, 0],
-        ]),
-        // Powerful arm drive
-        this.quatTrack('LeftArm', t, [
-          [0.1, 0.3, -0.4],
-          [0.6, 0.4, -0.7],
-          [1.1, 0.5, -0.9],
-          [0.6, 0.4, -0.7],
-          [0.1, 0.3, -0.4],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [1.1, -0.5, 0.9],
-          [0.6, -0.4, 0.7],
-          [0.1, -0.3, 0.4],
-          [0.6, -0.4, 0.7],
-          [1.1, -0.5, 0.9],
+          [0.30, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 6. JUMP (Ascent leaping pose)
-    // ==========================================
+    // ==============================================================
+    // 6. JUMP (Leaping Arc)
+    // ==============================================================
     {
       const d = 0.5;
-      const t = [0, 0.15, 0.5];
+      const t = [0, 0.18, 0.5];
       clips['jump'] = new THREE.AnimationClip('jump', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.94, 0],
-          [0, 1.05, 0],
-          [0, 1.02, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 118, 0],
+          [0, 115, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [-0.1, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [-0.08, 0, 0],
           [0.15, 0, 0],
-          [0.12, 0, 0],
+          [0.10, 0, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [0.3, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.20, 0, 0],
+          [-0.85, 0, 0],
+          [-0.75, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.40, 0, 0],
+          [1.35, 0, 0],
+          [1.15, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [-0.20, 0, 0],
           [-0.75, 0, 0],
           [-0.65, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.1, 0, 0],
-          [1.15, 0, 0],
-          [1.0, 0, 0],
-        ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.35, 0, 0],
-          [-0.55, 0, 0],
-          [-0.45, 0, 0],
-        ]),
-        this.quatTrack('RightLeg', t, [
-          [0.15, 0, 0],
-          [0.95, 0, 0],
-          [0.85, 0, 0],
-        ]),
-        this.quatTrack('LeftArm', t, [
-          [0.2, 0, -0.5],
-          [0.9, 0, -0.9],
-          [0.7, 0, -0.7],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.2, 0, 0.5],
-          [0.9, 0, 0.9],
-          [0.7, 0, 0.7],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.40, 0, 0],
+          [1.25, 0, 0],
+          [1.05, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 7. FALL (Airborne descent)
-    // ==========================================
+    // ==============================================================
+    // 7. FALL (Airborne Descent)
+    // ==============================================================
     {
       const d = 0.4;
       const t = [0, 0.4];
       clips['fall'] = new THREE.AnimationClip('fall', d, [
-        this.quatTrack('Spine', t, [
+        this.quatTrack('mixamorig:Spine', t, [
           [0.12, 0, 0],
           [0.10, 0, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
           [-0.45, 0, 0],
           [-0.35, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
+        this.quatTrack('mixamorig:LeftLeg', t, [
           [0.75, 0, 0],
           [0.55, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
+        this.quatTrack('mixamorig:RightUpLeg', t, [
           [-0.35, 0, 0],
           [-0.25, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
+        this.quatTrack('mixamorig:RightLeg', t, [
           [0.65, 0, 0],
           [0.45, 0, 0],
         ]),
-        this.quatTrack('LeftArm', t, [
-          [0.5, 0, -0.6],
-          [0.4, 0, -0.5],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.5, 0, 0.6],
-          [0.4, 0, 0.5],
-        ]),
       ]);
     }
 
-    // ==========================================
-    // 8. LAND (Landing shock absorption)
-    // ==========================================
+    // ==============================================================
+    // 8. LAND (Landing Knee Compression Rebound)
+    // ==============================================================
     {
-      const d = 0.25;
-      const t = [0, 0.1, 0.25];
+      const d = 0.22;
+      const t = [0, 0.08, 0.22];
       clips['land'] = new THREE.AnimationClip('land', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.92, 0],
-          [0, 0.78, 0],
-          [0, 0.98, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 72, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.12, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
           [0.35, 0, 0],
-          [0.08, 0, 0],
+          [0.10, 0, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.2, 0, 0],
-          [-0.75, 0, 0],
-          [-0.2, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.35, 0, 0],
+          [-0.85, 0, 0],
+          [-0.35, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.35, 0, 0],
-          [1.35, 0, 0],
-          [0.35, 0, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.65, 0, 0],
+          [1.50, 0, 0],
+          [0.65, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, 0, 0],
-          [-0.70, 0, 0],
-          [0.2, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, 0, 0],
+          [-0.80, 0, 0],
+          [0.25, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.3, 0, 0],
-          [1.30, 0, 0],
-          [0.3, 0, 0],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.55, 0, 0],
+          [1.45, 0, 0],
+          [0.55, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 9. CROUCH (Defensive low guard)
-    // ==========================================
+    // ==============================================================
+    // 9. PUNCH LEFT (Lead Snappy Jab — REAL PUNCH SYSTEM)
+    // 1. Preparation -> 2. Shoulder/Torso rotation -> 3. Arm extension -> 4. Impact -> 5. Recovery
+    // ==============================================================
     {
-      const d = 0.5;
-      const t = [0, 0.5];
-      clips['crouch'] = new THREE.AnimationClip('crouch', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.62, 0],
-          [0, 0.62, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.35, 0, 0],
-          [0.35, 0, 0],
-        ]),
-        this.quatTrack('Head', t, [
-          [-0.28, 0, 0],
-          [-0.28, 0, 0],
-        ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.9, 0, 0],
-          [-0.9, 0, 0],
-        ]),
-        this.quatTrack('LeftLeg', t, [
-          [1.45, 0, 0],
-          [1.45, 0, 0],
-        ]),
-        this.quatTrack('RightUpLeg', t, [
-          [-0.85, 0, 0],
-          [-0.85, 0, 0],
-        ]),
-        this.quatTrack('RightLeg', t, [
-          [1.40, 0, 0],
-          [1.40, 0, 0],
-        ]),
-        this.quatTrack('LeftArm', t, [
-          [0.75, 0.5, -0.8],
-          [0.75, 0.5, -0.8],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.7, -0.4, 0.75],
-          [0.7, -0.4, 0.75],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 10. PUNCH LEFT (Snappy Lead Jab)
-    // ==========================================
-    {
-      const d = 0.31;
-      const t = [0, 0.07, 0.14, 0.31];
+      const d = 0.26;
+      const t = [0, 0.06, 0.12, 0.26];
       clips['punch_left'] = new THREE.AnimationClip('punch_left', d, [
-        this.quatTrack('Spine', t, [
-          [0.08, 0.12, 0],
-          [0.10, 0.35, 0],
-          [0.10, 0.35, 0],
-          [0.08, 0.12, 0],
+        // Torso rotates into punch
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0.18, 0],
+          [0.12, 0.45, 0],
+          [0.12, 0.45, 0],
+          [0.10, 0.18, 0],
         ]),
-        this.quatTrack('Spine2', t, [
-          [0.06, 0.08, 0],
-          [0.08, 0.40, 0],
-          [0.08, 0.40, 0],
-          [0.06, 0.08, 0],
+        this.quatTrack('mixamorig:Spine2', t, [
+          [0.08, 0.14, 0],
+          [0.10, 0.50, 0],
+          [0.10, 0.50, 0],
+          [0.08, 0.14, 0],
         ]),
-        // Lead arm snaps straight forward
-        this.quatTrack('LeftShoulder', t, [
-          [0, 0, 0],
-          [0.15, 0.3, 0],
-          [0.15, 0.3, 0],
-          [0, 0, 0],
+        // Left shoulder thrusts forward
+        this.quatTrack('mixamorig:LeftShoulder', t, [
+          [0.10, 0.15, 0],
+          [0.25, 0.35, 0],
+          [0.25, 0.35, 0],
+          [0.10, 0.15, 0],
         ]),
-        this.quatTrack('LeftArm', t, [
-          [0.4, 0.6, -0.8],
-          [0.95, 0.1, -0.15],
-          [0.95, 0.1, -0.15],
-          [0.4, 0.6, -0.8],
+        // Left arm drives straight at opponent chin
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.55, -0.20, -0.85],
+          [1.45, -0.10, -0.15],
+          [1.45, -0.10, -0.15],
+          [0.55, -0.20, -0.85],
         ]),
-        this.quatTrack('LeftForeArm', t, [
-          [0, 0.4, 1.4],
-          [0, 0.05, 0.15],
-          [0, 0.05, 0.15],
-          [0, 0.4, 1.4],
+        // Left forearm extends fully (elbow straight)
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.35, 0],
+          [0, -0.10, 0],
+          [0, -0.10, 0],
+          [0, -1.35, 0],
         ]),
-        // Rear arm tight guard
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [0.4, -0.6, 0.85],
-          [0.4, -0.6, 0.85],
-          [0.3, -0.5, 0.75],
+        // Right arm guards cheek
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [0.40, 0.20, 1.05],
+          [0.40, 0.20, 1.05],
+          [0.45, 0.15, 0.95],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 1.55, 0],
+          [0, 1.55, 0],
+          [0, 1.45, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 11. PUNCH RIGHT (Rear Straight Cross)
-    // ==========================================
+    // ==============================================================
+    // 10. PUNCH RIGHT (Rear Straight Cross — POWERFUL ROTATION & DRIVE)
+    // Full hip torque, rear foot pivot, powerful straight cross extension
+    // ==============================================================
+    {
+      const d = 0.38;
+      const t = [0, 0.10, 0.18, 0.38];
+      clips['punch_right'] = new THREE.AnimationClip('punch_right', d, [
+        // Hips shift forward slightly with weight transfer
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [6, 94, 0],
+          [6, 94, 0],
+          [0, 96, 0],
+        ]),
+        // Torso rotates powerfully clockwise into punch
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0.18, 0],
+          [0.14, -0.55, 0],
+          [0.14, -0.55, 0],
+          [0.10, 0.18, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine2', t, [
+          [0.08, 0.14, 0],
+          [0.12, -0.65, 0],
+          [0.12, -0.65, 0],
+          [0.08, 0.14, 0],
+        ]),
+        // Right shoulder drives forward
+        this.quatTrack('mixamorig:RightShoulder', t, [
+          [0.08, -0.12, 0],
+          [0.28, -0.38, 0],
+          [0.28, -0.38, 0],
+          [0.08, -0.12, 0],
+        ]),
+        // Right arm extends fully
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [1.50, 0.10, 0.18],
+          [1.50, 0.10, 0.18],
+          [0.45, 0.15, 0.95],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 0.12, 0],
+          [0, 0.12, 0],
+          [0, 1.45, 0],
+        ]),
+        // Left arm guards jaw
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.55, -0.20, -0.85],
+          [0.50, -0.15, -0.80],
+          [0.50, -0.15, -0.80],
+          [0.55, -0.20, -0.85],
+        ]),
+        // Rear leg pivots
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, -0.12, -0.08],
+          [0.35, -0.35, 0.22],
+          [0.35, -0.35, 0.22],
+          [0.25, -0.12, -0.08],
+        ]),
+      ]);
+    }
+
+    // ==============================================================
+    // 11. PUNCH HEAVY (Overhand Power Smash)
+    // Wind up overhead and descending hammer crash
+    // ==============================================================
+    {
+      const d = 0.50;
+      const t = [0, 0.14, 0.24, 0.50];
+      clips['punch_heavy'] = new THREE.AnimationClip('punch_heavy', d, [
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [8, 92, 0],
+          [8, 92, 0],
+          [0, 96, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [0.32, -0.68, 0],
+          [0.32, -0.68, 0],
+          [0.10, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [1.65, 0.18, 0.32],
+          [1.65, 0.18, 0.32],
+          [0.45, 0.15, 0.95],
+        ]),
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 0.20, 0],
+          [0, 0.20, 0],
+          [0, 1.45, 0],
+        ]),
+      ]);
+    }
+
+    // ==============================================================
+    // 12. KICK FRONT (Front Snap Kick — REAL KICK SYSTEM)
+    // Weight transfer -> Knee chambers up -> Leg snaps horizontal -> Retracts
+    // ==============================================================
+    {
+      const d = 0.37;
+      const t = [0, 0.09, 0.18, 0.37];
+      clips['kick_front'] = new THREE.AnimationClip('kick_front', d, [
+        // Slight hip lean back for counterbalance
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [-4, 95, 0],
+          [-4, 95, 0],
+          [0, 96, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.32, 0, 0],
+          [-0.32, 0, 0],
+          [0.10, 0, 0],
+        ]),
+        // Right leg raises and snaps straight out horizontally!
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, 0, 0],
+          [-1.58, 0, 0],
+          [-1.58, 0, 0],
+          [0.25, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.55, 0, 0],
+          [0.08, 0, 0],
+          [0.08, 0, 0],
+          [0.55, 0, 0],
+        ]),
+        // Left support leg flexes for stability
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.35, 0, 0],
+          [0.18, 0, 0],
+          [0.18, 0, 0],
+          [-0.35, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.65, 0, 0],
+          [0.85, 0, 0],
+          [0.85, 0, 0],
+          [0.65, 0, 0],
+        ]),
+        // Arms guard during kick
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.55, -0.20, -0.85],
+          [0.65, -0.15, -0.75],
+          [0.65, -0.15, -0.75],
+          [0.55, -0.20, -0.85],
+        ]),
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [0.35, 0.15, 0.85],
+          [0.35, 0.15, 0.85],
+          [0.45, 0.15, 0.95],
+        ]),
+      ]);
+    }
+
+    // ==============================================================
+    // 13. KICK HIGH (High Roundhouse Kick)
+    // Hip rotation, lateral lean, high arcing head strike
+    // ==============================================================
+    {
+      const d = 0.51;
+      const t = [0, 0.13, 0.26, 0.51];
+      clips['kick_high'] = new THREE.AnimationClip('kick_high', d, [
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 94, 0],
+          [0, 94, 0],
+          [0, 96, 0],
+        ]),
+        // Torso counter-leans laterally to allow high leg elevation
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.42, 0.25, -0.52],
+          [-0.42, 0.25, -0.52],
+          [0.10, 0, 0],
+        ]),
+        // Right leg sweeps high at 1.65m head level
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, 0, 0],
+          [-1.90, -0.35, 0.52],
+          [-1.90, -0.35, 0.52],
+          [0.25, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.55, 0, 0],
+          [0.12, 0, 0],
+          [0.12, 0, 0],
+          [0.55, 0, 0],
+        ]),
+      ]);
+    }
+
+    // ==============================================================
+    // 14. KICK LOW (Low Shin Sweep)
+    // Hips drop, sweeping leg extends low across the floor
+    // ==============================================================
     {
       const d = 0.42;
       const t = [0, 0.11, 0.22, 0.42];
-      clips['punch_right'] = new THREE.AnimationClip('punch_right', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0.05, 0.96, 0],
-          [0.05, 0.96, 0],
-          [0, 0.98, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0.12, 0],
-          [0.14, -0.45, 0],
-          [0.14, -0.45, 0],
-          [0.08, 0.12, 0],
-        ]),
-        this.quatTrack('Spine2', t, [
-          [0.06, 0.08, 0],
-          [0.12, -0.55, 0],
-          [0.12, -0.55, 0],
-          [0.06, 0.08, 0],
-        ]),
-        // Rear arm drives forward with torque
-        this.quatTrack('RightShoulder', t, [
-          [0, 0, 0],
-          [0.2, -0.35, 0],
-          [0.2, -0.35, 0],
-          [0, 0, 0],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [0.98, -0.1, 0.12],
-          [0.98, -0.1, 0.12],
-          [0.3, -0.5, 0.75],
-        ]),
-        this.quatTrack('RightForeArm', t, [
-          [0, -0.3, -1.45],
-          [0, -0.05, -0.15],
-          [0, -0.05, -0.15],
-          [0, -0.3, -1.45],
-        ]),
-        // Pivot back foot
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, -0.1, -0.1],
-          [0.35, -0.3, 0.2],
-          [0.35, -0.3, 0.2],
-          [0.2, -0.1, -0.1],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 12. PUNCH HEAVY (Overhand Power Smash)
-    // ==========================================
-    {
-      const d = 0.55;
-      const t = [0, 0.16, 0.28, 0.55];
-      clips['punch_heavy'] = new THREE.AnimationClip('punch_heavy', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0.08, 0.94, 0],
-          [0.08, 0.94, 0],
-          [0, 0.98, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [0.25, -0.6, 0],
-          [0.25, -0.6, 0],
-          [0.08, 0, 0],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [1.35, -0.2, 0.25],
-          [1.35, -0.2, 0.25],
-          [0.3, -0.5, 0.75],
-        ]),
-        this.quatTrack('RightForeArm', t, [
-          [0, -0.3, -1.45],
-          [0, -0.1, -0.2],
-          [0, -0.1, -0.2],
-          [0, -0.3, -1.45],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 13. KICK FRONT (Front Snap Kick)
-    // ==========================================
-    {
-      const d = 0.44;
-      const t = [0, 0.12, 0.22, 0.44];
-      clips['kick_front'] = new THREE.AnimationClip('kick_front', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [-0.04, 0.97, 0],
-          [-0.04, 0.97, 0],
-          [0, 0.98, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [-0.22, 0, 0],
-          [-0.22, 0, 0],
-          [0.08, 0, 0],
-        ]),
-        // Right leg snaps forward
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, -0.1, -0.1],
-          [-1.45, 0, 0],
-          [-1.45, 0, 0],
-          [0.2, -0.1, -0.1],
-        ]),
-        this.quatTrack('RightLeg', t, [
-          [0.3, 0, 0],
-          [0.1, 0, 0],
-          [0.1, 0, 0],
-          [0.3, 0, 0],
-        ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.2, 0.1, 0.1],
-          [0.15, 0, 0],
-          [0.15, 0, 0],
-          [-0.2, 0.1, 0.1],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 14. KICK HIGH (Roundhouse Kick)
-    // ==========================================
-    {
-      const d = 0.56;
-      const t = [0, 0.16, 0.30, 0.56];
-      clips['kick_high'] = new THREE.AnimationClip('kick_high', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0, 0.96, 0],
-          [0, 0.96, 0],
-          [0, 0.98, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [-0.35, 0.2, -0.45],
-          [-0.35, 0.2, -0.45],
-          [0.08, 0, 0],
-        ]),
-        // Right leg high roundhouse arc
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, -0.1, -0.1],
-          [-1.75, -0.3, 0.45],
-          [-1.75, -0.3, 0.45],
-          [0.2, -0.1, -0.1],
-        ]),
-        this.quatTrack('RightLeg', t, [
-          [0.3, 0, 0],
-          [0.15, 0, 0],
-          [0.15, 0, 0],
-          [0.3, 0, 0],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 15. KICK LOW (Low Shin Sweep)
-    // ==========================================
-    {
-      const d = 0.48;
-      const t = [0, 0.14, 0.26, 0.48];
       clips['kick_low'] = new THREE.AnimationClip('kick_low', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0, 0.72, 0],
-          [0, 0.72, 0],
-          [0, 0.98, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 68, 0],
+          [0, 68, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [0.35, 0, 0],
-          [0.35, 0, 0],
-          [0.08, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [0.38, 0, 0],
+          [0.38, 0, 0],
+          [0.10, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, 0, 0],
-          [-1.1, -0.2, 0],
-          [-1.1, -0.2, 0],
-          [0.2, 0, 0],
+        // Right leg sweeps low across shin level
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, 0, 0],
+          [-1.25, -0.25, 0],
+          [-1.25, -0.25, 0],
+          [0.25, 0, 0],
         ]),
-        this.quatTrack('RightLeg', t, [
-          [0.3, 0, 0],
-          [0.15, 0, 0],
-          [0.15, 0, 0],
-          [0.3, 0, 0],
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.55, 0, 0],
+          [0.14, 0, 0],
+          [0.14, 0, 0],
+          [0.55, 0, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.2, 0, 0],
-          [-0.85, 0, 0],
-          [-0.85, 0, 0],
-          [-0.2, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.35, 0, 0],
+          [-0.92, 0, 0],
+          [-0.92, 0, 0],
+          [-0.35, 0, 0],
         ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.35, 0, 0],
-          [1.4, 0, 0],
-          [1.4, 0, 0],
-          [0.35, 0, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.65, 0, 0],
+          [1.52, 0, 0],
+          [1.52, 0, 0],
+          [0.65, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 16. BLOCK / GUARD
-    // ==========================================
+    // ==============================================================
+    // 15. BLOCK (Cross-Arm Defensive Guard)
+    // ==============================================================
     {
       const d = 0.4;
       const t = [0, 0.4];
       clips['block'] = new THREE.AnimationClip('block', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.92, 0],
-          [0, 0.92, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 92, 0],
+          [0, 92, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.18, 0, 0],
-          [0.18, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.20, 0, 0],
+          [0.20, 0, 0],
         ]),
-        // Crossed forearms high guard
-        this.quatTrack('LeftArm', t, [
-          [0.85, 0.4, -0.55],
-          [0.85, 0.4, -0.55],
+        // Crossed forearms high guard in front of face
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.85, 0.35, -0.55],
+          [0.85, 0.35, -0.55],
         ]),
-        this.quatTrack('LeftForeArm', t, [
-          [0, 0.25, 1.85],
-          [0, 0.25, 1.85],
+        this.quatTrack('mixamorig:LeftForeArm', t, [
+          [0, -1.85, 0],
+          [0, -1.85, 0],
         ]),
-        this.quatTrack('RightArm', t, [
-          [0.85, -0.4, 0.55],
-          [0.85, -0.4, 0.55],
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.85, -0.35, 0.55],
+          [0.85, -0.35, 0.55],
         ]),
-        this.quatTrack('RightForeArm', t, [
-          [0, -0.25, -1.85],
-          [0, -0.25, -1.85],
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.85, 0],
+          [0, 1.85, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.35, 0, 0],
-          [-0.35, 0, 0],
-        ]),
-        this.quatTrack('LeftLeg', t, [
-          [0.55, 0, 0],
-          [0.55, 0, 0],
-        ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.35, 0, 0],
-          [0.35, 0, 0],
-        ]),
-        this.quatTrack('RightLeg', t, [
-          [0.55, 0, 0],
-          [0.55, 0, 0],
-        ]),
-      ]);
-    }
-
-    // ==========================================
-    // 17. HIT REACTION (Snappy Recoil)
-    // ==========================================
-    {
-      const d = 0.32;
-      const t = [0, 0.08, 0.18, 0.32];
-      clips['hit_reaction'] = new THREE.AnimationClip('hit_reaction', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [-0.06, 0.95, 0],
-          [-0.04, 0.96, 0],
-          [0, 0.98, 0],
-        ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
           [-0.45, 0, 0],
-          [-0.25, 0, 0],
-          [0.08, 0, 0],
+          [-0.45, 0, 0],
         ]),
-        this.quatTrack('Head', t, [
-          [-0.08, 0, 0],
-          [0.45, 0.15, 0],
+        this.quatTrack('mixamorig:LeftLeg', t, [
+          [0.75, 0, 0],
+          [0.75, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.35, 0, 0],
+          [0.35, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:RightLeg', t, [
+          [0.75, 0, 0],
+          [0.75, 0, 0],
+        ]),
+      ]);
+    }
+
+    // ==============================================================
+    // 16. HIT REACTION (Snappy Head & Torso Recoil)
+    // ==============================================================
+    {
+      const d = 0.28;
+      const t = [0, 0.07, 0.16, 0.28];
+      clips['hit_reaction'] = new THREE.AnimationClip('hit_reaction', d, [
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [-6, 94, 0],
+          [-4, 95, 0],
+          [0, 96, 0],
+        ]),
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.48, 0, 0],
+          [-0.22, 0, 0],
+          [0.10, 0, 0],
+        ]),
+        this.quatTrack('mixamorig:Head', t, [
+          [-0.10, 0, 0],
+          [0.48, 0.15, 0],
           [0.20, 0.05, 0],
-          [-0.08, 0, 0],
+          [-0.10, 0, 0],
         ]),
-        this.quatTrack('LeftArm', t, [
-          [0.4, 0.6, -0.8],
-          [-0.25, 0, -0.6],
-          [0.1, 0, -0.7],
-          [0.4, 0.6, -0.8],
+        this.quatTrack('mixamorig:LeftArm', t, [
+          [0.55, -0.20, -0.85],
+          [-0.15, 0, -0.65],
+          [0.25, 0, -0.75],
+          [0.55, -0.20, -0.85],
         ]),
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [-0.25, 0, 0.6],
-          [0.1, 0, 0.7],
-          [0.3, -0.5, 0.75],
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [-0.15, 0, 0.65],
+          [0.25, 0, 0.75],
+          [0.45, 0.15, 0.95],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 18. KNOCKBACK (Heavy impact stumble)
-    // ==========================================
+    // ==============================================================
+    // 17. KNOCKBACK (Heavy Stumble Backward)
+    // ==============================================================
     {
-      const d = 0.65;
-      const t = [0, 0.15, 0.40, 0.65];
+      const d = 0.55;
+      const t = [0, 0.12, 0.32, 0.55];
       clips['knockback'] = new THREE.AnimationClip('knockback', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [-0.25, 0.90, 0],
-          [-0.15, 0.94, 0],
-          [0, 0.98, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [-22, 88, 0],
+          [-14, 92, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [-0.65, 0, 0],
-          [-0.35, 0, 0],
-          [0.08, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.68, 0, 0],
+          [-0.32, 0, 0],
+          [0.10, 0, 0],
         ]),
-        this.quatTrack('Head', t, [
+        this.quatTrack('mixamorig:Head', t, [
           [0, 0, 0],
-          [0.6, 0, 0],
-          [0.2, 0, 0],
+          [0.62, 0, 0],
+          [0.20, 0, 0],
           [0, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 19. STAGGER (Dazed unsteady reel)
-    // ==========================================
+    // ==============================================================
+    // 18. STAGGER (Dazed Unsteady Sway)
+    // ==============================================================
     {
-      const d = 0.85;
-      const t = [0, 0.25, 0.55, 0.85];
+      const d = 0.80;
+      const t = [0, 0.22, 0.50, 0.80];
       clips['stagger'] = new THREE.AnimationClip('stagger', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [-0.08, 0.94, 0],
-          [0.04, 0.95, 0],
-          [0, 0.98, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [-6, 92, 0],
+          [4, 94, 0],
+          [0, 96, 0],
         ]),
-        this.quatTrack('Spine', t, [
+        this.quatTrack('mixamorig:Spine', t, [
           [0, 0, 0],
-          [-0.3, 0.15, 0.1],
-          [0.1, -0.15, -0.1],
-          [0.08, 0, 0],
+          [-0.28, 0.15, 0.10],
+          [0.12, -0.15, -0.10],
+          [0.10, 0, 0],
         ]),
-        this.quatTrack('Head', t, [
+        this.quatTrack('mixamorig:Head', t, [
           [0, 0, 0],
-          [0.35, -0.2, 0],
-          [-0.2, 0.2, 0],
+          [0.32, -0.18, 0],
+          [-0.18, 0.18, 0],
           [0, 0, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 20. VICTORY (Triumphant victory pose)
-    // ==========================================
+    // ==============================================================
+    // 19. VICTORY (Triumphant Fighter Stance)
+    // ==============================================================
     {
-      const d = 1.8;
-      const t = [0, 0.6, 1.2, 1.8];
+      const d = 1.6;
+      const t = [0, 0.5, 1.0, 1.6];
       clips['victory'] = new THREE.AnimationClip('victory', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [0, 1.02, 0],
-          [0, 1.00, 0],
-          [0, 1.00, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [0, 102, 0],
+          [0, 100, 0],
+          [0, 100, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [-0.15, 0, 0],
-          [-0.10, 0, 0],
-          [-0.10, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.18, 0, 0],
+          [-0.12, 0, 0],
+          [-0.12, 0, 0],
         ]),
-        // Raised victory fist
-        this.quatTrack('LeftArm', t, [
-          [0.4, 0.6, -0.8],
-          [1.55, 0.1, -0.3],
-          [1.55, 0.1, -0.3],
-          [1.55, 0.1, -0.3],
+        // Right fist thrust high into the air!
+        this.quatTrack('mixamorig:RightArm', t, [
+          [0.45, 0.15, 0.95],
+          [1.65, 0.10, 0.25],
+          [1.65, 0.10, 0.25],
+          [1.65, 0.10, 0.25],
         ]),
-        this.quatTrack('LeftForeArm', t, [
-          [0, 0.4, 1.4],
-          [0, 0.1, 0.4],
-          [0, 0.1, 0.4],
-          [0, 0.1, 0.4],
-        ]),
-        this.quatTrack('RightArm', t, [
-          [0.3, -0.5, 0.75],
-          [-0.2, -0.3, 0.5],
-          [-0.2, -0.3, 0.5],
-          [-0.2, -0.3, 0.5],
+        this.quatTrack('mixamorig:RightForeArm', t, [
+          [0, 1.45, 0],
+          [0, 0.25, 0],
+          [0, 0.25, 0],
+          [0, 0.25, 0],
         ]),
       ]);
     }
 
-    // ==========================================
-    // 21. DEFEAT (Knockdown collapse)
-    // ==========================================
+    // ==============================================================
+    // 20. DEFEAT (Collapse to Ground)
+    // ==============================================================
     {
-      const d = 1.2;
-      const t = [0, 0.4, 0.8, 1.2];
+      const d = 1.1;
+      const t = [0, 0.35, 0.75, 1.1];
       clips['defeat'] = new THREE.AnimationClip('defeat', d, [
-        this.posTrack('Hips', t, [
-          [0, 0.98, 0],
-          [-0.3, 0.55, 0],
-          [-0.6, 0.20, 0],
-          [-0.6, 0.16, 0],
+        this.posTrack('mixamorig:Hips', t, [
+          [0, 96, 0],
+          [-25, 52, 0],
+          [-55, 18, 0],
+          [-55, 14, 0],
         ]),
-        this.quatTrack('Spine', t, [
-          [0.08, 0, 0],
-          [-0.8, 0, 0],
+        this.quatTrack('mixamorig:Spine', t, [
+          [0.10, 0, 0],
+          [-0.75, 0, 0],
           [-1.45, 0, 0],
-          [-1.5, 0, 0],
+          [-1.50, 0, 0],
         ]),
-        this.quatTrack('LeftUpLeg', t, [
-          [-0.2, 0, 0],
-          [0.4, 0, 0],
-          [0.6, 0, 0],
-          [0.6, 0, 0],
+        this.quatTrack('mixamorig:LeftUpLeg', t, [
+          [-0.35, 0, 0],
+          [0.45, 0, 0],
+          [0.65, 0, 0],
+          [0.65, 0, 0],
         ]),
-        this.quatTrack('RightUpLeg', t, [
-          [0.2, 0, 0],
-          [0.5, 0, 0],
-          [0.7, 0, 0],
-          [0.7, 0, 0],
+        this.quatTrack('mixamorig:RightUpLeg', t, [
+          [0.25, 0, 0],
+          [0.55, 0, 0],
+          [0.75, 0, 0],
+          [0.75, 0, 0],
         ]),
       ]);
     }
 
     return clips as Record<AnimationName, THREE.AnimationClip>;
+  }
+
+  public static createClips(): Record<AnimationName, THREE.AnimationClip> {
+    return this.createMixamoClips([]);
   }
 }

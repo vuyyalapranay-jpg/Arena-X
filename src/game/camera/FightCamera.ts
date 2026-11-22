@@ -36,16 +36,21 @@ export class FightCamera {
       GAME_CONFIG.CAMERA.MAX_X_OFFSET
     );
 
-    // 3. Dynamic distance (Zoom in when close, Zoom out when far)
+    // 3. Aspect-adaptive distance (Auto-scales for mobile portrait and wide landscape)
+    // In portrait mode (aspect < 1.0), the camera backs up smoothly so both fighters remain fully in view
+    const aspect = this.camera.aspect || 1.77;
+    const portraitMultiplier = aspect < 1.0 ? Math.max(1.0, 0.95 / aspect) : 1.0;
+
+    const baseCalculatedDistance = GAME_CONFIG.CAMERA.BASE_DISTANCE + (fighterDistance - 4.0) * 0.45;
     const targetDistance = THREE.MathUtils.clamp(
-      GAME_CONFIG.CAMERA.BASE_DISTANCE + (fighterDistance - 4.0) * 0.42,
+      baseCalculatedDistance * portraitMultiplier,
       GAME_CONFIG.CAMERA.MIN_DISTANCE,
-      GAME_CONFIG.CAMERA.MAX_DISTANCE
+      16.5
     );
 
-    const targetHeight = GAME_CONFIG.CAMERA.BASE_HEIGHT + midpointY * 0.35;
+    const targetHeight = GAME_CONFIG.CAMERA.BASE_HEIGHT + midpointY * 0.35 + (aspect < 1.0 ? 0.35 : 0);
 
-    // 4. Smooth lerping towards target
+    // 4. Smooth exponential lerping towards target
     const smoothFactor = 1 - Math.exp(-8.0 * deltaTime);
     this.currentPosition.x = THREE.MathUtils.lerp(this.currentPosition.x, clampedMidpointX, smoothFactor);
     this.currentPosition.y = THREE.MathUtils.lerp(this.currentPosition.y, targetHeight, smoothFactor);

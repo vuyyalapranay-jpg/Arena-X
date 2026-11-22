@@ -27,42 +27,60 @@ export class InputManager {
 
   private boundKeyDown: (e: KeyboardEvent) => void;
   private boundKeyUp: (e: KeyboardEvent) => void;
+  private boundBlur: () => void;
 
   constructor() {
     this.boundKeyDown = this.handleKeyDown.bind(this);
     this.boundKeyUp = this.handleKeyUp.bind(this);
+    this.boundBlur = this.handleBlur.bind(this);
     this.attach();
   }
 
   public attach(): void {
-    window.addEventListener('keydown', this.boundKeyDown);
+    window.addEventListener('keydown', this.boundKeyDown, { passive: false });
     window.addEventListener('keyup', this.boundKeyUp);
+    window.addEventListener('blur', this.boundBlur);
+    window.addEventListener('focus', this.boundBlur);
   }
 
   public detach(): void {
     window.removeEventListener('keydown', this.boundKeyDown);
     window.removeEventListener('keyup', this.boundKeyUp);
-    this.activeKeys.clear();
+    window.removeEventListener('blur', this.boundBlur);
+    window.removeEventListener('focus', this.boundBlur);
+    this.resetAll();
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
-    // Prevent default scroll/behavior on fighting control keys
     const code = e.code;
-    const preventKeys = [
+    const key = e.key;
+    
+    // Prevent default scroll/tab/focus behavior on fighting game control keys
+    const preventCodes = [
       'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH',
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyJ', 'KeyK', 'KeyL',
-      'Space'
+      'Space', 'Tab'
     ];
-    if (preventKeys.includes(code)) {
+    if (preventCodes.includes(code)) {
       e.preventDefault();
     }
+
     this.activeKeys.add(code);
-    this.activeKeys.add(e.key.toLowerCase());
+    if (key) {
+      this.activeKeys.add(key.toLowerCase());
+    }
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
     this.activeKeys.delete(e.code);
-    this.activeKeys.delete(e.key.toLowerCase());
+    if (e.key) {
+      this.activeKeys.delete(e.key.toLowerCase());
+    }
+  }
+
+  private handleBlur(): void {
+    // Release all pressed inputs immediately when browser window loses focus or regains focus
+    this.resetAll();
   }
 
   public setTouchInput(player: PlayerId, input: keyof FighterInputs, active: boolean): void {

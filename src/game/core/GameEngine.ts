@@ -1,34 +1,33 @@
 // src/game/core/GameEngine.ts
-import * as THREE from 'three';
+// ARENA X — PURE 2D HTML5 CANVAS 2.5D FIGHTING ENGINE
+
 import { GameMode, GameSettings, GameState, MatchState, PlayerId } from '../../types';
 import { GAME_CONFIG } from '../../config/gameConfig';
-import { PhysicsWorld } from '../physics/PhysicsWorld';
-import { Arena3D } from '../arena/Arena3D';
-import { Fighter } from '../characters/Fighter';
-import { FightCamera } from '../camera/FightCamera';
 import { InputManager } from '../controls/InputManager';
-import { ParticleSystem } from '../arena/ParticleSystem';
 import { soundManager } from './SoundManager';
+import { ParallaxArena2D } from '../2d/ParallaxArena2D';
+import { AnimeFighter2D, Hitbox2D, Hurtbox2D } from '../2d/AnimeFighter2D';
+import { VFXManager2D } from '../2d/VFXManager2D';
+import { Projectile2D } from '../2d/Projectile2D';
 
 export interface GameEngineCallbacks {
   onMatchStateUpdate: (state: MatchState) => void;
-  onFightersUpdate: (p1: Fighter, p2: Fighter) => void;
+  onFightersUpdate: (p1: AnimeFighter2D, p2: AnimeFighter2D) => void;
   onGameStateChange: (state: GameState) => void;
   onFpsUpdate?: (fps: number) => void;
 }
 
 export class GameEngine {
   private container: HTMLElement;
-  private renderer: THREE.WebGLRenderer;
-  private scene: THREE.Scene;
-  private cameraManager: FightCamera;
-  private physics: PhysicsWorld;
-  private arena: Arena3D;
-  private particles: ParticleSystem;
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
 
-  public fighterP1: Fighter;
-  public fighterP2: Fighter;
   public inputManager: InputManager;
+  public fighterP1: AnimeFighter2D;
+  public fighterP2: AnimeFighter2D;
+  public arena: ParallaxArena2D;
+  public vfx: VFXManager2D;
+  public projectiles: Projectile2D[] = [];
 
   private callbacks: GameEngineCallbacks;
   private settings: GameSettings;
@@ -43,6 +42,18 @@ export class GameEngine {
     winner: null,
     announcement: 'ROUND 1',
   };
+
+  // 2D Dynamic Camera Tracking
+  private camX = 1200;
+  private camY = 480;
+  private camZoom = 1.0;
+  private shakeTimer = 0;
+  private shakeIntensity = 0;
+
+  // Combo Tracking
+  private p1Combo = 0;
+  private p2Combo = 0;
+  private comboResetTimer = 0;
 
   private animationFrameId: number | null = null;
   private lastTime = 0;
@@ -64,81 +75,54 @@ export class GameEngine {
     this.gameMode = gameMode;
     this.callbacks = callbacks;
 
-    // 1. Three.js Scene & Fog
-    this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x06080e, 0.025);
+    // 1. Create HTML5 Canvas 2D
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'arena-canvas-2d';
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+    this.canvas.style.display = 'block';
 
-    // 2. WebGL Renderer
-    const width = container.clientWidth || window.innerWidth;
-    const height = container.clientHeight || window.innerHeight;
+    const ctx = this.canvas.getContext('2d', { alpha: false });
+    if (!ctx) {
+      throw new Error('Failed to create 2D canvas context');
+    }
+    this.ctx = ctx;
+    container.appendChild(this.canvas);
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: settings.graphicsQuality !== 'low',
-      powerPreference: 'high-performance',
-      stencil: false,
-    });
-    this.renderer.setSize(width, height);
-    this.setGraphicsQuality(settings.graphicsQuality);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
-    container.appendChild(this.renderer.domElement);
-
-    // 3. Camera
-    this.cameraManager = new FightCamera(width / height);
-
-    // 4. Input & Sound
+    // 2. Initialize Subsystems
     this.inputManager = new InputManager();
+    this.arena = new ParallaxArena2D();
+    this.vfx = new VFXManager2D();
 
-    // 5. Physics & Environment
-    this.physics = new PhysicsWorld();
-    this.arena = new Arena3D();
-    this.scene.add(this.arena.group);
+    // 3. Initialize Anime Fighters
+    this.fighterP1 = new AnimeFighter2D('P1', 950, 1);
+    this.fighterP2 = new AnimeFighter2D('P2', 1450, -1);
 
-    this.particles = new ParticleSystem();
-    this.scene.add(this.particles.group);
-
-    // 6. Fighters
-    this.fighterP1 = new Fighter('P1');
-    this.fighterP2 = new Fighter('P2');
-    this.scene.add(this.fighterP1.modelRoot);
-    this.scene.add(this.fighterP2.modelRoot);
-
-    // 7. Event listeners
+    // 4. Handle Window Resize
+    this.handleResize();
     window.addEventListener('resize', this.handleResize);
 
-    // Start loading physics and then run loop
-    this.initAsync();
-  }
-
-  private async initAsync(): Promise<void> {
-    await this.physics.init();
-
-    // Start intro sequence
+    // 5. Start Round 1
     this.startRoundIntro(1);
+
     this.lastTime = performance.now();
     this.loop(this.lastTime);
   }
 
-  public setGraphicsQuality(quality: GameSettings['graphicsQuality']): void {
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const maxPr = quality === 'high' ? (isMobile ? 1.5 : 2.0) : quality === 'medium' ? 1.25 : 1.0;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPr));
-
-    if (quality === 'low') {
-      this.renderer.shadowMap.enabled = false;
-    } else {
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = quality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
-    }
+  public setGraphicsQuality(_quality: GameSettings['graphicsQuality']): void {
+    // Canvas 2D operates automatically at high DPI
+    this.handleResize();
   }
 
   private handleResize = (): void => {
-    if (!this.container || !this.renderer) return;
+    if (!this.container || !this.canvas) return;
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
-    this.renderer.setSize(width, height);
-    this.cameraManager.setAspect(width / height);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    this.canvas.width = width * dpr;
+    this.canvas.height = height * dpr;
+    this.ctx.scale(dpr, dpr);
   };
 
   private startRoundIntro(roundNumber: number): void {
@@ -149,9 +133,12 @@ export class GameEngine {
     this.callbacks.onGameStateChange(this.gameState);
     this.callbacks.onMatchStateUpdate({ ...this.matchState });
 
-    // Reset fighters
-    this.fighterP1.reset(GAME_CONFIG.FIGHTERS.P1.spawnX, 1);
-    this.fighterP2.reset(GAME_CONFIG.FIGHTERS.P2.spawnX, -1);
+    // Reset Fighters to starting coordinates
+    this.fighterP1.reset(950, 1);
+    this.fighterP2.reset(1450, -1);
+    this.projectiles = [];
+    this.p1Combo = 0;
+    this.p2Combo = 0;
     this.roundTransitionTimer = 1.6;
 
     soundManager.playRoundStartGong();
@@ -160,10 +147,10 @@ export class GameEngine {
   private loop = (currentTime: number): void => {
     this.animationFrameId = requestAnimationFrame(this.loop);
 
-    const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+    const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.08);
     this.lastTime = currentTime;
 
-    // Track FPS
+    // FPS Meter
     this.frameCount++;
     this.fpsTimer += deltaTime;
     if (this.fpsTimer >= 1.0) {
@@ -175,23 +162,23 @@ export class GameEngine {
     }
 
     if (this.gameState === 'PAUSED') {
-      this.renderer.render(this.scene, this.cameraManager.camera);
+      this.render();
       return;
     }
 
-    // Process Hit Freeze (Hitstop)
+    // Process Hit Freeze (Hitstop for combat impact)
     if (this.hitFreezeTimer > 0) {
       this.hitFreezeTimer -= deltaTime;
-      this.renderer.render(this.scene, this.cameraManager.camera);
+      this.render();
       return;
     }
 
     this.update(deltaTime);
-    this.renderer.render(this.scene, this.cameraManager.camera);
+    this.render();
   };
 
   private update(deltaTime: number): void {
-    // 1. Intro announcement transition
+    // 1. Intro sequence transition
     if (this.gameState === 'INTRO') {
       this.roundTransitionTimer -= deltaTime;
       if (this.roundTransitionTimer <= 0.8 && this.matchState.announcement !== 'FIGHT!') {
@@ -209,7 +196,6 @@ export class GameEngine {
     // 2. Round timer countdown in FIGHTING state
     if (this.gameState === 'FIGHTING') {
       this.matchState.timeRemaining = Math.max(0, this.matchState.timeRemaining - deltaTime);
-
       if (this.matchState.timeRemaining <= 0) {
         this.handleTimeOut();
       }
@@ -224,27 +210,84 @@ export class GameEngine {
         const p2Inputs = this.inputManager.getInputs('P2');
         this.fighterP2.handleInput(p2Inputs, this.fighterP1);
       } else {
-        // Training Dummy Mode: gentle defensive AI / idle
-        this.updateTrainingDummy(deltaTime);
+        // Training Dummy: keeps facing player
+        const dir = this.fighterP1.x > this.fighterP2.x ? 1 : -1;
+        if (this.fighterP2.facing !== dir) {
+          this.fighterP2.facing = dir;
+        }
       }
     }
 
-    // 4. Physics World Step
-    this.physics.step(deltaTime);
-
-    // 5. Update Fighters & Apply Movement
+    // 4. Update Fighters
     this.fighterP1.update(deltaTime, this.fighterP2);
     this.fighterP2.update(deltaTime, this.fighterP1);
 
-    // 6. Pushbox Collision (Separation)
-    this.resolvePushboxCollision();
+    // Spawn any pending projectiles from special attacks
+    if (this.fighterP1.pendingProjectile) {
+      this.projectiles.push(this.fighterP1.pendingProjectile);
+      this.fighterP1.pendingProjectile = null;
+    }
+    if (this.fighterP2.pendingProjectile) {
+      this.projectiles.push(this.fighterP2.pendingProjectile);
+      this.fighterP2.pendingProjectile = null;
+    }
 
-    // 7. Combat Attack Resolution (Hitbox vs Hurtbox)
+    // 5. Update Projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.update(deltaTime);
+      if (p.isDestroyed) {
+        this.projectiles.splice(i, 1);
+        continue;
+      }
+
+      // Projectile collision with opponent
+      const target = p.owner === 'P1' ? this.fighterP2 : this.fighterP1;
+      const hurt = target.getHurtbox();
+      if (this.checkPointInBox(p.x, p.y, hurt)) {
+        const isBlocked = target.state === 'BLOCK' && target.facing !== (p.vx > 0 ? 1 : -1);
+        target.takeHit(p.damage, 140, isBlocked, p.vx > 0 ? 1 : -1);
+
+        if (isBlocked) {
+          this.vfx.spawnBlockSpark(p.x, p.y);
+          soundManager.playBlockClank();
+        } else {
+          this.vfx.spawnHitSpark(p.x, p.y, p.owner === 'P1' ? '#ff3366' : '#00f0ff', 48);
+          soundManager.playPunchHit();
+          this.addScreenShake(6, 0.2);
+        }
+
+        p.isDestroyed = true;
+        this.projectiles.splice(i, 1);
+
+        if (target.currentHealth <= 0) {
+          this.handleKnockout(p.owner);
+        }
+      }
+    }
+
+    // 6. Combat Attack Resolution (Hitbox vs Hurtbox)
     if (this.gameState === 'FIGHTING') {
       this.resolveCombatAttacks();
     }
 
-    // 8. Round / Match Over Transition
+    // 7. Update Parallax Arena & VFX
+    this.arena.update(deltaTime);
+    this.vfx.update(deltaTime);
+
+    // 8. Update Camera Tracking
+    this.updateCamera(deltaTime);
+
+    // 9. Combo Decay Timer
+    if (this.comboResetTimer > 0) {
+      this.comboResetTimer -= deltaTime;
+      if (this.comboResetTimer <= 0) {
+        this.p1Combo = 0;
+        this.p2Combo = 0;
+      }
+    }
+
+    // 10. Round Over / Transition
     if (this.gameState === 'ROUND_OVER') {
       this.roundTransitionTimer -= deltaTime;
       if (this.roundTransitionTimer <= 0) {
@@ -266,37 +309,17 @@ export class GameEngine {
       }
     }
 
-    // 9. Update Arena, Particles & Camera
-    this.arena.update(deltaTime, this.fighterP1.position.x, this.fighterP2.position.x);
-    this.particles.update(deltaTime);
-    this.cameraManager.update(deltaTime, this.fighterP1.position, this.fighterP2.position);
-
-    // 10. Update HUD Callbacks
+    // 11. Send State Updates to React HUD
     this.callbacks.onFightersUpdate(this.fighterP1, this.fighterP2);
     this.callbacks.onMatchStateUpdate({ ...this.matchState });
   }
 
-  private resolvePushboxCollision(): void {
-    const p1Push = this.fighterP1.getPushbox();
-    const p2Push = this.fighterP2.getPushbox();
-    const dx = p2Push.x - p1Push.x;
-    const minDist = p1Push.radius + p2Push.radius;
-
-    if (Math.abs(dx) < minDist) {
-      const overlap = minDist - Math.abs(dx);
-      const sign = dx >= 0 ? 1 : -1;
-      // Push each half of overlap away
-      this.fighterP1.position.x -= sign * (overlap * 0.5);
-      this.fighterP2.position.x += sign * (overlap * 0.5);
-    }
-  }
-
   private resolveCombatAttacks(): void {
-    // Check P1 attacking P2
+    // P1 attacking P2
     const p1Hitbox = this.fighterP1.getActiveHitbox();
     if (p1Hitbox) {
       const p2Hurtbox = this.fighterP2.getHurtbox();
-      if (this.checkHit(p1Hitbox, p2Hurtbox)) {
+      if (this.checkHitboxHurtbox(p1Hitbox, p2Hurtbox)) {
         this.fighterP1.hasHitCurrentAttack = true;
         const isBlocked = this.fighterP2.state === 'BLOCK' && this.fighterP2.facing !== this.fighterP1.facing;
         const cleanHit = this.fighterP2.takeHit(
@@ -307,20 +330,24 @@ export class GameEngine {
         );
 
         if (isBlocked) {
-          this.particles.emitBlockSparks(p1Hitbox.x, p1Hitbox.y, 0);
+          this.vfx.spawnBlockSpark(p1Hitbox.x, p1Hitbox.y);
           soundManager.playBlockClank();
           this.hitFreezeTimer = 0.04;
         } else {
           const isPunch = p1Hitbox.type.startsWith('PUNCH');
-          const sparkColor = isPunch ? 0xff3355 : 0xff9900;
-          this.particles.emitHitSparks(p1Hitbox.x, p1Hitbox.y, 0, sparkColor);
-          if (isPunch) {
-            soundManager.playPunchHit();
-          } else {
-            soundManager.playKickHit();
+          this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#ff1a4b', isPunch ? 46 : 58);
+          if (isPunch) soundManager.playPunchHit();
+          else soundManager.playKickHit();
+
+          this.addScreenShake(isPunch ? 6 : 10, 0.22);
+          this.hitFreezeTimer = 0.06;
+
+          // Combo increment
+          this.p1Combo++;
+          this.comboResetTimer = 1.2;
+          if (this.p1Combo >= 2) {
+            this.vfx.spawnComboText(this.fighterP2.x, this.fighterP2.y - 120, this.p1Combo, true);
           }
-          this.cameraManager.addScreenShake(isPunch ? 0.22 : 0.35, 0.18);
-          this.hitFreezeTimer = GAME_CONFIG.MATCH.HIT_FREEZE_DURATION;
         }
 
         if (this.fighterP2.currentHealth <= 0) {
@@ -329,11 +356,11 @@ export class GameEngine {
       }
     }
 
-    // Check P2 attacking P1
+    // P2 attacking P1
     const p2Hitbox = this.fighterP2.getActiveHitbox();
     if (p2Hitbox) {
       const p1Hurtbox = this.fighterP1.getHurtbox();
-      if (this.checkHit(p2Hitbox, p1Hurtbox)) {
+      if (this.checkHitboxHurtbox(p2Hitbox, p1Hurtbox)) {
         this.fighterP2.hasHitCurrentAttack = true;
         const isBlocked = this.fighterP1.state === 'BLOCK' && this.fighterP1.facing !== this.fighterP2.facing;
         const cleanHit = this.fighterP1.takeHit(
@@ -344,20 +371,23 @@ export class GameEngine {
         );
 
         if (isBlocked) {
-          this.particles.emitBlockSparks(p2Hitbox.x, p2Hitbox.y, 0);
+          this.vfx.spawnBlockSpark(p2Hitbox.x, p2Hitbox.y);
           soundManager.playBlockClank();
           this.hitFreezeTimer = 0.04;
         } else {
           const isPunch = p2Hitbox.type.startsWith('PUNCH');
-          const sparkColor = isPunch ? 0x00f0ff : 0x0088ff;
-          this.particles.emitHitSparks(p2Hitbox.x, p2Hitbox.y, 0, sparkColor);
-          if (isPunch) {
-            soundManager.playPunchHit();
-          } else {
-            soundManager.playKickHit();
+          this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#00b4ff', isPunch ? 46 : 58);
+          if (isPunch) soundManager.playPunchHit();
+          else soundManager.playKickHit();
+
+          this.addScreenShake(isPunch ? 6 : 10, 0.22);
+          this.hitFreezeTimer = 0.06;
+
+          this.p2Combo++;
+          this.comboResetTimer = 1.2;
+          if (this.p2Combo >= 2) {
+            this.vfx.spawnComboText(this.fighterP1.x, this.fighterP1.y - 120, this.p2Combo, false);
           }
-          this.cameraManager.addScreenShake(isPunch ? 0.22 : 0.35, 0.18);
-          this.hitFreezeTimer = GAME_CONFIG.MATCH.HIT_FREEZE_DURATION;
         }
 
         if (this.fighterP1.currentHealth <= 0) {
@@ -367,23 +397,50 @@ export class GameEngine {
     }
   }
 
-  private checkHit(
-    hitbox: { x: number; y: number; radius: number },
-    hurtbox: { x: number; y: number; width: number; height: number }
-  ): boolean {
-    // Circle vs AABB collision
+  private checkHitboxHurtbox(hitbox: Hitbox2D, hurtbox: Hurtbox2D): boolean {
+    // Circle vs Rectangle collision
     const closestX = Math.max(hurtbox.x, Math.min(hitbox.x, hurtbox.x + hurtbox.width));
     const closestY = Math.max(hurtbox.y, Math.min(hitbox.y, hurtbox.y + hurtbox.height));
-    const distanceX = hitbox.x - closestX;
-    const distanceY = hitbox.y - closestY;
-    const distanceSquared = distanceX * distanceX + distanceY * distanceY;
-    return distanceSquared < hitbox.radius * hitbox.radius;
+    const dx = hitbox.x - closestX;
+    const dy = hitbox.y - closestY;
+    return dx * dx + dy * dy < hitbox.radius * hitbox.radius;
+  }
+
+  private checkPointInBox(px: number, py: number, box: Hurtbox2D): boolean {
+    return px >= box.x && px <= box.x + box.width && py >= box.y && py <= box.y + box.height;
+  }
+
+  private addScreenShake(intensity: number, duration: number): void {
+    this.shakeIntensity = intensity;
+    this.shakeTimer = duration;
+  }
+
+  private updateCamera(dt: number): void {
+    // Smoothly pan camera to midpoint between fighters
+    const targetX = (this.fighterP1.x + this.fighterP2.x) / 2;
+    const targetY = (this.fighterP1.y + this.fighterP2.y) / 2 - 35;
+    this.camX += (targetX - this.camX) * 0.1;
+    this.camY += (targetY - this.camY) * 0.08;
+
+    // Dynamic zoom based on fighter distance
+    const dist = Math.abs(this.fighterP1.x - this.fighterP2.x);
+    const targetZoom = Math.max(0.82, Math.min(1.18, 920 / (dist + 380)));
+    this.camZoom += (targetZoom - this.camZoom) * 0.06;
+
+    // Decay camera shake
+    if (this.shakeTimer > 0) {
+      this.shakeTimer -= dt;
+      if (this.shakeTimer <= 0) {
+        this.shakeIntensity = 0;
+      }
+    }
   }
 
   private handleKnockout(winner: PlayerId): void {
     this.gameState = 'ROUND_OVER';
     soundManager.playKOGong();
-    this.cameraManager.addScreenShake(0.45, 0.35);
+    this.addScreenShake(18, 0.45);
+    this.vfx.triggerScreenFlash('#ffffff', 0.65);
 
     if (winner === 'P1') {
       this.matchState.p1RoundsWon++;
@@ -425,12 +482,52 @@ export class GameEngine {
     this.callbacks.onMatchStateUpdate({ ...this.matchState });
   }
 
-  private updateTrainingDummy(deltaTime: number): void {
-    // Face the player
-    const dir = this.fighterP1.position.x > this.fighterP2.position.x ? 1 : -1;
-    if (this.fighterP2.facing !== dir) {
-      this.fighterP2.facing = dir;
+  private render(): void {
+    const width = this.canvas.width / (Math.min(window.devicePixelRatio || 1, 2));
+    const height = this.canvas.height / (Math.min(window.devicePixelRatio || 1, 2));
+
+    this.ctx.clearRect(0, 0, width, height);
+
+    // 0. Render edge-to-edge dark screen backdrop to eliminate all black gaps 100%
+    this.arena.renderScreenBackdrop(this.ctx, width, height, this.camX);
+
+    this.ctx.save();
+
+    // 1. Camera Transform (Centering, Zoom & Shake)
+    let shakeX = 0;
+    let shakeY = 0;
+    if (this.shakeTimer > 0) {
+      shakeX = (Math.random() - 0.5) * this.shakeIntensity * 2;
+      shakeY = (Math.random() - 0.5) * this.shakeIntensity * 2;
     }
+
+    this.ctx.translate(width / 2 + shakeX, height / 2 + shakeY);
+    this.ctx.scale(this.camZoom, this.camZoom);
+    this.ctx.translate(-this.camX, -this.camY);
+
+    // 2. Parallax Background & Arena Floor (Layers 1-5)
+    this.arena.renderBackground(this.ctx, this.camX, this.camY, this.camZoom, width, height);
+
+    // 3. Ground Shadows (Layer 6: Decoupled strictly to ground floorY = 560)
+    this.fighterP1.renderShadow(this.ctx);
+    this.fighterP2.renderShadow(this.ctx);
+
+    // 4. Render Anime Fighters (Layer 7: Grounded at groundY + jumpOffsetY)
+    this.fighterP1.render(this.ctx);
+    this.fighterP2.render(this.ctx);
+
+    // 5. Render Projectiles
+    for (const p of this.projectiles) {
+      p.render(this.ctx);
+    }
+
+    // 6. Render VFX (Sparks, Dust, Combo Numbers)
+    this.vfx.render(this.ctx);
+
+    // 7. Parallax Foreground Layer (Sakura Petals & Framing Eaves)
+    this.arena.renderForeground(this.ctx, this.camX, this.camY);
+
+    this.ctx.restore();
   }
 
   public restartMatch(): void {
@@ -466,19 +563,10 @@ export class GameEngine {
     }
 
     window.removeEventListener('resize', this.handleResize);
-
     this.inputManager.detach();
-    this.fighterP1.dispose();
-    this.fighterP2.dispose();
-    this.arena.dispose();
-    this.particles.dispose();
-    this.physics.dispose();
 
-    if (this.renderer) {
-      this.renderer.dispose();
-      if (this.renderer.domElement && this.renderer.domElement.parentNode) {
-        this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
-      }
+    if (this.canvas && this.canvas.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas);
     }
   }
 }
