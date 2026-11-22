@@ -113,10 +113,9 @@ export class SpriteCharacterRenderer2D {
     }
 
     // Directional Facing Scale:
-    // P1 (Kai) is drawn facing RIGHT (+1).
-    // P2 (Shadow) is drawn facing LEFT (-1).
-    const flipX = isP1 ? facing : (facing === -1 ? 1 : -1);
-    ctx.scale(flipX, 1);
+    // All base sprite assets face RIGHT (+1).
+    // ctx.scale(facing, 1) flips the sprite to face LEFT when facing is -1.
+    ctx.scale(facing, 1);
 
     // High-Resolution Character drawing scale and bottom-center foot anchor
     const scale = 0.58;
@@ -212,8 +211,7 @@ export class SpriteCharacterRenderer2D {
     if (isHitFlashing) {
       ctx.filter = 'brightness(3) contrast(1.5) drop-shadow(0 0 16px #ffffff)';
     }
-    const flipX = isP1 ? facing : (facing === -1 ? 1 : -1);
-    ctx.scale(flipX, 1);
+    ctx.scale(facing, 1);
     const scale = 0.58;
     ctx.drawImage(
       img,
