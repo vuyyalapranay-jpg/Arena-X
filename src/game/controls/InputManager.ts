@@ -13,6 +13,11 @@ export class InputManager {
     punch: false,
     kick: false,
     block: false,
+    punchLight: false,
+    punchHeavy: false,
+    kickLight: false,
+    kickHeavy: false,
+    special: false,
   };
 
   private touchInputsP2: FighterInputs = {
@@ -23,6 +28,11 @@ export class InputManager {
     punch: false,
     kick: false,
     block: false,
+    punchLight: false,
+    punchHeavy: false,
+    kickLight: false,
+    kickHeavy: false,
+    special: false,
   };
 
   private boundKeyDown: (e: KeyboardEvent) => void;
@@ -96,24 +106,48 @@ export class InputManager {
     const touch = isP1 ? this.touchInputsP1 : this.touchInputsP2;
 
     if (isP1) {
+      const punchLight = this.isAnyActive('KeyF', 'f', 'KeyJ', 'j') || !!touch.punchLight;
+      const punchHeavy = this.isAnyActive('KeyR', 'r', 'KeyU', 'u') || !!touch.punchHeavy;
+      const kickLight = this.isAnyActive('KeyG', 'g', 'KeyK', 'k') || !!touch.kickLight;
+      const kickHeavy = this.isAnyActive('KeyT', 't', 'KeyI', 'i') || !!touch.kickHeavy;
+      const special = this.isAnyActive('Space', 'space', 'KeyO', 'o', 'KeyE', 'e') || !!touch.special;
+      const isRunning = this.isAnyActive('ShiftLeft', 'ShiftRight');
+
       return {
         moveLeft: this.isAnyActive('KeyA', 'a') || touch.moveLeft,
         moveRight: this.isAnyActive('KeyD', 'd') || touch.moveRight,
         jump: this.isAnyActive('KeyW', 'w') || touch.jump,
         crouch: this.isAnyActive('KeyS', 's') || touch.crouch,
-        punch: this.isAnyActive('KeyF', 'f') || touch.punch,
-        kick: this.isAnyActive('KeyG', 'g') || touch.kick,
-        block: this.isAnyActive('KeyH', 'h') || touch.block,
+        punch: punchLight || punchHeavy || touch.punch,
+        kick: kickLight || kickHeavy || touch.kick,
+        block: this.isAnyActive('KeyH', 'h', 'KeyL', 'l') || touch.block,
+        run: isRunning,
+        punchLight,
+        punchHeavy,
+        kickLight,
+        kickHeavy,
+        special,
       };
     } else {
+      const punchLight = this.isAnyActive('Numpad4', 'Digit4', 'KeyJ', 'j') || !!touch.punchLight;
+      const punchHeavy = this.isAnyActive('Numpad5', 'Digit5', 'KeyU', 'u') || !!touch.punchHeavy;
+      const kickLight = this.isAnyActive('Numpad1', 'Digit1', 'KeyK', 'k') || !!touch.kickLight;
+      const kickHeavy = this.isAnyActive('Numpad2', 'Digit2', 'KeyI', 'i') || !!touch.kickHeavy;
+      const special = this.isAnyActive('NumpadEnter', 'Numpad3', 'Digit3', 'KeyO', 'o') || !!touch.special;
+
       return {
         moveLeft: this.isAnyActive('ArrowLeft', 'arrowleft') || touch.moveLeft,
         moveRight: this.isAnyActive('ArrowRight', 'arrowright') || touch.moveRight,
         jump: this.isAnyActive('ArrowUp', 'arrowup') || touch.jump,
         crouch: this.isAnyActive('ArrowDown', 'arrowdown') || touch.crouch,
-        punch: this.isAnyActive('KeyJ', 'j') || touch.punch,
-        kick: this.isAnyActive('KeyK', 'k') || touch.kick,
-        block: this.isAnyActive('KeyL', 'l') || touch.block,
+        punch: punchLight || punchHeavy || touch.punch,
+        kick: kickLight || kickHeavy || touch.kick,
+        block: this.isAnyActive('Numpad0', 'Numpad6', 'KeyL', 'l') || touch.block,
+        punchLight,
+        punchHeavy,
+        kickLight,
+        kickHeavy,
+        special,
       };
     }
   }

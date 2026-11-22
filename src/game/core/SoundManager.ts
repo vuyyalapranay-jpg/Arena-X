@@ -313,6 +313,26 @@ export class SoundManager {
     osc1.stop(this.ctx.currentTime + 1.5);
     osc2.stop(this.ctx.currentTime + 1.5);
   }
+
+  public playSpecialAttack(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(780, this.ctx.currentTime + 0.35);
+
+    gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.35);
+  }
 }
 
 export const soundManager = new SoundManager();

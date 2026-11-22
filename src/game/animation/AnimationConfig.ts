@@ -56,15 +56,22 @@ export interface CharacterAnimationSet {
   // 3. Punching
   punchLight: AnimationDefinition;
   punchHeavy: AnimationDefinition;
+  punchForward: AnimationDefinition;
   uppercut: AnimationDefinition;
+  comboPunch: AnimationDefinition;
 
   // 4. Kicking
   kickLight: AnimationDefinition;
   kickHeavy: AnimationDefinition;
   kickHigh: AnimationDefinition;
   kickLow: AnimationDefinition;
+  roundhouse: AnimationDefinition;
 
-  // 5. Defense & Damage
+  // 5. Air Attacks
+  jumpPunch: AnimationDefinition;
+  jumpKick: AnimationDefinition;
+
+  // 6. Defense & Damage
   blockStand: AnimationDefinition;
   blockCrouch: AnimationDefinition;
   hitLight: AnimationDefinition;
@@ -73,7 +80,7 @@ export interface CharacterAnimationSet {
   knockdown: AnimationDefinition;
   getUp: AnimationDefinition;
 
-  // 6. Special & Match States
+  // 7. Special & Match States
   special: AnimationDefinition;
   victory: AnimationDefinition;
   defeat: AnimationDefinition;
@@ -274,11 +281,53 @@ export const createFighterAnimationSet = (fighterPrefix: 'p1' | 'p2'): Character
         activeFrames: 2,
         recoveryFrames: 1,
         damage: 18,
-        knockback: 260,
-        reach: 82,
+        knockback: 160,
+        reach: 85,
         heightOffset: -125,
         radius: 48,
         hitType: 'HIGH',
+        impactSound: 'HEAVY',
+      },
+    },
+    punchForward: {
+      name: 'punch_forward',
+      category: 'PUNCH',
+      imageSrc: `${base}/Attack1.png`,
+      framesMax: 5,
+      frameRate: 16,
+      loop: false,
+      priority: ANIMATION_PRIORITIES.ATTACK,
+      hitboxTiming: {
+        startupFrames: 2,
+        activeFrames: 1,
+        recoveryFrames: 2,
+        damage: 14,
+        knockback: 200,
+        reach: 115,
+        heightOffset: -90,
+        radius: 44,
+        hitType: 'MID',
+        impactSound: 'PUNCH',
+      },
+    },
+    comboPunch: {
+      name: 'combo_punch',
+      category: 'PUNCH',
+      imageSrc: `${base}/Punch_Light.png`,
+      framesMax: 3,
+      frameRate: 20,
+      loop: false,
+      priority: ANIMATION_PRIORITIES.ATTACK,
+      hitboxTiming: {
+        startupFrames: 1,
+        activeFrames: 1,
+        recoveryFrames: 1,
+        damage: 12,
+        knockback: 220,
+        reach: 85,
+        heightOffset: -95,
+        radius: 44,
+        hitType: 'MID',
         impactSound: 'HEAVY',
       },
     },
@@ -365,6 +414,71 @@ export const createFighterAnimationSet = (fighterPrefix: 'p1' | 'p2'): Character
         heightOffset: -25,
         radius: 36,
         hitType: 'LOW',
+        impactSound: 'KICK',
+      },
+    },
+    roundhouse: {
+      name: 'roundhouse',
+      category: 'KICK',
+      imageSrc: `${base}/Kick_Heavy.png`,
+      framesMax: 4,
+      frameRate: 15,
+      loop: false,
+      priority: ANIMATION_PRIORITIES.ATTACK,
+      hitboxTiming: {
+        startupFrames: 2,
+        activeFrames: 2,
+        recoveryFrames: 2,
+        damage: 24,
+        knockback: 300,
+        reach: 115,
+        heightOffset: -110,
+        radius: 56,
+        hitType: 'HIGH',
+        impactSound: 'HEAVY',
+      },
+    },
+
+    // 5. Air Attacks
+    jumpPunch: {
+      name: 'jump_punch',
+      category: 'PUNCH',
+      imageSrc: `${base}/Punch_Light.png`,
+      framesMax: 3,
+      frameRate: 16,
+      loop: false,
+      priority: ANIMATION_PRIORITIES.ATTACK,
+      hitboxTiming: {
+        startupFrames: 1,
+        activeFrames: 2,
+        recoveryFrames: 1,
+        damage: 12,
+        knockback: 140,
+        reach: 78,
+        heightOffset: -70,
+        radius: 42,
+        hitType: 'HIGH',
+        impactSound: 'PUNCH',
+      },
+    },
+    jumpKick: {
+      name: 'jump_kick',
+      category: 'KICK',
+      imageSrc: `${base}/Kick_Light.png`,
+      framesMax: 3,
+      frameRate: 15,
+      loop: false,
+      priority: ANIMATION_PRIORITIES.ATTACK,
+      hitboxTiming: {
+        startupFrames: 1,
+        activeFrames: 2,
+        recoveryFrames: 1,
+        damage: 15,
+        knockback: 180,
+        reach: 92,
+        heightOffset: -60,
+        radius: 46,
+        hitType: 'HIGH',
         impactSound: 'KICK',
       },
     },

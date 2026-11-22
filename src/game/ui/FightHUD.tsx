@@ -128,6 +128,11 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               <div className="target-health-fill p1-fill" style={{ width: `${p1HealthPercent}%` }} />
               <div className="target-health-sheen" />
             </div>
+
+            {/* Guard Meter */}
+            <div className="target-guard-bar p1-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.max(0, p1Stats.guardMeter || 100)}%`, background: (p1Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#00f0ff', transition: 'width 0.1s linear' }} />
+            </div>
           </div>
         </div>
 
@@ -175,6 +180,11 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               <div className="target-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
               <div className="target-health-fill p2-fill" style={{ width: `${p2HealthPercent}%` }} />
               <div className="target-health-sheen" />
+            </div>
+
+            {/* Guard Meter */}
+            <div className="target-guard-bar p2-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.max(0, p2Stats.guardMeter || 100)}%`, background: (p2Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#ff0055', transition: 'width 0.1s linear', marginLeft: 'auto' }} />
             </div>
           </div>
         </div>
@@ -360,6 +370,16 @@ export const FightHUD: React.FC<FightHUDProps> = ({
             >
               <span>BLOCK</span>
               <small>[H]</small>
+            </button>
+            <button
+              className="action-btn special-btn"
+              onTouchStart={() => onTouchInput('P1', 'special', true)}
+              onTouchEnd={() => onTouchInput('P1', 'special', false)}
+              onMouseDown={() => onTouchInput('P1', 'special', true)}
+              onMouseUp={() => onTouchInput('P1', 'special', false)}
+            >
+              <span>SPECIAL</span>
+              <small>[SPACE]</small>
             </button>
           </div>
         </div>

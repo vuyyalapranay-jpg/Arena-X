@@ -13,7 +13,7 @@ export interface StateConfig {
 }
 
 export class AnimationStateMachine {
-  private static states: Record<FighterState, StateConfig> = {
+  private static states: Partial<Record<FighterState, StateConfig>> = {
     IDLE: {
       name: 'IDLE',
       clipName: 'idle',
@@ -197,7 +197,7 @@ export class AnimationStateMachine {
   };
 
   public static getConfig(state: FighterState): StateConfig {
-    return this.states[state] || this.states.IDLE;
+    return this.states[state] || this.states.IDLE!;
   }
 
   public static canTransition(current: FighterState, next: FighterState): boolean {

@@ -59,7 +59,7 @@ export const CHARACTER_PROFILES: Record<'P1' | 'P2', FighterVisualProfile> = {
   },
 };
 
-export const COMBAT_ATTACKS: Record<AttackType, AttackData> = {
+export const COMBAT_ATTACKS: Partial<Record<AttackType, AttackData>> = {
   PUNCH_LEFT: {
     name: 'Lead Jab',
     type: 'PUNCH_LEFT',

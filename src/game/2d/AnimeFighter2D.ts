@@ -1,5 +1,5 @@
 // src/game/2d/AnimeFighter2D.ts
-// PHASE 3 ANIME FIGHTER WITH DEDICATED ANIMATION CONTROLLER & SYNCHRONIZED COMBAT
+// PHASE 4 ANIME FIGHTER WITH COMPLETE COMBAT STATE MACHINE & COMBAT ENGINE INTEGRATION
 
 import { AttackType, FighterInputs, FighterState, FighterStats, PlayerId } from '../../types';
 import { SpriteCharacterRenderer2D } from './SpriteCharacterRenderer2D';
@@ -7,22 +7,11 @@ import { Projectile2D } from './Projectile2D';
 import { soundManager } from '../core/SoundManager';
 import { AnimationController } from '../animation/AnimationController';
 import { CharacterAnimationSet, P1_ANIMATIONS, P2_ANIMATIONS } from '../animation/AnimationConfig';
+import { CombatEngine } from '../combat/CombatEngine';
+import { HitboxInstance, HurtboxInstance } from '../combat/CombatTypes';
 
-export interface Hitbox2D {
-  x: number;
-  y: number;
-  radius: number;
-  damage: number;
-  knockback: number;
-  type: AttackType | 'SPECIAL' | 'ULTIMATE';
-}
-
-export interface Hurtbox2D {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export interface Hitbox2D extends HitboxInstance {}
+export interface Hurtbox2D extends HurtboxInstance {}
 
 export class AnimeFighter2D {
   public id: PlayerId;
@@ -57,24 +46,36 @@ export class AnimeFighter2D {
   public state: FighterState = 'IDLE';
   public currentHealth = 100;
   public maxHealth = 100;
+  public guardMeter = 100;
+  public readonly maxGuardMeter = 100;
   public superMeter = 0; // 0 to 100
   public roundsWon = 0;
   public isGrounded = true;
 
-  // Dedicated Phase 3 Animation Controller
+  // Dedicated Animation Controller
   public animController: AnimationController;
 
   // Combat Timers & Attack State
-  public currentAttackType: AttackType | 'SPECIAL' | 'ULTIMATE' | null = null;
+  public currentAttackType: AttackType | null = null;
   public attackTimer = 0;
   public attackDuration = 0;
   public hasHitCurrentAttack = false;
-  public comboStep = 0;
+  public canCancelIntoSpecial = false;
   public lastAttackTime = 0;
+  public lastAttackKey: string | null = null;
 
+  // Stun, Guard & Damage Timers
   public hitStunTimer = 0;
+  public guardStunTimer = 0;
+  public guardBreakTimer = 0;
+  public knockdownTimer = 0;
+  public recoveryTimer = 0;
+  public isInvulnerable = false;
   public hitFlashTimer = 0;
   public animTime = 0;
+
+  // Input Buffering Queue (buffers inputs for 0.18s)
+  public bufferedAction: { type: string; timestamp: number } | null = null;
 
   // Projectile spawned by special attack
   public pendingProjectile: Projectile2D | null = null;
@@ -119,30 +120,51 @@ export class AnimeFighter2D {
     this.facing = facing;
     this.state = 'IDLE';
     this.currentHealth = this.maxHealth;
+    this.guardMeter = this.maxGuardMeter;
     this.superMeter = 0;
     this.isGrounded = true;
     this.currentAttackType = null;
     this.attackTimer = 0;
     this.hasHitCurrentAttack = false;
+    this.canCancelIntoSpecial = false;
     this.hitStunTimer = 0;
+    this.guardStunTimer = 0;
+    this.guardBreakTimer = 0;
+    this.knockdownTimer = 0;
+    this.recoveryTimer = 0;
+    this.isInvulnerable = false;
     this.hitFlashTimer = 0;
     this.animTime = 0;
+    this.bufferedAction = null;
     this.pendingProjectile = null;
     this.animController.play('idle', true);
   }
 
   public handleInput(inputs: FighterInputs, opponent: AnimeFighter2D): void {
-    // Cannot act while stunned, knocked down, or defeated
+    const now = performance.now();
+
+    // 1. COMBAT STATE MACHINE GUARDS (Prevent impossible transitions)
     if (
       this.state === 'HIT_STAGGER' ||
+      this.state === 'GUARD_STUN' ||
+      this.state === 'GUARD_BREAK' ||
       this.state === 'KNOCKBACK' ||
+      this.state === 'KNOCKDOWN' ||
+      this.state === 'RECOVERY' ||
       this.state === 'DEFEAT' ||
       this.state === 'VICTORY'
     ) {
+      // Buffer attack input if pressed near the end of stun/recovery
+      if (inputs.punch || inputs.kick || inputs.special) {
+        this.bufferedAction = {
+          type: inputs.special ? 'SPECIAL' : inputs.punch ? 'PUNCH' : 'KICK',
+          timestamp: now,
+        };
+      }
       return;
     }
 
-    // Auto-facing: turn towards opponent unless performing an attack
+    // 2. AUTO-FACING: Face opponent unless locked in an active attack
     if (this.currentAttackType === null) {
       const dirToOpponent = opponent.x > this.x ? 1 : -1;
       if (this.facing !== dirToOpponent) {
@@ -150,54 +172,102 @@ export class AnimeFighter2D {
       }
     }
 
-    // If an attack is actively executing, cannot interrupt with basic movement
-    if (this.currentAttackType !== null) {
+    // 3. ATTACK CANCELING & EXECUTION
+    const isAttacking = this.currentAttackType !== null;
+
+    if (isAttacking) {
+      // Allow canceling into Special on hit
+      if (this.canCancelIntoSpecial && inputs.special && this.superMeter >= 35) {
+        this.startAttack('SPECIAL', 'special');
+        return;
+      }
+      // Cannot interrupt with basic movement during active swing
       return;
     }
 
-    const now = performance.now();
+    // Check buffered input
+    if (this.bufferedAction && now - this.bufferedAction.timestamp < 180) {
+      const buffered = this.bufferedAction.type;
+      this.bufferedAction = null;
+      if (buffered === 'SPECIAL' && this.superMeter >= 35) {
+        this.startAttack('SPECIAL', 'special');
+        return;
+      }
+    }
 
-    // 1. COMBAT ATTACKS (Punching)
-    if (inputs.punch && this.isGrounded) {
+    // 4. SPECIAL ATTACK EXECUTION (Requires 35% Super Meter)
+    if (inputs.special) {
+      if (this.superMeter >= 35) {
+        this.startAttack('SPECIAL', 'special');
+        return;
+      }
+    }
+
+    // 5. AIR COMBAT ATTACKS (Jumping Punch & Jumping Kick)
+    if (!this.isGrounded) {
+      if (inputs.punch || inputs.punchLight || inputs.punchHeavy) {
+        this.startAttack('JUMP_PUNCH', 'jumpPunch');
+        return;
+      }
+      if (inputs.kick || inputs.kickLight || inputs.kickHeavy) {
+        this.startAttack('JUMP_KICK', 'jumpKick');
+        return;
+      }
+    }
+
+    // 6. GROUND COMBAT ATTACKS — PUNCHES
+    if (inputs.punch || inputs.punchLight || inputs.punchHeavy) {
       if (inputs.crouch) {
-        // Uppercut
-        this.startAttack('PUNCH_HEAVY', 'uppercut');
+        // Uppercut (Crouch + Punch): Anti-Air rising strike
+        this.startAttack('UPPERCUT', 'uppercut');
       } else if (
         (inputs.moveRight && this.facing === 1) ||
         (inputs.moveLeft && this.facing === -1)
       ) {
-        // Heavy Straight Forward Punch (Kyo Flame Strike)
+        // Forward Punch: Lunging straight strike
+        this.startAttack('PUNCH_FORWARD', 'punchForward');
+      } else if (inputs.punchHeavy || inputs.run) {
+        // Heavy Punch: Devastating straight
         this.startAttack('PUNCH_HEAVY', 'punchHeavy');
       } else {
-        // Light Jab
-        this.startAttack('PUNCH_LEFT', 'punchLight');
+        // Punch combo chain: alternate between light jab and combo punch
+        const isChain = this.lastAttackKey === 'punchLight' && now - this.lastAttackTime < 320;
+        if (isChain) {
+          this.startAttack('COMBO_PUNCH', 'comboPunch');
+        } else {
+          this.startAttack('PUNCH_LIGHT', 'punchLight');
+        }
       }
       this.lastAttackTime = now;
-      soundManager.playPunchWhoosh();
       return;
     }
 
-    // 2. COMBAT ATTACKS (Kicking)
-    if (inputs.kick && this.isGrounded) {
+    // 7. GROUND COMBAT ATTACKS — KICKS
+    if (inputs.kick || inputs.kickLight || inputs.kickHeavy) {
       if (inputs.crouch) {
-        // Low Shin Sweep
+        // Low Shin Sweep (Crouch + Kick): Low attack that beats standing guard!
         this.startAttack('KICK_LOW', 'kickLow');
+      } else if (inputs.run) {
+        // Spinning Roundhouse Kick
+        this.startAttack('ROUNDHOUSE', 'roundhouse');
+      } else if (inputs.kickHeavy) {
+        // High Crescent Kick
+        this.startAttack('KICK_HIGH', 'kickHigh');
       } else if (
         (inputs.moveRight && this.facing === 1) ||
         (inputs.moveLeft && this.facing === -1)
       ) {
-        // High Crescent Roundhouse Kick (180° shockwave)
-        this.startAttack('KICK_HIGH', 'kickHigh');
+        // Heavy Thrust Kick
+        this.startAttack('KICK_HEAVY', 'kickHeavy');
       } else {
-        // Light Front Snap Kick
-        this.startAttack('KICK_FRONT', 'kickLight');
+        // Light Snap Kick
+        this.startAttack('KICK_LIGHT', 'kickLight');
       }
       this.lastAttackTime = now;
-      soundManager.playPunchWhoosh();
       return;
     }
 
-    // 3. DEFENSIVE GUARD (Block)
+    // 8. DEFENSIVE GUARD (Standing Block & Crouching Block)
     if (inputs.block && this.isGrounded) {
       this.state = 'BLOCK';
       this.vx = 0;
@@ -209,7 +279,7 @@ export class AnimeFighter2D {
       return;
     }
 
-    // 4. JUMP
+    // 9. JUMP
     if (inputs.jump && this.isGrounded) {
       this.vy = this.jumpImpulse;
       this.isGrounded = false;
@@ -219,15 +289,15 @@ export class AnimeFighter2D {
       return;
     }
 
-    // 5. CROUCH
+    // 10. CROUCH
     if (inputs.crouch && this.isGrounded) {
-      this.state = 'CROUCH';
       this.vx = 0;
+      this.state = 'CROUCH';
       this.animController.play('crouch');
       return;
     }
 
-    // 6. LATERAL LOCOMOTION (Walk / Run)
+    // 11. LATERAL LOCOMOTION (Walk / Run)
     if (this.isGrounded) {
       const isRunning = !!inputs.run;
       const speed = isRunning ? this.runSpeed : this.walkSpeed;
@@ -258,28 +328,42 @@ export class AnimeFighter2D {
     }
   }
 
-  public startAttack(type: AttackType | 'SPECIAL', animKey: keyof CharacterAnimationSet): void {
+  public startAttack(type: AttackType, animKey: keyof CharacterAnimationSet): void {
     this.currentAttackType = type;
-    this.state = type as FighterState;
+    this.state = 'ATTACKING';
     this.attackTimer = 0;
     this.hasHitCurrentAttack = false;
-    this.vx = 0;
+    this.canCancelIntoSpecial = false;
+    this.lastAttackKey = animKey as string;
+
+    // Halt ground movement during grounded attack execution
+    if (this.isGrounded) {
+      this.vx = 0;
+    }
 
     this.animController.play(animKey, true);
     const def = this.animController.currentAnim;
     this.attackDuration = def.framesMax / def.frameRate;
+
+    // Audio trigger
+    if (type === 'SPECIAL') {
+      soundManager.playSpecialAttack();
+      this.fireSpecialProjectile();
+    } else {
+      soundManager.playPunchWhoosh();
+    }
   }
 
   public fireSpecialProjectile(): void {
     const projType = this.id === 'P1' ? 'CRIMSON_FIREBALL' : 'SHADOW_SHURIKEN';
     this.pendingProjectile = new Projectile2D(
-      this.x + this.facing * 45,
-      this.y - 75,
+      this.x + this.facing * 50,
+      this.y - 85,
       this.facing,
       this.id,
       projType
     );
-    this.superMeter = Math.max(0, this.superMeter - 40);
+    this.superMeter = Math.max(0, this.superMeter - 35);
   }
 
   public update(dt: number, opponent: AnimeFighter2D): void {
@@ -290,7 +374,28 @@ export class AnimeFighter2D {
       this.hitFlashTimer -= dt;
     }
 
-    // 1. Process Hit Stun Recovery
+    // 1. Guard Meter Regeneration (Regenerates +20/s when not blocking)
+    if (this.state !== 'BLOCK' && this.state !== 'GUARD_STUN' && this.state !== 'GUARD_BREAK') {
+      this.guardMeter = Math.min(this.maxGuardMeter, this.guardMeter + 20 * dt);
+    }
+
+    // 2. Process Guard Stun & Guard Break
+    if (this.guardBreakTimer > 0) {
+      this.guardBreakTimer -= dt;
+      if (this.guardBreakTimer <= 0) {
+        this.guardMeter = 50;
+        this.state = 'IDLE';
+        this.animController.play('idle');
+      }
+    } else if (this.guardStunTimer > 0) {
+      this.guardStunTimer -= dt;
+      if (this.guardStunTimer <= 0) {
+        this.state = 'IDLE';
+        this.animController.play('idle');
+      }
+    }
+
+    // 3. Process Hit Stun Recovery
     if (this.hitStunTimer > 0) {
       this.hitStunTimer -= dt;
       if (this.hitStunTimer <= 0) {
@@ -299,30 +404,52 @@ export class AnimeFighter2D {
       }
     }
 
-    // 2. Process Attack Completion
-    if (this.currentAttackType !== null) {
-      this.attackTimer += dt;
-      if (this.animController.isFinished() || this.attackTimer >= this.attackDuration) {
-        this.currentAttackType = null;
-        this.hasHitCurrentAttack = false;
+    // 4. Process Knockdown & Wake-Up Recovery
+    if (this.knockdownTimer > 0) {
+      this.knockdownTimer -= dt;
+      if (this.knockdownTimer <= 0) {
+        // Transition from flat on ground to getting up with invulnerability
+        this.state = 'RECOVERY';
+        this.recoveryTimer = 0.35;
+        this.isInvulnerable = true;
+        this.animController.play('getUp', true);
+      }
+    } else if (this.recoveryTimer > 0) {
+      this.recoveryTimer -= dt;
+      if (this.recoveryTimer <= 0) {
+        this.isInvulnerable = false;
         this.state = 'IDLE';
         this.animController.play('idle');
       }
     }
 
-    // 3. Gravity and Vertical Jump Physics (Decoupled from ground position)
+    // 5. Process Attack Completion
+    if (this.currentAttackType !== null) {
+      this.attackTimer += dt;
+      if (this.animController.isFinished() || this.attackTimer >= this.attackDuration) {
+        this.currentAttackType = null;
+        this.hasHitCurrentAttack = false;
+        this.canCancelIntoSpecial = false;
+        this.state = this.isGrounded ? 'IDLE' : 'FALL';
+        this.animController.play(this.isGrounded ? 'idle' : 'jumpFall');
+      }
+    }
+
+    // 6. Gravity and Vertical Jump Physics (Decoupled from ground position)
     if (!this.isGrounded) {
       this.vy += this.gravity * dt;
       this.jumpOffsetY += this.vy * dt;
 
-      if (this.vy < -80) {
-        this.state = 'JUMP';
-        this.animController.play('jumpRise');
-      } else if (Math.abs(this.vy) <= 80) {
-        this.animController.play('jumpApex');
-      } else {
-        this.state = 'FALL';
-        this.animController.play('jumpFall');
+      if (this.currentAttackType === null) {
+        if (this.vy < -80) {
+          this.state = 'JUMP';
+          this.animController.play('jumpRise');
+        } else if (Math.abs(this.vy) <= 80) {
+          this.animController.play('jumpApex');
+        } else {
+          this.state = 'FALL';
+          this.animController.play('jumpFall');
+        }
       }
 
       // Precision Ground Landing
@@ -330,24 +457,26 @@ export class AnimeFighter2D {
         this.jumpOffsetY = 0;
         this.vy = 0;
         this.isGrounded = true;
-        this.state = 'LAND';
-        this.animController.play('land', true);
-        soundManager.playLanding();
-        setTimeout(() => {
-          if (this.state === 'LAND') {
-            this.state = 'IDLE';
-            this.animController.play('idle');
-          }
-        }, 120);
+        if (this.state === 'JUMP' || this.state === 'FALL' || this.state === 'KNOCKBACK') {
+          this.state = 'LAND';
+          this.animController.play('land', true);
+          soundManager.playLanding();
+          setTimeout(() => {
+            if (this.state === 'LAND') {
+              this.state = 'IDLE';
+              this.animController.play('idle');
+            }
+          }, 120);
+        }
       }
     }
 
-    // 4. Horizontal Movement & Arena Bounds Clamping
+    // 7. Horizontal Movement & Arena Bounds Clamping
     this.x += this.vx * dt;
     if (this.x < this.minX) this.x = this.minX;
     if (this.x > this.maxX) this.x = this.maxX;
 
-    // 5. Pushbox collision (Fighters maintain spacing)
+    // 8. Pushbox collision (Fighters maintain spacing)
     const dist = opponent.x - this.x;
     const minSeparation = 72;
     if (Math.abs(dist) < minSeparation && this.isGrounded && opponent.isGrounded) {
@@ -358,41 +487,141 @@ export class AnimeFighter2D {
     }
   }
 
-  public getActiveHitbox(): Hitbox2D | null {
+  public getActiveHitbox(): HitboxInstance | null {
     if (!this.currentAttackType || this.hasHitCurrentAttack) return null;
 
     const info = this.animController.getHitboxInfo();
     if (!info.isActive || !info.data) return null;
 
     const timing = info.data;
+    const config = CombatEngine.ATTACK_CONFIGS[this.currentAttackType] || {
+      verticalKnockback: 0,
+      guardDamage: 20,
+      chipDamageRatio: 0.1,
+      guardStun: 0.22,
+    };
+
     return {
+      owner: this.id,
+      type: this.currentAttackType,
       x: this.x + this.facing * timing.reach,
       y: this.groundY + this.jumpOffsetY + timing.heightOffset,
       radius: timing.radius,
       damage: timing.damage,
       knockback: timing.knockback,
-      type: this.currentAttackType,
+      verticalKnockback: config.verticalKnockback || 0,
+      height: timing.hitType,
+      hitStun: timing.damage >= 18 ? 0.38 : 0.22,
+      guardStun: config.guardStun,
+      guardDamage: config.guardDamage,
+      chipDamageRatio: config.chipDamageRatio,
+      impactSound: timing.impactSound,
+      facing: this.facing,
     };
   }
 
-  public getHurtbox(): Hurtbox2D {
-    const isCrouched = this.state === 'CROUCH' || this.state === 'KICK_LOW';
-    const height = isCrouched ? 80 : 135;
-    const width = 55;
+  public getHurtbox(): HurtboxInstance {
+    const isCrouched = this.state === 'CROUCH' || this.animController.currentAnimKey === 'blockCrouch';
+    const height = isCrouched ? 85 : 140;
+    const width = 56;
     return {
+      owner: this.id,
       x: this.x - width / 2,
       y: this.y - height,
       width,
       height,
+      isInvulnerable: this.isInvulnerable || this.state === 'DEFEAT',
     };
   }
 
+  public applyHitResult(result: import('../combat/CombatTypes').HitResolutionResult, attackerFacing: number): void {
+    if (result.isBlocked) {
+      // Guard blocked
+      this.currentHealth = Math.max(0, this.currentHealth - result.damageDealt);
+      this.guardMeter = Math.max(0, this.guardMeter - result.hitbox.guardDamage);
+      this.guardStunTimer = result.hitbox.guardStun;
+      this.state = 'GUARD_STUN';
+      this.vx = 0;
+      this.x += attackerFacing * (result.hitbox.knockback * 0.25);
+      this.animController.play(
+        this.animController.currentAnimKey === 'blockCrouch' ? 'blockCrouch' : 'blockStand',
+        true
+      );
+      return;
+    }
+
+    if (result.isGuardBreak) {
+      // Guard broken!
+      this.guardMeter = 0;
+      this.guardBreakTimer = 0.65;
+      this.state = 'GUARD_BREAK';
+      this.vx = 0;
+      this.currentHealth = Math.max(0, this.currentHealth - result.damageDealt);
+      this.x += attackerFacing * (result.hitbox.knockback * 0.5);
+      this.animController.play('hitHeavy', true);
+      soundManager.playBlockClank();
+      return;
+    }
+
+    // Clean hit!
+    this.currentHealth = Math.max(0, this.currentHealth - result.damageDealt);
+    this.x += attackerFacing * result.hitbox.knockback;
+    this.vx = 0;
+    this.hitFlashTimer = 0.12;
+
+    // Fill super meter on hit
+    this.superMeter = Math.min(100, this.superMeter + result.damageDealt * 1.2);
+
+    if (this.currentHealth <= 0) {
+      this.state = 'DEFEAT';
+      this.currentAttackType = null;
+      this.animController.play('defeat', true);
+      return;
+    }
+
+    if (result.isKnockdown) {
+      // Knockdown
+      this.state = 'KNOCKDOWN';
+      this.knockdownTimer = 0.55;
+      this.isInvulnerable = true;
+      if (result.hitbox.verticalKnockback < 0) {
+        this.vy = result.hitbox.verticalKnockback;
+        this.jumpOffsetY = -5;
+        this.isGrounded = false;
+      }
+      this.animController.play('knockdown', true);
+    } else if (result.hitbox.knockback > 220 || result.hitbox.verticalKnockback < -100) {
+      // Knockback tumble
+      this.state = 'KNOCKBACK';
+      this.hitStunTimer = result.hitbox.hitStun;
+      if (result.hitbox.verticalKnockback < 0) {
+        this.vy = result.hitbox.verticalKnockback;
+        this.jumpOffsetY = -5;
+        this.isGrounded = false;
+      }
+      this.animController.play('knockback', true);
+    } else {
+      // Standard Hit Stun
+      this.state = 'HIT_STAGGER';
+      this.hitStunTimer = result.hitbox.hitStun;
+      this.animController.play(result.hitbox.damage >= 16 ? 'hitHeavy' : 'hitLight', true);
+    }
+  }
+
   public takeHit(damage: number, knockback: number, isBlocked: boolean, attackerFacing: number): boolean {
+    if (this.isInvulnerable) return false;
+
     if (isBlocked) {
-      const chipDamage = Math.max(1, Math.round(damage * 0.15));
+      const chipDamage = Math.max(1, Math.round(damage * 0.12));
       this.currentHealth = Math.max(0, this.currentHealth - chipDamage);
+      this.guardMeter = Math.max(0, this.guardMeter - 18);
+      this.guardStunTimer = 0.20;
+      this.state = 'GUARD_STUN';
       this.x += attackerFacing * (knockback * 0.25);
-      this.animController.play(this.state === 'CROUCH' ? 'blockCrouch' : 'blockStand', true);
+      this.animController.play(
+        this.animController.currentAnimKey === 'blockCrouch' ? 'blockCrouch' : 'blockStand',
+        true
+      );
       return false; // blocked
     }
 
@@ -408,17 +637,22 @@ export class AnimeFighter2D {
       this.state = 'DEFEAT';
       this.currentAttackType = null;
       this.animController.play('defeat', true);
-    } else if (knockback > 220) {
+    } else if (knockback > 240) {
+      this.state = 'KNOCKDOWN';
+      this.knockdownTimer = 0.55;
+      this.isInvulnerable = true;
+      this.animController.play('knockdown', true);
+    } else if (knockback > 180) {
       this.state = 'KNOCKBACK';
-      this.hitStunTimer = 0.45;
-      this.vy = -220;
+      this.hitStunTimer = 0.40;
+      this.vy = -200;
       this.jumpOffsetY = -5;
       this.isGrounded = false;
       this.animController.play('knockback', true);
     } else {
       this.state = 'HIT_STAGGER';
       this.hitStunTimer = 0.28;
-      this.animController.play('hitHeavy', true);
+      this.animController.play(damage >= 16 ? 'hitHeavy' : 'hitLight', true);
     }
 
     return true; // clean hit
@@ -460,6 +694,10 @@ export class AnimeFighter2D {
       name: this.name,
       maxHealth: this.maxHealth,
       currentHealth: this.currentHealth,
+      guardMeter: this.guardMeter,
+      maxGuardMeter: this.maxGuardMeter,
+      superMeter: this.superMeter,
+      isInvulnerable: this.isInvulnerable,
       roundsWon: this.roundsWon,
       isGrounded: this.isGrounded,
       facing: this.facing,

@@ -12,6 +12,7 @@ import { Projectile2D } from '../2d/Projectile2D';
 import { FightCamera2D } from '../engine/FightCamera2D';
 import { Renderer2D } from '../engine/Renderer2D';
 import { WorldCoordinateSystem } from '../engine/WorldCoordinateSystem';
+import { CombatEngine } from '../combat/CombatEngine';
 
 export interface GameEngineCallbacks {
   onMatchStateUpdate: (state: MatchState) => void;
@@ -246,17 +247,22 @@ export class GameEngine {
       // Projectile collision with opponent
       const target = p.owner === 'P1' ? this.fighterP2 : this.fighterP1;
       const hurt = target.getHurtbox();
-      if (this.checkPointInBox(p.x, p.y, hurt)) {
+      if (this.checkPointInBox(p.x, p.y, hurt) && !hurt.isInvulnerable) {
         const isBlocked = target.state === 'BLOCK' && target.facing !== (p.vx > 0 ? 1 : -1);
-        target.takeHit(p.damage, 140, isBlocked, p.vx > 0 ? 1 : -1);
-
         if (isBlocked) {
+          const chip = Math.max(1, Math.round(p.damage * 0.15));
+          target.currentHealth = Math.max(0, target.currentHealth - chip);
+          target.guardMeter = Math.max(0, target.guardMeter - 30);
+          target.guardStunTimer = 0.25;
           this.vfx.spawnBlockSpark(p.x, p.y);
           soundManager.playBlockClank();
+          this.hitFreezeTimer = 0.05;
         } else {
-          this.vfx.spawnHitSpark(p.x, p.y, p.owner === 'P1' ? '#ff3366' : '#00f0ff', 48);
+          target.takeHit(p.damage, 260, false, p.vx > 0 ? 1 : -1);
+          this.vfx.spawnHitSpark(p.x, p.y, p.owner === 'P1' ? '#ff3366' : '#00f0ff', 64);
           soundManager.playPunchHit();
-          this.addScreenShake(6, 0.2);
+          this.addScreenShake(12, 0.3);
+          this.hitFreezeTimer = 0.08;
         }
 
         p.isDestroyed = true;
@@ -322,39 +328,55 @@ export class GameEngine {
     const p1Hitbox = this.fighterP1.getActiveHitbox();
     if (p1Hitbox) {
       const p2Hurtbox = this.fighterP2.getHurtbox();
-      if (this.checkHitboxHurtbox(p1Hitbox, p2Hurtbox)) {
+      if (
+        CombatEngine.checkCircleVsRect(
+          p1Hitbox.x,
+          p1Hitbox.y,
+          p1Hitbox.radius,
+          p2Hurtbox.x,
+          p2Hurtbox.y,
+          p2Hurtbox.width,
+          p2Hurtbox.height
+        )
+      ) {
         this.fighterP1.hasHitCurrentAttack = true;
-        const isBlocked = this.fighterP2.state === 'BLOCK' && this.fighterP2.facing !== this.fighterP1.facing;
-        const cleanHit = this.fighterP2.takeHit(
-          p1Hitbox.damage,
-          p1Hitbox.knockback,
-          isBlocked,
-          this.fighterP1.facing
+        const res = CombatEngine.resolveAttackHit(
+          p1Hitbox,
+          p2Hurtbox,
+          this.fighterP2.state,
+          this.fighterP2.state === 'CROUCH' || this.fighterP2.animController.currentAnimKey === 'blockCrouch',
+          this.fighterP2.facing,
+          this.fighterP2.guardMeter
         );
 
-        if (isBlocked) {
-          this.vfx.spawnBlockSpark(p1Hitbox.x, p1Hitbox.y);
-          soundManager.playBlockClank();
-          this.hitFreezeTimer = 0.04;
-        } else {
-          const isPunch = p1Hitbox.type.startsWith('PUNCH');
-          this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#ff1a4b', isPunch ? 46 : 58);
-          if (isPunch) soundManager.playPunchHit();
-          else soundManager.playKickHit();
+        if (res.hitConnected) {
+          this.fighterP2.applyHitResult(res, this.fighterP1.facing);
+          this.hitFreezeTimer = res.hitFreezeTime;
+          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration);
 
-          this.addScreenShake(isPunch ? 6 : 10, 0.22);
-          this.hitFreezeTimer = 0.06;
+          if (res.isBlocked) {
+            this.vfx.spawnBlockSpark(p1Hitbox.x, p1Hitbox.y);
+            soundManager.playBlockClank();
+          } else {
+            // Clean hit!
+            this.fighterP1.canCancelIntoSpecial = true;
+            const isPunch = p1Hitbox.type.includes('PUNCH');
+            this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#ff1a4b', isPunch ? 48 : 58);
+            if (p1Hitbox.type === 'SPECIAL') soundManager.playSpecialAttack();
+            else if (isPunch) soundManager.playPunchHit();
+            else soundManager.playKickHit();
 
-          // Combo increment
-          this.p1Combo++;
-          this.comboResetTimer = 1.2;
-          if (this.p1Combo >= 2) {
-            this.vfx.spawnComboText(this.fighterP2.x, this.fighterP2.y - 120, this.p1Combo, true);
+            // Combo chaining & tracking
+            this.p1Combo++;
+            this.comboResetTimer = 1.25;
+            if (this.p1Combo >= 2) {
+              this.vfx.spawnComboText(this.fighterP2.x, this.fighterP2.y - 120, this.p1Combo, true);
+            }
           }
-        }
 
-        if (this.fighterP2.currentHealth <= 0) {
-          this.handleKnockout('P1');
+          if (this.fighterP2.currentHealth <= 0) {
+            this.handleKnockout('P1');
+          }
         }
       }
     }
@@ -363,38 +385,53 @@ export class GameEngine {
     const p2Hitbox = this.fighterP2.getActiveHitbox();
     if (p2Hitbox) {
       const p1Hurtbox = this.fighterP1.getHurtbox();
-      if (this.checkHitboxHurtbox(p2Hitbox, p1Hurtbox)) {
+      if (
+        CombatEngine.checkCircleVsRect(
+          p2Hitbox.x,
+          p2Hitbox.y,
+          p2Hitbox.radius,
+          p1Hurtbox.x,
+          p1Hurtbox.y,
+          p1Hurtbox.width,
+          p1Hurtbox.height
+        )
+      ) {
         this.fighterP2.hasHitCurrentAttack = true;
-        const isBlocked = this.fighterP1.state === 'BLOCK' && this.fighterP1.facing !== this.fighterP2.facing;
-        const cleanHit = this.fighterP1.takeHit(
-          p2Hitbox.damage,
-          p2Hitbox.knockback,
-          isBlocked,
-          this.fighterP2.facing
+        const res = CombatEngine.resolveAttackHit(
+          p2Hitbox,
+          p1Hurtbox,
+          this.fighterP1.state,
+          this.fighterP1.state === 'CROUCH' || this.fighterP1.animController.currentAnimKey === 'blockCrouch',
+          this.fighterP1.facing,
+          this.fighterP1.guardMeter
         );
 
-        if (isBlocked) {
-          this.vfx.spawnBlockSpark(p2Hitbox.x, p2Hitbox.y);
-          soundManager.playBlockClank();
-          this.hitFreezeTimer = 0.04;
-        } else {
-          const isPunch = p2Hitbox.type.startsWith('PUNCH');
-          this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#00b4ff', isPunch ? 46 : 58);
-          if (isPunch) soundManager.playPunchHit();
-          else soundManager.playKickHit();
+        if (res.hitConnected) {
+          this.fighterP1.applyHitResult(res, this.fighterP2.facing);
+          this.hitFreezeTimer = res.hitFreezeTime;
+          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration);
 
-          this.addScreenShake(isPunch ? 6 : 10, 0.22);
-          this.hitFreezeTimer = 0.06;
+          if (res.isBlocked) {
+            this.vfx.spawnBlockSpark(p2Hitbox.x, p2Hitbox.y);
+            soundManager.playBlockClank();
+          } else {
+            this.fighterP2.canCancelIntoSpecial = true;
+            const isPunch = p2Hitbox.type.includes('PUNCH');
+            this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#00b4ff', isPunch ? 48 : 58);
+            if (p2Hitbox.type === 'SPECIAL') soundManager.playSpecialAttack();
+            else if (isPunch) soundManager.playPunchHit();
+            else soundManager.playKickHit();
 
-          this.p2Combo++;
-          this.comboResetTimer = 1.2;
-          if (this.p2Combo >= 2) {
-            this.vfx.spawnComboText(this.fighterP1.x, this.fighterP1.y - 120, this.p2Combo, false);
+            this.p2Combo++;
+            this.comboResetTimer = 1.25;
+            if (this.p2Combo >= 2) {
+              this.vfx.spawnComboText(this.fighterP1.x, this.fighterP1.y - 120, this.p2Combo, false);
+            }
           }
-        }
 
-        if (this.fighterP1.currentHealth <= 0) {
-          this.handleKnockout('P2');
+          if (this.fighterP1.currentHealth <= 0) {
+            this.handleKnockout('P2');
+          }
         }
       }
     }
@@ -531,8 +568,14 @@ export class GameEngine {
       this.fighterP1,
       this.fighterP2,
       this.projectiles,
-      this.vfx
+      this.vfx,
+      this.settings.showHitboxes
     );
+  }
+
+  public toggleHitboxes(): boolean {
+    this.settings.showHitboxes = !this.settings.showHitboxes;
+    return this.settings.showHitboxes;
   }
 
   public restartMatch(): void {

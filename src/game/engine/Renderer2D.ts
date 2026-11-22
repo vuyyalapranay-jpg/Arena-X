@@ -32,7 +32,8 @@ export class Renderer2D {
     fighterP1: AnimeFighter2D,
     fighterP2: AnimeFighter2D,
     projectiles: Projectile2D[],
-    vfx: VFXManager2D
+    vfx: VFXManager2D,
+    showHitboxes = false
   ): void {
     const ctx = this.ctx;
     const cam = this.camera;
@@ -53,11 +54,6 @@ export class Renderer2D {
 
     // ==============================================================
     // LAYERS 2-6: ENVIRONMENTAL STAGE & ARENA FLOOR
-    // Layer 2: Distant scenery (Moon, distant peaks)
-    // Layer 3: Pagoda architecture & temple roofs
-    // Layer 4: Midground lanterns & sakura groves
-    // Layer 5: Fighting arena stone floor (locked strictly at worldY = 560)
-    // Layer 6: Center "ARENA X" battle emblem & floor markings
     // ==============================================================
     arena.renderBackground(ctx, cam.x, cam.y, cam.zoom, viewportW, viewportH);
 
@@ -84,10 +80,73 @@ export class Renderer2D {
     vfx.render(ctx);
     arena.renderForeground(ctx, cam.x, cam.y);
 
+    // ==============================================================
+    // DEBUG OVERLAY: HITBOXES & HURTBOXES
+    // ==============================================================
+    if (showHitboxes) {
+      this.renderDebugCollision(ctx, fighterP1, fighterP2);
+    }
+
     ctx.restore();
 
     // ==============================================================
-    // LAYER 10: HUD & SCREEN-SPACE OVERLAYS ARE HANDLED BY REACT UI (FightHUD.tsx)
+    // LAYER 10: HUD & SCREEN-SPACE OVERLAYS ARE HANDLED BY REACT UI
     // ==============================================================
+  }
+
+  private renderDebugCollision(
+    ctx: CanvasRenderingContext2D,
+    p1: AnimeFighter2D,
+    p2: AnimeFighter2D
+  ): void {
+    const fighters = [p1, p2];
+
+    for (const f of fighters) {
+      // 1. Hurtbox (Green/Cyan rectangle)
+      const hurt = f.getHurtbox();
+      ctx.save();
+      ctx.fillStyle = hurt.isInvulnerable
+        ? 'rgba(255, 255, 255, 0.35)'
+        : 'rgba(0, 255, 120, 0.25)';
+      ctx.strokeStyle = hurt.isInvulnerable ? '#ffffff' : '#00ff78';
+      ctx.lineWidth = 2;
+      ctx.fillRect(hurt.x, hurt.y, hurt.width, hurt.height);
+      ctx.strokeRect(hurt.x, hurt.y, hurt.width, hurt.height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '10px monospace';
+      ctx.fillText(
+        `${f.name} [${f.state}]${hurt.isInvulnerable ? ' (INVULNERABLE)' : ''}`,
+        hurt.x,
+        hurt.y - 6
+      );
+      ctx.restore();
+
+      // 2. Active Hitbox (Red circle)
+      const hit = f.getActiveHitbox();
+      if (hit) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 30, 60, 0.35)';
+        ctx.strokeStyle = '#ff1e3c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(hit.x, hit.y, hit.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Center crosshair
+        ctx.beginPath();
+        ctx.moveTo(hit.x - 8, hit.y);
+        ctx.lineTo(hit.x + 8, hit.y);
+        ctx.moveTo(hit.x, hit.y - 8);
+        ctx.lineTo(hit.x, hit.y + 8);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffff00';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText(`${hit.type} [${hit.height}]`, hit.x - 24, hit.y - hit.radius - 6);
+        ctx.restore();
+      }
+    }
   }
 }

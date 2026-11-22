@@ -42,15 +42,30 @@ export type FighterState =
   | 'FALL'
   | 'LAND'
   | 'CROUCH'
+  | 'ATTACKING'
   | 'PUNCH_LEFT'
   | 'PUNCH_RIGHT'
+  | 'PUNCH_LIGHT'
   | 'PUNCH_HEAVY'
+  | 'PUNCH_FORWARD'
+  | 'UPPERCUT'
+  | 'COMBO_PUNCH'
   | 'KICK_FRONT'
+  | 'KICK_LIGHT'
+  | 'KICK_HEAVY'
   | 'KICK_HIGH'
   | 'KICK_LOW'
+  | 'ROUNDHOUSE'
+  | 'JUMP_PUNCH'
+  | 'JUMP_KICK'
+  | 'SPECIAL'
   | 'BLOCK'
+  | 'GUARD_STUN'
+  | 'GUARD_BREAK'
   | 'HIT_STAGGER'
   | 'KNOCKBACK'
+  | 'KNOCKDOWN'
+  | 'RECOVERY'
   | 'STAGGER'
   | 'VICTORY'
   | 'DEFEAT';
@@ -66,15 +81,36 @@ export interface FighterInputs {
   kick: boolean;
   block: boolean;
   run?: boolean;
+  punchLight?: boolean;
+  punchHeavy?: boolean;
+  kickLight?: boolean;
+  kickHeavy?: boolean;
+  special?: boolean;
 }
 
 export type AttackType = 
+  // Punches
   | 'PUNCH_LEFT' 
   | 'PUNCH_RIGHT' 
+  | 'PUNCH_LIGHT'
   | 'PUNCH_HEAVY' 
+  | 'PUNCH_FORWARD'
+  | 'UPPERCUT'
+  | 'COMBO_PUNCH'
+  // Kicks
   | 'KICK_FRONT' 
+  | 'KICK_LIGHT'
+  | 'KICK_HEAVY'
   | 'KICK_HIGH' 
-  | 'KICK_LOW';
+  | 'KICK_LOW'
+  | 'ROUNDHOUSE'
+  // Air Attacks
+  | 'JUMP_PUNCH'
+  | 'JUMP_KICK'
+  // Special
+  | 'SPECIAL'
+  | 'CRIMSON_FIREBALL'
+  | 'SHADOW_SHURIKEN';
 
 export interface AttackData {
   name: string;
@@ -94,6 +130,10 @@ export interface FighterStats {
   name: string;
   maxHealth: number;
   currentHealth: number;
+  guardMeter: number;
+  maxGuardMeter: number;
+  superMeter: number;
+  isInvulnerable: boolean;
   roundsWon: number;
   isGrounded: boolean;
   facing: 1 | -1; // 1 = right, -1 = left

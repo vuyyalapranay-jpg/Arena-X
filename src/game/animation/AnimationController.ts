@@ -12,6 +12,7 @@ export interface ActiveHitboxInfo {
 export class AnimationController {
   private animationSet: CharacterAnimationSet;
   public currentAnim: AnimationDefinition;
+  public currentAnimKey: keyof CharacterAnimationSet = 'idle';
   public frameIndex = 0;
   public animTime = 0;
   public isCompleted = false;
@@ -49,6 +50,7 @@ export class AnimationController {
     }
 
     this.currentAnim = target;
+    this.currentAnimKey = animKey;
     this.frameIndex = 0;
     this.animTime = 0;
     this.isCompleted = false;

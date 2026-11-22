@@ -246,8 +246,8 @@ export class Fighter {
   }
 
   private startAttack(type: AttackType): void {
-    this.state = type;
-    this.currentAttackData = COMBAT_ATTACKS[type];
+    this.state = type as FighterState;
+    this.currentAttackData = COMBAT_ATTACKS[type] || null;
     this.attackTimer = 0;
     this.hasHitCurrentAttack = false;
     this.velocity.x = 0;
@@ -440,6 +440,10 @@ export class Fighter {
       name: this.name,
       maxHealth: this.maxHealth,
       currentHealth: this.currentHealth,
+      guardMeter: 100,
+      maxGuardMeter: 100,
+      superMeter: 0,
+      isInvulnerable: false,
       roundsWon: this.roundsWon,
       isGrounded: this.isGrounded,
       facing: this.facing,
