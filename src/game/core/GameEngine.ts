@@ -5,6 +5,7 @@ import { GameMode, GameSettings, GameState, MatchState, PlayerId } from '../../t
 import { GAME_CONFIG } from '../../config/gameConfig';
 import { InputManager } from '../controls/InputManager';
 import { soundManager } from './SoundManager';
+import { multiplayerClient } from '../../multiplayer/MultiplayerClient';
 import { ParallaxArena2D } from '../2d/ParallaxArena2D';
 import { AnimeFighter2D, Hitbox2D, Hurtbox2D } from '../2d/AnimeFighter2D';
 import { VFXManager2D } from '../2d/VFXManager2D';
@@ -106,10 +107,97 @@ export class GameEngine {
     window.addEventListener('resize', this.handleResize);
 
     // 5. Start Round 1
-    this.startRoundIntro(1);
+    if (this.gameMode === 'ONLINE') {
+      this.setupMultiplayerSubscriptions();
+    } else {
+      this.startRoundIntro(1);
+    }
 
     this.lastTime = performance.now();
     this.loop(this.lastTime);
+  }
+
+  private unsubs: Array<() => void> = [];
+
+  private setupMultiplayerSubscriptions(): void {
+    // 1. Snapshot Listener
+    const unsubSnap = multiplayerClient.onSnapshot((snap) => {
+      if (snap.match) {
+        this.matchState.round = snap.match.round;
+        this.matchState.timeRemaining = snap.match.timeRemaining;
+        this.matchState.announcement = snap.match.announcement;
+        this.matchState.winner = snap.match.winner;
+
+        if (snap.match.status === 'FIGHTING' && this.gameState !== 'FIGHTING') {
+          this.gameState = 'FIGHTING';
+          this.callbacks.onGameStateChange(this.gameState);
+        } else if (snap.match.status === 'FINISHED' && this.gameState !== 'MATCH_OVER') {
+          this.gameState = 'MATCH_OVER';
+          this.callbacks.onGameStateChange(this.gameState);
+        }
+      }
+
+      // Synchronize Fighter State
+      const mySlot = multiplayerClient.mySlot || 'P1';
+      if (snap.p1) {
+        this.fighterP1.currentHealth = snap.p1.health;
+        this.fighterP1.guardMeter = snap.p1.guardMeter;
+        this.fighterP1.superMeter = snap.p1.superMeter;
+        this.fighterP1.isSurging = snap.p1.isSurging;
+        this.fighterP1.isCharging = snap.p1.isCharging;
+        this.fighterP1.isCinematic = snap.p1.isCinematic;
+
+        if (mySlot === 'P2') {
+          // Remote interpolation for P1
+          this.fighterP1.x += (snap.p1.x - this.fighterP1.x) * 0.45;
+          this.fighterP1.y = snap.p1.y;
+          this.fighterP1.facing = snap.p1.facing;
+          if (snap.p1.animKey && this.fighterP1.animController.currentAnimKey !== snap.p1.animKey) {
+            this.fighterP1.animController.play(snap.p1.animKey as any);
+          }
+        }
+      }
+
+      if (snap.p2) {
+        this.fighterP2.currentHealth = snap.p2.health;
+        this.fighterP2.guardMeter = snap.p2.guardMeter;
+        this.fighterP2.superMeter = snap.p2.superMeter;
+        this.fighterP2.isSurging = snap.p2.isSurging;
+        this.fighterP2.isCharging = snap.p2.isCharging;
+        this.fighterP2.isCinematic = snap.p2.isCinematic;
+
+        if (mySlot === 'P1') {
+          // Remote interpolation for P2
+          this.fighterP2.x += (snap.p2.x - this.fighterP2.x) * 0.45;
+          this.fighterP2.y = snap.p2.y;
+          this.fighterP2.facing = snap.p2.facing;
+          if (snap.p2.animKey && this.fighterP2.animController.currentAnimKey !== snap.p2.animKey) {
+            this.fighterP2.animController.play(snap.p2.animKey as any);
+          }
+        }
+      }
+    });
+
+    // 2. Hit Event Listener
+    const unsubHit = multiplayerClient.onHitEvent((hit) => {
+      this.addScreenShake(hit.type?.startsWith('ULTIMATE') ? 25 : 12, 0.3);
+      if (hit.isBlocked) {
+        this.vfx.spawnBlockSpark(hit.x, hit.y);
+        soundManager.playBlockClank();
+      } else {
+        const isKai = hit.type?.includes('BLUE') || hit.type?.includes('CELESTIAL');
+        this.vfx.spawnHitSpark(hit.x, hit.y, isKai ? '#00e5ff' : '#ba68c8', 50);
+        if (hit.type?.startsWith('ULTIMATE')) {
+          this.vfx.spawnEnergyExplosion(hit.x, hit.y, isKai ? '#00e5ff' : '#ba68c8', 30);
+          soundManager.playEnergyExplosion();
+          this.vfx.triggerScreenFlash('#ffffff', 0.8);
+        } else {
+          soundManager.playPunchHit();
+        }
+      }
+    });
+
+    this.unsubs.push(unsubSnap, unsubHit);
   }
 
   public setGraphicsQuality(_quality: GameSettings['graphicsQuality']): void {
@@ -206,17 +294,43 @@ export class GameEngine {
 
     // 3. Process Player Inputs
     if (this.gameState === 'FIGHTING') {
-      const p1Inputs = this.inputManager.getInputs('P1');
-      this.fighterP1.handleInput(p1Inputs, this.fighterP2);
+      if (this.gameMode === 'ONLINE') {
+        const mySlot = multiplayerClient.mySlot || 'P1';
+        const myInputs = this.inputManager.getInputs('P1'); // Local controls
+        multiplayerClient.sendInput({
+          seq: Date.now(),
+          left: myInputs.moveLeft,
+          right: myInputs.moveRight,
+          jump: myInputs.jump,
+          crouch: myInputs.crouch,
+          lightPunch: myInputs.punchLight || myInputs.punch,
+          heavyPunch: myInputs.punchHeavy || false,
+          lightKick: myInputs.kickLight || myInputs.kick,
+          heavyKick: myInputs.kickHeavy || false,
+          block: myInputs.block,
+          charge: myInputs.charge || false,
+          special: myInputs.special || false,
+          ultimate: myInputs.ultimate || false,
+        });
 
-      if (this.gameMode === 'VERSUS') {
-        const p2Inputs = this.inputManager.getInputs('P2');
-        this.fighterP2.handleInput(p2Inputs, this.fighterP1);
+        if (mySlot === 'P1') {
+          this.fighterP1.handleInput(myInputs, this.fighterP2);
+        } else {
+          this.fighterP2.handleInput(myInputs, this.fighterP1);
+        }
       } else {
-        // Training Dummy: keeps facing player
-        const dir = this.fighterP1.x > this.fighterP2.x ? 1 : -1;
-        if (this.fighterP2.facing !== dir) {
-          this.fighterP2.facing = dir;
+        const p1Inputs = this.inputManager.getInputs('P1');
+        this.fighterP1.handleInput(p1Inputs, this.fighterP2);
+
+        if (this.gameMode === 'VERSUS') {
+          const p2Inputs = this.inputManager.getInputs('P2');
+          this.fighterP2.handleInput(p2Inputs, this.fighterP1);
+        } else {
+          // Training Dummy: keeps facing player
+          const dir = this.fighterP1.x > this.fighterP2.x ? 1 : -1;
+          if (this.fighterP2.facing !== dir) {
+            this.fighterP2.facing = dir;
+          }
         }
       }
     }
@@ -274,8 +388,8 @@ export class GameEngine {
       }
     }
 
-    // 6. Combat Attack Resolution (Hitbox vs Hurtbox)
-    if (this.gameState === 'FIGHTING') {
+    // 6. Combat Attack Resolution (Hitbox vs Hurtbox - offline only, online is server-authoritative)
+    if (this.gameState === 'FIGHTING' && this.gameMode !== 'ONLINE') {
       this.resolveCombatAttacks();
     }
 
@@ -683,6 +797,9 @@ export class GameEngine {
   }
 
   public dispose(): void {
+    this.unsubs.forEach((unsub) => unsub());
+    this.unsubs = [];
+
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;

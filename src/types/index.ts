@@ -1,6 +1,6 @@
 // src/types/index.ts
 
-export type GameMode = 'VERSUS' | 'TRAINING';
+export type GameMode = 'VERSUS' | 'TRAINING' | 'ONLINE';
 
 export type GameState = 
   | 'MENU'

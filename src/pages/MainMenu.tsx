@@ -12,7 +12,9 @@ import {
   CheckCircle2, 
   X,
   Smartphone,
-  Sparkles
+  Sparkles,
+  Globe,
+  Radio
 } from 'lucide-react';
 import { GameMode, GameSettings, GraphicsQuality } from '../types';
 import { soundManager } from '../game/core/SoundManager';
@@ -195,6 +197,32 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
             </div>
             <div className="btn-corner-cut" />
+          </button>
+
+          {/* ONLINE PLAY (2XKO Aesthetic) */}
+          <button
+            className="menu-btn standard-btn online-menu-btn"
+            style={{
+              borderColor: '#00e5ff',
+              background: 'linear-gradient(90deg, rgba(0, 229, 255, 0.15) 0%, rgba(10, 14, 24, 0.85) 100%)',
+              boxShadow: '0 0 20px rgba(0, 229, 255, 0.25)',
+            }}
+            onMouseEnter={() => soundManager.playMenuHover()}
+            onClick={() => {
+              soundManager.playMenuSelect();
+              onStartGame('ONLINE');
+            }}
+          >
+            <div className="btn-content">
+              <Radio className="btn-icon" size={22} style={{ color: '#00e5ff' }} />
+              <div className="btn-text">
+                <span className="title" style={{ color: '#00e5ff', fontWeight: 900 }}>ONLINE PLAY</span>
+                <span className="sub">Public Rooms • Private Duels • Quick Matchmaking</span>
+              </div>
+            </div>
+            <span className="status-tag phase2 active-tag" style={{ background: '#00e5ff', color: '#000000', fontWeight: 900 }}>
+              LIVE NETPLAY
+            </span>
           </button>
 
           {/* 2. TRAINING MODE */}

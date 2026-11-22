@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine } from '../game/core/GameEngine';
 import { FightHUD } from '../game/ui/FightHUD';
+import { multiplayerClient } from '../multiplayer/MultiplayerClient';
+import { Wifi, AlertTriangle } from 'lucide-react';
 import { 
   FighterStats, 
   GameMode, 
@@ -72,6 +74,25 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
     announcement: 'ROUND 1',
   });
 
+  const [reconnectNotice, setReconnectNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (gameMode !== 'ONLINE') return;
+
+    const unsubReconnecting = multiplayerClient.onOpponentReconnecting((info) => {
+      setReconnectNotice(`Opponent disconnected! Waiting for reconnection (${info.timeoutSeconds}s)...`);
+    });
+
+    const unsubReconnected = multiplayerClient.onOpponentReconnected((info) => {
+      setReconnectNotice(null);
+    });
+
+    return () => {
+      unsubReconnecting();
+      unsubReconnected();
+    };
+  }, [gameMode]);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -135,6 +156,69 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
     <div className="arena-page-root">
       {/* 3D Canvas Mounting Container */}
       <div ref={containerRef} className="three-canvas-container" />
+
+      {/* Online Netplay Status Banner */}
+      {gameMode === 'ONLINE' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '4px 14px',
+            background: 'rgba(6, 10, 18, 0.85)',
+            border: '1px solid rgba(0, 229, 255, 0.3)',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 800,
+            letterSpacing: '1px',
+            color: '#00e5ff',
+            zIndex: 100,
+            pointerEvents: 'none',
+          }}
+        >
+          <span>NETPLAY: <strong>{multiplayerClient.roomCode || 'LIVE'}</strong></span>
+          <span style={{ color: '#8fa0b5' }}>•</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#00e676' }}>
+            <Wifi size={12} />
+            {multiplayerClient.currentPing} ms
+          </span>
+          <span style={{ color: '#8fa0b5' }}>•</span>
+          <span>YOU: {multiplayerClient.mySlot || 'P1'}</span>
+        </div>
+      )}
+
+      {/* Reconnection Overlay */}
+      {reconnectNotice && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            zIndex: 200,
+            color: '#ffffff',
+          }}
+        >
+          <AlertTriangle size={48} color="#ffb300" />
+          <h2 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '2px', margin: 0 }}>
+            CONNECTION INTERRUPTION
+          </h2>
+          <p style={{ color: '#ffb300', fontSize: '15px', fontWeight: 700, margin: 0 }}>
+            {reconnectNotice}
+          </p>
+          <span style={{ fontSize: '12px', color: '#8fa0b5' }}>
+            Match will be awarded by forfeit if player does not return.
+          </span>
+        </div>
+      )}
 
       {/* Interactive Fighting Game HUD */}
       <FightHUD

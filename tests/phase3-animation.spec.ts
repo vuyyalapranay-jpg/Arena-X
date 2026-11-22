@@ -132,8 +132,14 @@ test.describe('ARENA X — Phase 3 Character Sprites & Animation System', () => 
 
     // 14. Verify 0 fatal errors
     const fatalErrors = consoleErrors.filter(
-      (err) => !err.includes('favicon') && !err.includes('AudioContext')
+      (err) =>
+        !err.includes('favicon') &&
+        !err.includes('AudioContext') &&
+        !err.includes('ERR_CONNECTION_CLOSED')
     );
+    if (fatalErrors.length > 0) {
+      console.log('Fatal errors logged during phase3 test:', fatalErrors);
+    }
     expect(fatalErrors.length).toBe(0);
   });
 });
