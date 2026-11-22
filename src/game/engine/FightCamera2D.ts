@@ -11,20 +11,21 @@ export interface CameraState2D {
   shakeY: number;
 }
 
+export interface VisibleWorldBounds2D {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
 export class FightCamera2D {
   public x = 1200;
   public y = WorldCoordinateSystem.DEFAULT_CAM_Y;
   public zoom = 1.0;
 
-  // Clamping limits
-  public minX = 750;
-  public maxX = 1650;
-  public minY = 420;
-  public maxY = 550;
-
   // Zoom limits
-  public minZoom = 0.82;
-  public maxZoom = 1.18;
+  public minZoom = 0.45;
+  public maxZoom = 1.08;
 
   // Screen Shake
   private shakeTimer = 0;
@@ -38,8 +39,9 @@ export class FightCamera2D {
   }
 
   /**
-   * Smoothly tracks midpoint between two fighters, applies bounding constraints,
-   * dynamically adjusts zoom according to distance, and decays screen shake.
+   * Smoothly tracks midpoint between two fighters, guarantees comfortable side margins,
+   * dynamically adjusts zoom according to distance and vertical framing,
+   * keeps the ground horizon rock-stable, and decays screen shake.
    */
   public update(
     dt: number,
@@ -52,28 +54,62 @@ export class FightCamera2D {
   ): void {
     // 1. Calculate midpoint
     const midX = (p1X + p2X) * 0.5;
-    const midY = (p1Y + p2Y) * 0.5 - 35; // Slight upward bias to capture heads and jump apexes
 
-    // 2. Dynamic Zoom Calculation based on fighter separation and viewport aspect
+    // 2. Dynamic Zoom Calculation with Guaranteed Side Margins
+    // Both fighters must have generous breathing room (paddingX on both sides)
+    const paddingX = 240; // World coordinates margin per side
     const dist = Math.abs(p1X - p2X);
-    const aspect = viewportW / Math.max(1, viewportH);
-    const aspectMultiplier = aspect < 1.2 ? 0.88 : 1.0; // zoom out slightly on narrow/portrait screens
+    const requiredWorldW = Math.max(760, dist + paddingX * 2);
+
+    // Vertical framing to ensure heads and ground shadows remain fully in frame
+    const highestFighterY = Math.min(p1Y - 240, p2Y - 240) - 40;
+    const lowestFighterY = WorldCoordinateSystem.GROUND_Y + 50;
+    const requiredWorldH = Math.max(500, lowestFighterY - highestFighterY);
+
+    const zoomX = viewportW / requiredWorldW;
+    const zoomY = viewportH / requiredWorldH;
 
     const desiredZoom = Math.max(
       this.minZoom,
-      Math.min(this.maxZoom, (960 / (dist + 380)) * aspectMultiplier)
+      Math.min(this.maxZoom, Math.min(zoomX, zoomY))
     );
 
-    // 3. Smooth Exponential Interpolation
-    const lerpRate = 1 - Math.exp(-9.0 * dt);
-    const targetX = Math.max(this.minX, Math.min(this.maxX, midX));
-    const targetY = Math.max(this.minY, Math.min(this.maxY, midY));
+    // 3. Stage Bounds Clamping for Camera X
+    const halfVisibleW = (viewportW * 0.5) / desiredZoom;
+    const stageLeft = WorldCoordinateSystem.STAGE_BOUND_LEFT;
+    const stageRight = WorldCoordinateSystem.STAGE_BOUND_RIGHT;
+
+    let targetX = midX;
+    if (halfVisibleW * 2 >= (stageRight - stageLeft)) {
+      // If the stage fully fits within the visible viewport, lock camera to stage center
+      targetX = (stageLeft + stageRight) * 0.5;
+    } else {
+      const minCamX = stageLeft + halfVisibleW;
+      const maxCamX = stageRight - halfVisibleW;
+      targetX = Math.max(minCamX, Math.min(maxCamX, midX));
+    }
+
+    // 4. Stable Fighting Horizon (Camera Y)
+    // The ground plane (y = 560) is held stable near the bottom third (~73% viewport height)
+    const targetGroundRatio = 0.73;
+    const baseY = WorldCoordinateSystem.GROUND_Y - (viewportH * (targetGroundRatio - 0.5)) / desiredZoom;
+
+    // Subtle aerial follow if fighters jump or get juggled
+    const p1Air = Math.min(0, p1Y - WorldCoordinateSystem.GROUND_Y);
+    const p2Air = Math.min(0, p2Y - WorldCoordinateSystem.GROUND_Y);
+    const highestAir = Math.min(p1Air, p2Air);
+    const jumpFollow = highestAir * 0.22; // subtle 22% upward follow
+    const targetY = baseY + jumpFollow;
+
+    // 5. Smooth Exponential Interpolation
+    const lerpRate = 1 - Math.exp(-10.0 * dt);
+    const zoomLerpRate = 1 - Math.exp(-8.0 * dt);
 
     this.x += (targetX - this.x) * lerpRate;
-    this.y += (targetY - this.y) * (lerpRate * 0.8);
-    this.zoom += (desiredZoom - this.zoom) * (lerpRate * 0.7);
+    this.y += (targetY - this.y) * lerpRate;
+    this.zoom += (desiredZoom - this.zoom) * zoomLerpRate;
 
-    // 4. Screen Shake Processing
+    // 6. Screen Shake Processing
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
       const progress = Math.max(0, this.shakeTimer / 0.3);
@@ -88,6 +124,20 @@ export class FightCamera2D {
       this.shakeX = 0;
       this.shakeY = 0;
     }
+  }
+
+  /**
+   * Computes the visible bounding rectangle in world coordinates.
+   */
+  public getVisibleWorldBounds(viewportW: number, viewportH: number): VisibleWorldBounds2D {
+    const halfW = (viewportW * 0.5) / this.zoom;
+    const halfH = (viewportH * 0.5) / this.zoom;
+    return {
+      minX: this.x - halfW,
+      maxX: this.x + halfW,
+      minY: this.y - halfH,
+      maxY: this.y + halfH,
+    };
   }
 
   /**

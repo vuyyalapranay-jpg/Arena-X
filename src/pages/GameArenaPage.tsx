@@ -90,10 +90,12 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
     );
 
     engineRef.current = engine;
+    (window as any).__ARENA_X_ENGINE__ = engine;
 
     return () => {
       engine.dispose();
       engineRef.current = null;
+      delete (window as any).__ARENA_X_ENGINE__;
     };
   }, [gameMode, settings]);
 

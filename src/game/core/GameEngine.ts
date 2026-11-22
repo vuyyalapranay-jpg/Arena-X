@@ -277,8 +277,9 @@ export class GameEngine {
     this.arena.update(deltaTime);
     this.vfx.update(deltaTime);
 
-    // 8. Update Camera Tracking
+    // 8. Update Camera Tracking & Viewport Boundary Clamping
     this.updateCamera(deltaTime);
+    this.enforceViewportAndStageBounds();
 
     // 9. Combo Decay Timer
     if (this.comboResetTimer > 0) {
@@ -428,6 +429,46 @@ export class GameEngine {
       width,
       height
     );
+  }
+
+  /**
+   * Enforces fighting-game screen edge boundaries ("corner walls")
+   * to guarantee neither fighter is ever pushed or walks off-screen.
+   */
+  private enforceViewportAndStageBounds(): void {
+    const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
+    const height = this.canvas.height / Math.min(window.devicePixelRatio || 1, 2);
+    const bounds = this.camera.getVisibleWorldBounds(width, height);
+
+    // Generous side margin (in world space) so full body, limbs, and combat poses
+    // never get clipped by the viewport edges
+    const margin = 95;
+
+    const minAllowedX = Math.max(WorldCoordinateSystem.STAGE_BOUND_LEFT + margin, bounds.minX + margin);
+    const maxAllowedX = Math.min(WorldCoordinateSystem.STAGE_BOUND_RIGHT - margin, bounds.maxX - margin);
+
+    // Screen edge wall clamping
+    if (this.fighterP1.x < minAllowedX) this.fighterP1.x = minAllowedX;
+    if (this.fighterP1.x > maxAllowedX) this.fighterP1.x = maxAllowedX;
+
+    if (this.fighterP2.x < minAllowedX) this.fighterP2.x = minAllowedX;
+    if (this.fighterP2.x > maxAllowedX) this.fighterP2.x = maxAllowedX;
+
+    // Corner wall pushbox collision: prevent fighters from overlapping when pushed into corner
+    const dist = this.fighterP2.x - this.fighterP1.x;
+    const minSeparation = 72;
+    if (Math.abs(dist) < minSeparation) {
+      if (this.fighterP1.x <= minAllowedX + 2) {
+        this.fighterP2.x = minAllowedX + minSeparation;
+      } else if (this.fighterP2.x >= maxAllowedX - 2) {
+        this.fighterP1.x = maxAllowedX - minSeparation;
+      } else {
+        const overlap = minSeparation - Math.abs(dist);
+        const sign = dist >= 0 ? 1 : -1;
+        this.fighterP1.x -= sign * (overlap * 0.5);
+        this.fighterP2.x += sign * (overlap * 0.5);
+      }
+    }
   }
 
   private handleKnockout(winner: PlayerId): void {
