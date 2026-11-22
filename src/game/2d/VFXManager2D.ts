@@ -292,17 +292,17 @@ export class VFXManager2D {
   }
 
   public spawnAuraParticle(x: number, y: number, color = '#00e5ff'): void {
-    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
-    const speed = 60 + Math.random() * 140;
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+    const speed = 40 + Math.random() * 80;
     this.auraParticles.push({
-      x: x + (Math.random() - 0.5) * 40,
-      y: y + (Math.random() - 0.5) * 60,
+      x: x + (Math.random() - 0.5) * 36,
+      y: y + (Math.random() - 0.5) * 12,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 60,
-      radius: 6 + Math.random() * 8,
+      vy: Math.sin(angle) * speed - 30,
+      radius: 2 + Math.random() * 3,
       color,
-      alpha: 0.85,
-      lifetime: 0.32 + Math.random() * 0.18,
+      alpha: 0.7,
+      lifetime: 0.35 + Math.random() * 0.2,
       age: 0,
     });
   }
@@ -343,27 +343,6 @@ export class VFXManager2D {
   }
 
   public render(ctx: CanvasRenderingContext2D): void {
-    // 0. Render After-Images
-    ctx.save();
-    for (const ai of this.afterImages) {
-      ctx.save();
-      ctx.translate(ai.x, ai.y);
-      ctx.scale(ai.facing, 1);
-      ctx.globalAlpha = ai.alpha * 0.5;
-      ctx.fillStyle = ai.color;
-      ctx.shadowColor = ai.color;
-      ctx.shadowBlur = 14;
-      // Silhouette humanoid approximation
-      ctx.beginPath();
-      ctx.arc(0, -180, 22, 0, Math.PI * 2); // Head
-      ctx.rect(-24, -155, 48, 85);          // Torso
-      ctx.rect(-18, -70, 16, 70);           // Leg L
-      ctx.rect(4, -70, 16, 70);             // Leg R
-      ctx.fill();
-      ctx.restore();
-    }
-    ctx.restore();
-
     // 1. Render Shockwaves (Projected on floor plane)
     ctx.save();
     for (const sw of this.shockwaves) {

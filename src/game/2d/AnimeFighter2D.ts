@@ -523,7 +523,7 @@ export class AnimeFighter2D {
     }
 
     // 0.7 After-Image Spawning during Dash attacks
-    if (this.currentAttackType === 'FLASH_DASH' || this.currentAttackType === 'PHANTOM_DASH' || this.isSurging) {
+    if (this.currentAttackType === 'FLASH_DASH' || this.currentAttackType === 'PHANTOM_DASH') {
       this.afterImageTimer += dt;
     }
 

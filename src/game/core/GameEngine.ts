@@ -411,24 +411,30 @@ export class GameEngine {
       this.vfx.cinematicVignetteAlpha = 0.65;
       this.vfx.cinematicVignetteColor = activeCinematic.id === 'P1' ? '#001a33' : '#1a0033';
       const auraColor = activeCinematic.id === 'P1' ? '#00e5ff' : '#ba68c8';
-      this.vfx.spawnAuraParticle(activeCinematic.x, activeCinematic.y - 80, auraColor);
+      if (Math.random() < 0.4) {
+        this.vfx.spawnAuraParticle(activeCinematic.x, activeCinematic.y - 15, auraColor);
+      }
     } else {
       this.vfx.cinematicVignetteAlpha = 0;
     }
 
-    if (this.fighterP1.isCharging || this.fighterP1.isSurging) {
-      this.vfx.spawnAuraParticle(this.fighterP1.x, this.fighterP1.y - 80, '#00e5ff');
+    if (this.fighterP1.isCharging && Math.random() < 0.35) {
+      this.vfx.spawnAuraParticle(this.fighterP1.x, this.fighterP1.y - 15, '#00e5ff');
     }
-    if (this.fighterP2.isCharging || this.fighterP2.isSurging) {
-      this.vfx.spawnAuraParticle(this.fighterP2.x, this.fighterP2.y - 80, '#ba68c8');
+    if (this.fighterP2.isCharging && Math.random() < 0.35) {
+      this.vfx.spawnAuraParticle(this.fighterP2.x, this.fighterP2.y - 15, '#ba68c8');
     }
 
     if (this.fighterP1.afterImageTimer >= 0.04) {
-      this.vfx.spawnAfterImage(this.fighterP1.x, this.fighterP1.y, this.fighterP1.facing, '#00e5ff');
+      if (this.fighterP1.currentAttackType === 'FLASH_DASH') {
+        this.vfx.spawnAfterImage(this.fighterP1.x, this.fighterP1.y, this.fighterP1.facing, '#00e5ff');
+      }
       this.fighterP1.afterImageTimer = 0;
     }
     if (this.fighterP2.afterImageTimer >= 0.04) {
-      this.vfx.spawnAfterImage(this.fighterP2.x, this.fighterP2.y, this.fighterP2.facing, '#ba68c8');
+      if (this.fighterP2.currentAttackType === 'PHANTOM_DASH') {
+        this.vfx.spawnAfterImage(this.fighterP2.x, this.fighterP2.y, this.fighterP2.facing, '#ba68c8');
+      }
       this.fighterP2.afterImageTimer = 0;
     }
 
