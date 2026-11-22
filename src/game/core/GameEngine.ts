@@ -281,6 +281,34 @@ export class GameEngine {
 
     // 7. Update Parallax Arena & VFX
     this.arena.update(deltaTime);
+
+    // Phase 5: Aura & Cinematic VFX Processing
+    const activeCinematic = this.fighterP1.isCinematic ? this.fighterP1 : this.fighterP2.isCinematic ? this.fighterP2 : null;
+    if (activeCinematic) {
+      this.vfx.cinematicVignetteAlpha = 0.65;
+      this.vfx.cinematicVignetteColor = activeCinematic.id === 'P1' ? '#001a33' : '#1a0033';
+      const auraColor = activeCinematic.id === 'P1' ? '#00e5ff' : '#ba68c8';
+      this.vfx.spawnAuraParticle(activeCinematic.x, activeCinematic.y - 80, auraColor);
+    } else {
+      this.vfx.cinematicVignetteAlpha = 0;
+    }
+
+    if (this.fighterP1.isCharging || this.fighterP1.isSurging) {
+      this.vfx.spawnAuraParticle(this.fighterP1.x, this.fighterP1.y - 80, '#00e5ff');
+    }
+    if (this.fighterP2.isCharging || this.fighterP2.isSurging) {
+      this.vfx.spawnAuraParticle(this.fighterP2.x, this.fighterP2.y - 80, '#ba68c8');
+    }
+
+    if (this.fighterP1.afterImageTimer >= 0.04) {
+      this.vfx.spawnAfterImage(this.fighterP1.x, this.fighterP1.y, this.fighterP1.facing, '#00e5ff');
+      this.fighterP1.afterImageTimer = 0;
+    }
+    if (this.fighterP2.afterImageTimer >= 0.04) {
+      this.vfx.spawnAfterImage(this.fighterP2.x, this.fighterP2.y, this.fighterP2.facing, '#ba68c8');
+      this.fighterP2.afterImageTimer = 0;
+    }
+
     this.vfx.update(deltaTime);
 
     // 8. Update Camera Tracking & Viewport Boundary Clamping
@@ -360,11 +388,28 @@ export class GameEngine {
           } else {
             // Clean hit!
             this.fighterP1.canCancelIntoSpecial = true;
+            this.fighterP1.superMeter = Math.min(100, this.fighterP1.superMeter + 10);
             const isPunch = p1Hitbox.type.includes('PUNCH');
-            this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#ff1a4b', isPunch ? 48 : 58);
-            if (p1Hitbox.type === 'SPECIAL') soundManager.playSpecialAttack();
-            else if (isPunch) soundManager.playPunchHit();
-            else soundManager.playKickHit();
+            this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#00b4ff', isPunch ? 48 : 58);
+
+            // Phase 5: Ultimate & Special impact explosions
+            if (p1Hitbox.type.startsWith('ULTIMATE')) {
+              this.vfx.spawnEnergyExplosion(p1Hitbox.x, p1Hitbox.y, '#00e5ff', 32);
+              soundManager.playEnergyExplosion();
+              this.addScreenShake(26, 0.55);
+              this.vfx.triggerScreenFlash('#ffffff', 0.8);
+              this.hitFreezeTimer = 0.22;
+            } else if (p1Hitbox.type === 'SKY_BREAKER' || p1Hitbox.type === 'VOID_IMPACT') {
+              this.vfx.spawnShockwave(p1Hitbox.x, this.fighterP1.floorY, '#00e5ff', 200);
+              this.addScreenShake(16, 0.35);
+              soundManager.playSpecialAttack();
+            } else if (p1Hitbox.type === 'SPECIAL' || p1Hitbox.type === 'ENERGY_PUNCH' || p1Hitbox.type === 'FLASH_DASH') {
+              soundManager.playSpecialAttack();
+            } else if (isPunch) {
+              soundManager.playPunchHit();
+            } else {
+              soundManager.playKickHit();
+            }
 
             // Combo chaining & tracking
             this.p1Combo++;
@@ -416,11 +461,28 @@ export class GameEngine {
             soundManager.playBlockClank();
           } else {
             this.fighterP2.canCancelIntoSpecial = true;
+            this.fighterP2.superMeter = Math.min(100, this.fighterP2.superMeter + 10);
             const isPunch = p2Hitbox.type.includes('PUNCH');
-            this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#00b4ff', isPunch ? 48 : 58);
-            if (p2Hitbox.type === 'SPECIAL') soundManager.playSpecialAttack();
-            else if (isPunch) soundManager.playPunchHit();
-            else soundManager.playKickHit();
+            this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#ff1a4b', isPunch ? 48 : 58);
+
+            // Phase 5: Ultimate & Special impact explosions for P2 Shadow
+            if (p2Hitbox.type.startsWith('ULTIMATE')) {
+              this.vfx.spawnEnergyExplosion(p2Hitbox.x, p2Hitbox.y, '#ba68c8', 32);
+              soundManager.playEnergyExplosion();
+              this.addScreenShake(26, 0.55);
+              this.vfx.triggerScreenFlash('#ffffff', 0.8);
+              this.hitFreezeTimer = 0.22;
+            } else if (p2Hitbox.type === 'SKY_BREAKER' || p2Hitbox.type === 'VOID_IMPACT') {
+              this.vfx.spawnShockwave(p2Hitbox.x, this.fighterP2.floorY, '#ba68c8', 200);
+              this.addScreenShake(16, 0.35);
+              soundManager.playSpecialAttack();
+            } else if (p2Hitbox.type === 'SPECIAL' || p2Hitbox.type === 'SHADOW_STRIKE' || p2Hitbox.type === 'PHANTOM_DASH') {
+              soundManager.playSpecialAttack();
+            } else if (isPunch) {
+              soundManager.playPunchHit();
+            } else {
+              soundManager.playKickHit();
+            }
 
             this.p2Combo++;
             this.comboResetTimer = 1.25;
@@ -457,15 +519,29 @@ export class GameEngine {
   private updateCamera(dt: number): void {
     const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
     const height = this.canvas.height / Math.min(window.devicePixelRatio || 1, 2);
-    this.camera.update(
-      dt,
-      this.fighterP1.x,
-      this.fighterP1.y,
-      this.fighterP2.x,
-      this.fighterP2.y,
-      width,
-      height
-    );
+
+    // Phase 5: Cinematic Camera Zoom during Ultimate attacks
+    const activeCinematic = this.fighterP1.isCinematic ? this.fighterP1 : this.fighterP2.isCinematic ? this.fighterP2 : null;
+    if (activeCinematic) {
+      const targetCamX = activeCinematic.x;
+      const targetCamY = activeCinematic.y - 60;
+      const targetZoom = 1.35;
+      const lerpRate = 1 - Math.exp(-14.0 * dt);
+
+      this.camera.x += (targetCamX - this.camera.x) * lerpRate;
+      this.camera.y += (targetCamY - this.camera.y) * lerpRate;
+      this.camera.zoom += (targetZoom - this.camera.zoom) * lerpRate;
+    } else {
+      this.camera.update(
+        dt,
+        this.fighterP1.x,
+        this.fighterP1.y,
+        this.fighterP2.x,
+        this.fighterP2.y,
+        width,
+        height
+      );
+    }
   }
 
   /**

@@ -18,6 +18,8 @@ export class InputManager {
     kickLight: false,
     kickHeavy: false,
     special: false,
+    charge: false,
+    ultimate: false,
   };
 
   private touchInputsP2: FighterInputs = {
@@ -33,6 +35,8 @@ export class InputManager {
     kickLight: false,
     kickHeavy: false,
     special: false,
+    charge: false,
+    ultimate: false,
   };
 
   private boundKeyDown: (e: KeyboardEvent) => void;
@@ -67,10 +71,10 @@ export class InputManager {
     
     // Prevent default scroll/tab/focus behavior on fighting game control keys
     const preventCodes = [
-      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyR', 'KeyT', 'KeyE', 'KeyQ',
+      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyR', 'KeyT', 'KeyE', 'KeyQ', 'KeyC', 'KeyV', 'KeyY',
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-      'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'KeyO',
-      'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6', 'NumpadEnter',
+      'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketRight',
+      'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6', 'Numpad7', 'Numpad8', 'NumpadEnter',
       'Space', 'Tab'
     ];
     if (preventCodes.includes(code)) {
@@ -114,6 +118,8 @@ export class InputManager {
       const kickLight = this.isAnyActive('KeyG', 'g') || !!touch.kickLight;
       const kickHeavy = this.isAnyActive('KeyT', 't') || !!touch.kickHeavy;
       const special = this.isAnyActive('Space', 'space', 'KeyE', 'e', 'KeyQ', 'q') || !!touch.special;
+      const charge = this.isAnyActive('KeyC', 'c') || !!touch.charge;
+      const ultimate = this.isAnyActive('KeyV', 'v', 'KeyY', 'y') || !!touch.ultimate;
       const isRunning = this.isAnyActive('ShiftLeft');
 
       return {
@@ -130,6 +136,8 @@ export class InputManager {
         kickLight,
         kickHeavy,
         special,
+        charge,
+        ultimate,
       };
     } else {
       // PLAYER 2 (Right hand: J, U, K, I, L, O or Numpad + Arrow keys)
@@ -138,6 +146,8 @@ export class InputManager {
       const kickLight = this.isAnyActive('KeyK', 'k', 'Numpad1') || !!touch.kickLight;
       const kickHeavy = this.isAnyActive('KeyI', 'i', 'Numpad2') || !!touch.kickHeavy;
       const special = this.isAnyActive('KeyO', 'o', 'NumpadEnter', 'Numpad3') || !!touch.special;
+      const charge = this.isAnyActive('KeyP', 'p', 'Numpad7') || !!touch.charge;
+      const ultimate = this.isAnyActive('BracketRight', 'Numpad8') || !!touch.ultimate;
       const isRunning = this.isAnyActive('ShiftRight');
 
       return {
@@ -154,6 +164,8 @@ export class InputManager {
         kickLight,
         kickHeavy,
         special,
+        charge,
+        ultimate,
       };
     }
   }

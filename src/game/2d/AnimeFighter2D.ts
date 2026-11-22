@@ -80,6 +80,14 @@ export class AnimeFighter2D {
   // Projectile spawned by special attack
   public pendingProjectile: Projectile2D | null = null;
 
+  // Phase 5: Super Energy, Charging, Surge & Cinematic Ultimates
+  public isCharging = false;
+  public isSurging = false;
+  public surgeTimer = 0;
+  public isCinematic = false;
+  public cinematicTimer = 0;
+  public afterImageTimer = 0;
+
   // Constants
   public static readonly MAX_SEPARATION = 760; // Max competitive fighting game engagement distance
   public readonly floorY = 560;
@@ -138,6 +146,12 @@ export class AnimeFighter2D {
     this.animTime = 0;
     this.bufferedAction = null;
     this.pendingProjectile = null;
+    this.isCharging = false;
+    this.isSurging = false;
+    this.surgeTimer = 0;
+    this.isCinematic = false;
+    this.cinematicTimer = 0;
+    this.afterImageTimer = 0;
     this.animController.play('idle', true);
   }
 
@@ -177,9 +191,13 @@ export class AnimeFighter2D {
     const isAttacking = this.currentAttackType !== null;
 
     if (isAttacking) {
-      // Allow canceling into Special on hit
-      if (this.canCancelIntoSpecial && inputs.special && this.superMeter >= 35) {
-        this.startAttack('SPECIAL', 'special');
+      // Allow canceling into Special on hit if meter available
+      if (this.canCancelIntoSpecial && inputs.special && this.superMeter >= 25) {
+        const isP1 = this.id === 'P1';
+        const move = isP1 ? 'BLUE_WAVE' : 'DARK_ORB';
+        this.superMeter -= 25;
+        this.startAttack(move, 'special');
+        this.fireSpecialProjectile(move);
         return;
       }
       // Cannot interrupt with basic movement during active swing
@@ -190,18 +208,86 @@ export class AnimeFighter2D {
     if (this.bufferedAction && now - this.bufferedAction.timestamp < 180) {
       const buffered = this.bufferedAction.type;
       this.bufferedAction = null;
-      if (buffered === 'SPECIAL' && this.superMeter >= 35) {
-        this.startAttack('SPECIAL', 'special');
+      if (buffered === 'SPECIAL' && this.superMeter >= 25) {
+        const isP1 = this.id === 'P1';
+        const move = isP1 ? 'BLUE_WAVE' : 'DARK_ORB';
+        this.superMeter -= 25;
+        this.startAttack(move, 'special');
+        this.fireSpecialProjectile(move);
         return;
       }
     }
 
-    // 4. SPECIAL ATTACK EXECUTION (Requires 35% Super Meter)
-    if (inputs.special) {
-      if (this.superMeter >= 35) {
-        this.startAttack('SPECIAL', 'special');
+    // 4. ULTIMATE ATTACK EXECUTION (Requires 100% Super Meter)
+    if ((inputs.ultimate || (inputs.special && this.superMeter >= 100)) && this.isGrounded) {
+      if (this.superMeter >= 100) {
+        const isP1 = this.id === 'P1';
+        const ultType = isP1 ? 'ULTIMATE_CELESTIAL_BURST' : 'ULTIMATE_ECLIPSE_DOMINION';
+        this.superMeter = 0;
+        this.startAttack(ultType, 'special');
+        this.isCinematic = true;
+        this.cinematicTimer = 0.85;
+        soundManager.playUltimateActivation();
         return;
       }
+    }
+
+    // 4.5 ENERGY CHARGING POSE (Hold C)
+    if (inputs.charge && this.isGrounded && this.currentAttackType === null) {
+      this.isCharging = true;
+      this.state = 'CHARGING';
+      this.vx = 0;
+      this.animController.play('idle');
+      soundManager.playEnergyCharge();
+      return;
+    } else {
+      this.isCharging = false;
+      if (this.state === 'CHARGING') {
+        this.state = 'IDLE';
+      }
+    }
+
+    // 4.6 CHARACTER-SPECIFIC SPECIAL ABILITY EXECUTION (Requires 25-30% Super Meter)
+    if (inputs.special && this.superMeter >= 25) {
+      const isP1 = this.id === 'P1';
+
+      if (inputs.crouch && this.superMeter >= 30) {
+        // Special 4: Anti-Air Sky Breaker (Kai) / Ground Shockwave Void Impact (Shadow)
+        const move = isP1 ? 'SKY_BREAKER' : 'VOID_IMPACT';
+        this.superMeter -= 30;
+        this.startAttack(move, isP1 ? 'uppercut' : 'kickLow');
+        if (isP1) {
+          this.vy = -620;
+          this.jumpOffsetY = -5;
+          this.isGrounded = false;
+        }
+        return;
+      }
+
+      if (((inputs.moveRight && this.facing === 1) || (inputs.moveLeft && this.facing === -1)) && this.superMeter >= 25) {
+        // Special 3: Flash Dash (Kai) / Phantom Dash (Shadow)
+        const move = isP1 ? 'FLASH_DASH' : 'PHANTOM_DASH';
+        this.superMeter -= 25;
+        this.startAttack(move, 'punchForward');
+        this.x += this.facing * 140;
+        soundManager.playDashWhoosh();
+        return;
+      }
+
+      if (inputs.punchHeavy && this.superMeter >= 25) {
+        // Special 1: Charged Melee Strike (Energy Punch / Shadow Strike)
+        const move = isP1 ? 'ENERGY_PUNCH' : 'SHADOW_STRIKE';
+        this.superMeter -= 25;
+        this.startAttack(move, 'punchHeavy');
+        return;
+      }
+
+      // Special 2 (Default): Energy Projectile (Blue Wave / Dark Orb)
+      const move = isP1 ? 'BLUE_WAVE' : 'DARK_ORB';
+      this.superMeter -= 25;
+      this.startAttack(move, 'special');
+      this.fireSpecialProjectile(move);
+      return;
     }
 
     // 5. AIR COMBAT ATTACKS (Jumping Punch & Jumping Kick)
@@ -371,19 +457,27 @@ export class AnimeFighter2D {
 
     this.animController.play(animKey, true);
     const def = this.animController.currentAnim;
-    this.attackDuration = def.framesMax / def.frameRate;
+    this.attackDuration = type.startsWith('ULTIMATE') ? 2.2 : def.framesMax / def.frameRate;
 
-    // Audio trigger
-    if (type === 'SPECIAL') {
+    // Audio & Visual trigger
+    if (type === 'SPECIAL' || type === 'BLUE_WAVE' || type === 'DARK_ORB') {
+      soundManager.playProjectileLaunch(this.id === 'P1');
+    } else if (type === 'FLASH_DASH' || type === 'PHANTOM_DASH') {
+      soundManager.playDashWhoosh();
+    } else if (type === 'ULTIMATE_CELESTIAL_BURST' || type === 'ULTIMATE_ECLIPSE_DOMINION') {
+      soundManager.playUltimateActivation();
+      this.isCinematic = true;
+      this.cinematicTimer = 2.2;
+    } else if (type === 'ENERGY_PUNCH' || type === 'SHADOW_STRIKE' || type === 'SKY_BREAKER' || type === 'VOID_IMPACT') {
       soundManager.playSpecialAttack();
-      this.fireSpecialProjectile();
     } else {
       soundManager.playPunchWhoosh();
     }
   }
 
-  public fireSpecialProjectile(): void {
-    const projType = this.id === 'P1' ? 'CRIMSON_FIREBALL' : 'SHADOW_SHURIKEN';
+  public fireSpecialProjectile(overrideType?: import('./Projectile2D').ProjectileType): void {
+    const isP1 = this.id === 'P1';
+    const projType = overrideType || (isP1 ? 'BLUE_WAVE' : 'DARK_ORB');
     this.pendingProjectile = new Projectile2D(
       this.x + this.facing * 50,
       this.y - 85,
@@ -391,7 +485,6 @@ export class AnimeFighter2D {
       this.id,
       projType
     );
-    this.superMeter = Math.max(0, this.superMeter - 35);
   }
 
   public update(dt: number, opponent: AnimeFighter2D): void {
@@ -400,6 +493,38 @@ export class AnimeFighter2D {
 
     if (this.hitFlashTimer > 0) {
       this.hitFlashTimer -= dt;
+    }
+
+    // 0. Energy Charging State (Hold C)
+    if (this.isCharging && this.isGrounded) {
+      this.superMeter = Math.min(100, this.superMeter + 35 * dt);
+      if (this.superMeter >= 100 && !this.isSurging) {
+        // Auto-ignite power-up Surge mode upon max charge!
+        this.isSurging = true;
+        this.surgeTimer = 8.0;
+        soundManager.playSurgeActivate();
+      }
+    }
+
+    // 0.5 Surge Power-Up Processing
+    if (this.isSurging) {
+      this.surgeTimer -= dt;
+      if (this.surgeTimer <= 0) {
+        this.isSurging = false;
+      }
+    }
+
+    // 0.6 Cinematic Ultimate Timer Processing
+    if (this.isCinematic) {
+      this.cinematicTimer -= dt;
+      if (this.cinematicTimer <= 0) {
+        this.isCinematic = false;
+      }
+    }
+
+    // 0.7 After-Image Spawning during Dash attacks
+    if (this.currentAttackType === 'FLASH_DASH' || this.currentAttackType === 'PHANTOM_DASH' || this.isSurging) {
+      this.afterImageTimer += dt;
     }
 
     // 1. Guard Meter Regeneration (Regenerates +20/s when not blocking)
@@ -527,23 +652,33 @@ export class AnimeFighter2D {
       guardDamage: 20,
       chipDamageRatio: 0.1,
       guardStun: 0.22,
+      damage: timing.damage,
+      knockback: timing.knockback,
+      reach: timing.reach,
+      radius: timing.radius,
+      heightOffset: timing.heightOffset,
+      height: timing.hitType,
+      impactSound: timing.impactSound,
     };
+
+    const baseDmg = config.damage !== undefined ? config.damage : timing.damage;
+    const finalDamage = this.isSurging ? Math.round(baseDmg * 1.15) : baseDmg;
 
     return {
       owner: this.id,
       type: this.currentAttackType,
-      x: this.x + this.facing * timing.reach,
-      y: this.groundY + this.jumpOffsetY + timing.heightOffset,
-      radius: timing.radius,
-      damage: timing.damage,
-      knockback: timing.knockback,
+      x: this.x + this.facing * (config.reach !== undefined ? config.reach : timing.reach),
+      y: this.groundY + this.jumpOffsetY + (config.heightOffset !== undefined ? config.heightOffset : timing.heightOffset),
+      radius: config.radius !== undefined ? config.radius : timing.radius,
+      damage: finalDamage,
+      knockback: config.knockback !== undefined ? config.knockback : timing.knockback,
       verticalKnockback: config.verticalKnockback || 0,
-      height: timing.hitType,
-      hitStun: timing.damage >= 18 ? 0.38 : 0.22,
+      height: config.height || timing.hitType,
+      hitStun: finalDamage >= 24 ? 0.45 : finalDamage >= 18 ? 0.38 : 0.22,
       guardStun: config.guardStun,
       guardDamage: config.guardDamage,
       chipDamageRatio: config.chipDamageRatio,
-      impactSound: timing.impactSound,
+      impactSound: config.impactSound || timing.impactSound,
       facing: this.facing,
     };
   }

@@ -43,6 +43,9 @@ export type FighterState =
   | 'LAND'
   | 'CROUCH'
   | 'ATTACKING'
+  | 'CHARGING'
+  | 'SURGE'
+  | 'CINEMATIC_ULTIMATE'
   | 'PUNCH_LEFT'
   | 'PUNCH_RIGHT'
   | 'PUNCH_LIGHT'
@@ -86,6 +89,10 @@ export interface FighterInputs {
   kickLight?: boolean;
   kickHeavy?: boolean;
   special?: boolean;
+  special2?: boolean;
+  special3?: boolean;
+  charge?: boolean;
+  ultimate?: boolean;
 }
 
 export type AttackType = 
@@ -107,7 +114,19 @@ export type AttackType =
   // Air Attacks
   | 'JUMP_PUNCH'
   | 'JUMP_KICK'
-  // Special
+  // Special Attacks — Kai (Blue Energy)
+  | 'ENERGY_PUNCH'
+  | 'BLUE_WAVE'
+  | 'FLASH_DASH'
+  | 'SKY_BREAKER'
+  | 'ULTIMATE_CELESTIAL_BURST'
+  // Special Attacks — Shadow (Dark Purple Energy)
+  | 'SHADOW_STRIKE'
+  | 'DARK_ORB'
+  | 'PHANTOM_DASH'
+  | 'VOID_IMPACT'
+  | 'ULTIMATE_ECLIPSE_DOMINION'
+  // Legacy Aliases
   | 'SPECIAL'
   | 'CRIMSON_FIREBALL'
   | 'SHADOW_SHURIKEN';

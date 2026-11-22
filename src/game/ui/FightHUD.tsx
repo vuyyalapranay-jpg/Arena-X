@@ -133,6 +133,16 @@ export const FightHUD: React.FC<FightHUDProps> = ({
             <div className="target-guard-bar p1-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, p1Stats.guardMeter || 100)}%`, background: (p1Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#00f0ff', transition: 'width 0.1s linear' }} />
             </div>
+
+            {/* Phase 5: Super Meter (0-100) */}
+            <div className="target-super-bar p1-super-bar" style={{ height: '6px', background: 'rgba(0,10,25,0.7)', marginTop: '3px', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(0,229,255,0.3)', position: 'relative' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, p1Stats.superMeter || 0))}%`, background: (p1Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #00e5ff, #fffb00)' : 'linear-gradient(90deg, #0052cc, #00e5ff)', transition: 'width 0.08s linear' }} />
+            </div>
+            {(p1Stats.superMeter || 0) >= 100 && (
+              <span style={{ fontSize: '10px', fontWeight: 900, color: '#00e5ff', textShadow: '0 0 8px #00e5ff', letterSpacing: '1px', marginTop: '2px', display: 'inline-block' }}>
+                ★ CELESTIAL BURST READY [V]
+              </span>
+            )}
           </div>
         </div>
 
@@ -186,6 +196,16 @@ export const FightHUD: React.FC<FightHUDProps> = ({
             <div className="target-guard-bar p2-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, p2Stats.guardMeter || 100)}%`, background: (p2Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#ff0055', transition: 'width 0.1s linear', marginLeft: 'auto' }} />
             </div>
+
+            {/* Phase 5: Super Meter (0-100) */}
+            <div className="target-super-bar p2-super-bar" style={{ height: '6px', background: 'rgba(20,0,30,0.7)', marginTop: '3px', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(186,104,200,0.3)', position: 'relative' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, p2Stats.superMeter || 0))}%`, background: (p2Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #ba68c8, #ff007f)' : 'linear-gradient(90deg, #4a148c, #ba68c8)', transition: 'width 0.08s linear', marginLeft: 'auto' }} />
+            </div>
+            {(p2Stats.superMeter || 0) >= 100 && (
+              <span style={{ fontSize: '10px', fontWeight: 900, color: '#ff007f', textShadow: '0 0 8px #ff007f', letterSpacing: '1px', marginTop: '2px', display: 'inline-block', textAlign: 'right' }}>
+                ★ ECLIPSE DOMINION READY [P2]
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -386,6 +406,32 @@ export const FightHUD: React.FC<FightHUDProps> = ({
             >
               <span>SPECIAL</span>
               <small>[SPACE]</small>
+            </button>
+            <button
+              className="action-btn charge-btn"
+              onTouchStart={() => onTouchInput('P1', 'charge', true)}
+              onTouchEnd={() => onTouchInput('P1', 'charge', false)}
+              onMouseDown={() => onTouchInput('P1', 'charge', true)}
+              onMouseUp={() => onTouchInput('P1', 'charge', false)}
+              style={{ background: 'linear-gradient(135deg, #0052cc, #00e5ff)' }}
+            >
+              <span>CHARGE</span>
+              <small>[C]</small>
+            </button>
+            <button
+              className="action-btn ultimate-btn"
+              onTouchStart={() => onTouchInput('P1', 'ultimate', true)}
+              onTouchEnd={() => onTouchInput('P1', 'ultimate', false)}
+              onMouseDown={() => onTouchInput('P1', 'ultimate', true)}
+              onMouseUp={() => onTouchInput('P1', 'ultimate', false)}
+              style={{
+                background: (p1Stats.superMeter || 0) >= 100 ? 'linear-gradient(135deg, #ff0055, #ffd700)' : 'rgba(50,50,60,0.6)',
+                border: (p1Stats.superMeter || 0) >= 100 ? '2px solid #ffd700' : '1px solid rgba(255,255,255,0.2)',
+                boxShadow: (p1Stats.superMeter || 0) >= 100 ? '0 0 16px #ffd700' : 'none'
+              }}
+            >
+              <span>ULTIMATE</span>
+              <small>[V]</small>
             </button>
           </div>
         </div>

@@ -46,15 +46,56 @@ export interface SlashTrail {
   age: number;
 }
 
+export interface EnergyShockwave {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  color: string;
+  lineWidth: number;
+  alpha: number;
+  lifetime: number;
+  age: number;
+}
+
+export interface EnergyAuraParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  alpha: number;
+  lifetime: number;
+  age: number;
+}
+
+export interface AfterImage {
+  x: number;
+  y: number;
+  facing: 1 | -1;
+  color: string;
+  alpha: number;
+  lifetime: number;
+  age: number;
+}
+
 export class VFXManager2D {
   public hitSparks: HitSpark[] = [];
   public floatingTexts: FloatingText[] = [];
   public dustParticles: DustParticle[] = [];
   public slashTrails: SlashTrail[] = [];
+  public shockwaves: EnergyShockwave[] = [];
+  public auraParticles: EnergyAuraParticle[] = [];
+  public afterImages: AfterImage[] = [];
 
   // Screen flash for heavy hits or super moves
   public flashColor: string | null = null;
   public flashAlpha = 0;
+
+  // Cinematic Ultimate Vignette
+  public cinematicVignetteAlpha = 0;
+  public cinematicVignetteColor = '#000000';
 
   public update(dt: number): void {
     // 1. Update Hit Sparks
@@ -67,6 +108,40 @@ export class VFXManager2D {
       s.rotation += 4 * dt;
       if (s.age >= s.lifetime) {
         this.hitSparks.splice(i, 1);
+      }
+    }
+
+    // 2. Update Shockwaves
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.age += dt;
+      const progress = sw.age / sw.lifetime;
+      sw.radius = sw.maxRadius * Math.sin(progress * Math.PI * 0.5);
+      sw.alpha = Math.max(0, 1 - progress);
+      if (sw.age >= sw.lifetime) {
+        this.shockwaves.splice(i, 1);
+      }
+    }
+
+    // 3. Update Aura Particles
+    for (let i = this.auraParticles.length - 1; i >= 0; i--) {
+      const ap = this.auraParticles[i];
+      ap.age += dt;
+      ap.x += ap.vx * dt;
+      ap.y += ap.vy * dt;
+      ap.alpha = Math.max(0, 1 - ap.age / ap.lifetime);
+      if (ap.age >= ap.lifetime) {
+        this.auraParticles.splice(i, 1);
+      }
+    }
+
+    // 4. Update After Images
+    for (let i = this.afterImages.length - 1; i >= 0; i--) {
+      const ai = this.afterImages[i];
+      ai.age += dt;
+      ai.alpha = Math.max(0, 1 - ai.age / ai.lifetime);
+      if (ai.age >= ai.lifetime) {
+        this.afterImages.splice(i, 1);
       }
     }
 
@@ -202,8 +277,129 @@ export class VFXManager2D {
     });
   }
 
+  public spawnShockwave(x: number, y: number, color = '#00f0ff', maxRadius = 160): void {
+    this.shockwaves.push({
+      x,
+      y,
+      radius: 10,
+      maxRadius,
+      color,
+      lineWidth: 8,
+      alpha: 1,
+      lifetime: 0.38,
+      age: 0,
+    });
+  }
+
+  public spawnAuraParticle(x: number, y: number, color = '#00e5ff'): void {
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+    const speed = 60 + Math.random() * 140;
+    this.auraParticles.push({
+      x: x + (Math.random() - 0.5) * 40,
+      y: y + (Math.random() - 0.5) * 60,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 60,
+      radius: 6 + Math.random() * 8,
+      color,
+      alpha: 0.85,
+      lifetime: 0.32 + Math.random() * 0.18,
+      age: 0,
+    });
+  }
+
+  public spawnAfterImage(x: number, y: number, facing: 1 | -1, color = '#00e5ff'): void {
+    this.afterImages.push({
+      x,
+      y,
+      facing,
+      color,
+      alpha: 0.75,
+      lifetime: 0.48,
+      age: 0,
+    });
+  }
+
+  public spawnEnergyExplosion(x: number, y: number, color = '#00f0ff', count = 28): void {
+    // Shockwave ring
+    this.spawnShockwave(x, y, color, 240);
+    this.triggerScreenFlash(color, 0.7);
+
+    // Radiant explosive energy particles
+    for (let i = 0; i < count; i++) {
+      const angle = (i * Math.PI * 2) / count + (Math.random() - 0.5) * 0.4;
+      const speed = 180 + Math.random() * 320;
+      this.auraParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 8 + Math.random() * 12,
+        color: Math.random() < 0.5 ? color : '#ffffff',
+        alpha: 1,
+        lifetime: 0.45 + Math.random() * 0.25,
+        age: 0,
+      });
+    }
+  }
+
   public render(ctx: CanvasRenderingContext2D): void {
-    // 1. Render Dust
+    // 0. Render After-Images
+    ctx.save();
+    for (const ai of this.afterImages) {
+      ctx.save();
+      ctx.translate(ai.x, ai.y);
+      ctx.scale(ai.facing, 1);
+      ctx.globalAlpha = ai.alpha * 0.5;
+      ctx.fillStyle = ai.color;
+      ctx.shadowColor = ai.color;
+      ctx.shadowBlur = 14;
+      // Silhouette humanoid approximation
+      ctx.beginPath();
+      ctx.arc(0, -180, 22, 0, Math.PI * 2); // Head
+      ctx.rect(-24, -155, 48, 85);          // Torso
+      ctx.rect(-18, -70, 16, 70);           // Leg L
+      ctx.rect(4, -70, 16, 70);             // Leg R
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // 1. Render Shockwaves (Projected on floor plane)
+    ctx.save();
+    for (const sw of this.shockwaves) {
+      ctx.save();
+      ctx.globalAlpha = sw.alpha;
+      ctx.strokeStyle = sw.color;
+      ctx.lineWidth = sw.lineWidth * (1 - sw.age / sw.lifetime);
+      ctx.shadowColor = sw.color;
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      // Floor perspective ellipse
+      ctx.ellipse(sw.x, sw.y, sw.radius, sw.radius * 0.38, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // 2. Render Aura Particles (Additive blending)
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const ap of this.auraParticles) {
+      ctx.save();
+      ctx.globalAlpha = ap.alpha;
+      const grad = ctx.createRadialGradient(ap.x, ap.y, 0, ap.x, ap.y, ap.radius);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, ap.color);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(ap.x, ap.y, ap.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // 3. Render Dust
     ctx.save();
     for (const d of this.dustParticles) {
       ctx.fillStyle = `rgba(210, 220, 240, ${d.alpha * 0.6})`;
@@ -213,7 +409,7 @@ export class VFXManager2D {
     }
     ctx.restore();
 
-    // 2. Render Hit Sparks (Anime radial starburst)
+    // 4. Render Hit Sparks (Anime radial starburst)
     ctx.save();
     for (const s of this.hitSparks) {
       ctx.save();
@@ -250,7 +446,7 @@ export class VFXManager2D {
     }
     ctx.restore();
 
-    // 3. Render Floating Combo Text
+    // 5. Render Floating Combo Text
     ctx.save();
     for (const t of this.floatingTexts) {
       ctx.save();
@@ -275,7 +471,16 @@ export class VFXManager2D {
     }
     ctx.restore();
 
-    // 4. Screen Flash
+    // 6. Cinematic Vignette (Darkening during ultimate attacks)
+    if (this.cinematicVignetteAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.cinematicVignetteAlpha;
+      ctx.fillStyle = this.cinematicVignetteColor;
+      ctx.fillRect(-2000, -2000, 4000, 4000);
+      ctx.restore();
+    }
+
+    // 7. Screen Flash
     if (this.flashColor && this.flashAlpha > 0) {
       ctx.save();
       ctx.fillStyle = this.flashColor;

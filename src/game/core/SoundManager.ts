@@ -333,6 +333,179 @@ export class SoundManager {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.35);
   }
+
+  public playEnergyCharge(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(560, this.ctx.currentTime + 0.25);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+    filter.Q.setValueAtTime(4.0, this.ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.25);
+  }
+
+  public playProjectileLaunch(isKai = true): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = isKai ? 'triangle' : 'sine';
+    const startFreq = isKai ? 850 : 380;
+    const endFreq = isKai ? 220 : 120;
+    osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + 0.18);
+
+    gain.gain.setValueAtTime(0.45, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.18);
+  }
+
+  public playDashWhoosh(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(420, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(110, this.ctx.currentTime + 0.14);
+
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.14);
+  }
+
+  public playSurgeActivate(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'triangle';
+    osc1.frequency.setValueAtTime(220, this.ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.4);
+    osc2.frequency.setValueAtTime(440, this.ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1320, this.ctx.currentTime + 0.4);
+
+    gain.gain.setValueAtTime(0.55, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc1.start();
+    osc2.start();
+    osc1.stop(this.ctx.currentTime + 0.4);
+    osc2.stop(this.ctx.currentTime + 0.4);
+  }
+
+  public playUltimateActivation(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    // Dramatic cinematic chime chord + sub-bass riser
+    const freqs = [130.81, 196.00, 261.63, 392.00, 523.25]; // C3, G3, C4, G4, C5
+    freqs.forEach((freq, idx) => {
+      if (!this.ctx || !this.sfxGain) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = idx === 0 ? 'sawtooth' : 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this.ctx.currentTime + 0.6);
+
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.65);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.65);
+    });
+  }
+
+  public playEnergyExplosion(): void {
+    this.initAudio();
+    if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+    // Deep sub-bass boom + noise rumble
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(95, this.ctx.currentTime);
+    subOsc.frequency.exponentialRampToValueAtTime(25, this.ctx.currentTime + 0.55);
+
+    subGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
+    subGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.55);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.sfxGain);
+
+    subOsc.start();
+    subOsc.stop(this.ctx.currentTime + 0.55);
+
+    // Filtered noise explosion burst
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.45);
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(650, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.45);
+
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
+
+    whiteNoise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(this.sfxGain);
+
+    whiteNoise.start();
+    whiteNoise.stop(this.ctx.currentTime + 0.45);
+  }
 }
 
 export const soundManager = new SoundManager();
