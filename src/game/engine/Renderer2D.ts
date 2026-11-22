@@ -2,6 +2,7 @@
 // MODULAR CENTRALIZED 2D CANVAS RENDERING ENGINE (10-LAYER PRESENTATION)
 
 import { FightCamera2D } from './FightCamera2D';
+import { Stage2D } from '../stages/Stage2D';
 import { ParallaxArena2D } from '../2d/ParallaxArena2D';
 import { AnimeFighter2D } from '../2d/AnimeFighter2D';
 import { Projectile2D } from '../2d/Projectile2D';
@@ -28,7 +29,7 @@ export class Renderer2D {
   public render(
     viewportW: number,
     viewportH: number,
-    arena: ParallaxArena2D,
+    arena: Stage2D | ParallaxArena2D,
     fighterP1: AnimeFighter2D,
     fighterP2: AnimeFighter2D,
     projectiles: Projectile2D[],

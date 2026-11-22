@@ -23,12 +23,16 @@ interface MainMenuProps {
   onStartGame: (mode: GameMode) => void;
   settings: GameSettings;
   onUpdateSettings: (settings: GameSettings) => void;
+  onOpenStageSelect?: () => void;
+  currentStageName?: string;
 }
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   onStartGame,
   settings,
   onUpdateSettings,
+  onOpenStageSelect,
+  currentStageName = 'ANCIENT TEMPLE',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -153,7 +157,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <header className="menu-header">
           <div className="logo-badge">
             <span className="badge-dot" />
-            <span>2.5D FIGHTING ENGINE • PHASE 2</span>
+            <span>2.5D FIGHTING ENGINE • PHASE 7 ADVANCED ARENAS</span>
           </div>
 
           <div className="arena-logo-wrapper">
@@ -173,7 +177,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
 
           <p className="menu-tagline">
-            NEXT-GEN 3D SKELETAL FIGHTERS • 21-ANIMATION SUITE • RAPIER 3D PHYSICS
+            SIX ORIGINAL 2.5D FIGHTING ARENAS • MULTI-LAYER PARALLAX • ATMOSPHERIC 2D EFFECTS
           </p>
         </header>
 
@@ -241,6 +245,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <span className="sub">Practice moves & combos against practice dummy</span>
               </div>
             </div>
+          </button>
+
+          {/* SELECT ARENA (Phase 7 2.5D Environments) */}
+          <button
+            className="menu-btn standard-btn stage-select-btn"
+            style={{
+              borderColor: '#ff00aa',
+              background: 'linear-gradient(90deg, rgba(255, 0, 170, 0.15) 0%, rgba(10, 14, 24, 0.85) 100%)',
+            }}
+            onMouseEnter={() => soundManager.playMenuHover()}
+            onClick={() => {
+              soundManager.playMenuSelect();
+              if (onOpenStageSelect) onOpenStageSelect();
+            }}
+          >
+            <div className="btn-content">
+              <Sparkles className="btn-icon" size={22} style={{ color: '#ff00aa' }} />
+              <div className="btn-text">
+                <span className="title" style={{ color: '#ff00aa', fontWeight: 900 }}>
+                  STAGE SELECT: {currentStageName}
+                </span>
+                <span className="sub">Six Original 2.5D Arenas • Parallax & Weather FX</span>
+              </div>
+            </div>
+            <span className="status-tag phase2 active-tag" style={{ background: '#ff00aa', color: '#ffffff', fontWeight: 900 }}>
+              6 ARENAS
+            </span>
           </button>
 
           {/* 3. CHARACTER STUDIO (Phase 2 Active Showcase) */}

@@ -24,10 +24,12 @@ import {
 import { multiplayerClient, ConnectionStatus } from '../multiplayer/MultiplayerClient';
 import { RoomMetadata, OnlineCharacter, FullRoomSnapshot } from '../../server/types';
 import { soundManager } from '../game/core/SoundManager';
+import { StageSelectModal } from './StageSelectModal';
+import { StageId } from '../game/stages/StageConfig';
 
 interface OnlineMultiplayerMenuProps {
   onBackToMainMenu: () => void;
-  onLaunchOnlineFight: () => void;
+  onLaunchOnlineFight: (stage?: string) => void;
   initialRoomCode?: string | null;
 }
 
@@ -65,6 +67,7 @@ export const OnlineMultiplayerMenu: React.FC<OnlineMultiplayerMenuProps> = ({
   // Room & Lobby states
   const [copiedCode, setCopiedCode] = useState(false);
   const [snapshot, setSnapshot] = useState<FullRoomSnapshot | null>(null);
+  const [showStageModal, setShowStageModal] = useState(false);
 
   // Save player name
   const handleNameChange = (newName: string) => {
@@ -97,12 +100,12 @@ export const OnlineMultiplayerMenu: React.FC<OnlineMultiplayerMenuProps> = ({
       });
 
       if (snap.match.status === 'FIGHTING') {
-        onLaunchOnlineFight();
+        onLaunchOnlineFight(snap.match.stage);
       }
     });
 
-    const unsubMatchStart = () => {
-      onLaunchOnlineFight();
+    const unsubMatchStart = (stage?: string) => {
+      onLaunchOnlineFight(stage);
     };
     const unsubMatch = multiplayerClient.onMatchStart(unsubMatchStart);
 
@@ -803,7 +806,31 @@ export const OnlineMultiplayerMenu: React.FC<OnlineMultiplayerMenuProps> = ({
             {/* --- VS EMBLEM IN CENTER --- */}
             <div className="lobby-vs-divider">
               <div className="vs-circle">VS</div>
-              <span className="vs-stage-text">STAGE: {snapshot?.match.stage || 'CYBER PAGODA'}</span>
+              <button
+                className="vs-stage-btn"
+                onClick={() => isHost && setShowStageModal(true)}
+                title={isHost ? "Click to change battle arena" : "Stage selected by Host"}
+                style={{
+                  background: 'rgba(10, 16, 28, 0.75)',
+                  border: isHost ? '1px solid #00e5ff' : '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '4px',
+                  padding: '0.35rem 0.75rem',
+                  cursor: isHost ? 'pointer' : 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <span className="vs-stage-text" style={{ color: isHost ? '#00e5ff' : '#ffffff', fontWeight: 800 }}>
+                  STAGE: {snapshot?.match.stage ? snapshot.match.stage.replace(/_/g, ' ') : 'ANCIENT TEMPLE'}
+                </span>
+                {isHost && (
+                  <span style={{ fontSize: '0.7rem', background: '#00e5ff', color: '#000', padding: '1px 5px', borderRadius: '3px', fontWeight: 900 }}>
+                    CHANGE
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* --- PLAYER 2 (Right / Purple Accent) --- */}
@@ -914,6 +941,18 @@ export const OnlineMultiplayerMenu: React.FC<OnlineMultiplayerMenuProps> = ({
           </footer>
         </div>
       )}
+
+      {/* Online Stage Selection Modal (Synchronized via Host) */}
+      <StageSelectModal
+        isOpen={showStageModal}
+        currentStageId={(snapshot?.match.stage as StageId) || 'ANCIENT_TEMPLE'}
+        onSelectStage={(newStageId) => {
+          multiplayerClient.selectStage(newStageId);
+          setShowStageModal(false);
+        }}
+        onClose={() => setShowStageModal(false)}
+        isHost={isHost}
+      />
     </div>
   );
 };

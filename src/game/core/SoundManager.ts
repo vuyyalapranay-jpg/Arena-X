@@ -506,6 +506,76 @@ export class SoundManager {
     whiteNoise.start();
     whiteNoise.stop(this.ctx.currentTime + 0.45);
   }
+
+  // Phase 7: Stage Environmental Ambient Soundscapes
+  private ambienceSource: AudioBufferSourceNode | null = null;
+  private ambienceGain: GainNode | null = null;
+
+  public playStageAmbience(stageId: string): void {
+    this.initAudio();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+
+    this.stopStageAmbience();
+
+    // Create a 2-second looping filtered atmospheric buffer
+    const duration = 2.0;
+    const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const src = this.ctx.createBufferSource();
+    src.buffer = noiseBuffer;
+    src.loop = true;
+
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    if (stageId === 'VOLCANIC_BATTLEFIELD') {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(140, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+    } else if (stageId === 'FROZEN_WASTELAND') {
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+      filter.Q.setValueAtTime(3.0, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+    } else if (stageId === 'NEON_CITY') {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+    } else {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(280, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.14, this.ctx.currentTime);
+    }
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    src.start();
+    this.ambienceSource = src;
+    this.ambienceGain = gain;
+  }
+
+  public stopStageAmbience(): void {
+    if (this.ambienceSource) {
+      try {
+        this.ambienceSource.stop();
+        this.ambienceSource.disconnect();
+      } catch (e) {}
+      this.ambienceSource = null;
+    }
+    if (this.ambienceGain) {
+      try {
+        this.ambienceGain.disconnect();
+      } catch (e) {}
+      this.ambienceGain = null;
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

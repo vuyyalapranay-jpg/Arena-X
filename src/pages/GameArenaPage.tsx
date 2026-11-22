@@ -13,17 +13,20 @@ import {
   PlayerId, 
   FighterInputs 
 } from '../types';
+import { StageId } from '../game/stages/StageConfig';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 interface GameArenaPageProps {
   gameMode: GameMode;
   settings: GameSettings;
+  stageId?: StageId;
   onReturnToMenu: () => void;
 }
 
 export const GameArenaPage: React.FC<GameArenaPageProps> = ({
   gameMode,
   settings,
+  stageId = 'ANCIENT_TEMPLE',
   onReturnToMenu,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -120,13 +123,16 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
 
     engineRef.current = engine;
     (window as any).__ARENA_X_ENGINE__ = engine;
+    if (stageId) {
+      engine.setStage(stageId);
+    }
 
     return () => {
       engine.dispose();
       engineRef.current = null;
       delete (window as any).__ARENA_X_ENGINE__;
     };
-  }, [gameMode, settings]);
+  }, [gameMode, settings, stageId]);
 
   const handlePause = useCallback(() => {
     if (engineRef.current) {

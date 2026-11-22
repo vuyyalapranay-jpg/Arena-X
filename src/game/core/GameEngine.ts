@@ -6,7 +6,8 @@ import { GAME_CONFIG } from '../../config/gameConfig';
 import { InputManager } from '../controls/InputManager';
 import { soundManager } from './SoundManager';
 import { multiplayerClient } from '../../multiplayer/MultiplayerClient';
-import { ParallaxArena2D } from '../2d/ParallaxArena2D';
+import { Stage2D } from '../stages/Stage2D';
+import { StageId, STAGES } from '../stages/StageConfig';
 import { AnimeFighter2D, Hitbox2D, Hurtbox2D } from '../2d/AnimeFighter2D';
 import { VFXManager2D } from '../2d/VFXManager2D';
 import { Projectile2D } from '../2d/Projectile2D';
@@ -30,7 +31,7 @@ export class GameEngine {
   public inputManager: InputManager;
   public fighterP1: AnimeFighter2D;
   public fighterP2: AnimeFighter2D;
-  public arena: ParallaxArena2D;
+  public arena: Stage2D;
   public vfx: VFXManager2D;
   public projectiles: Projectile2D[] = [];
 
@@ -93,7 +94,7 @@ export class GameEngine {
 
     // 2. Initialize Subsystems & Centralized 2D Camera/Renderer
     this.inputManager = new InputManager();
-    this.arena = new ParallaxArena2D();
+    this.arena = new Stage2D('ANCIENT_TEMPLE');
     this.vfx = new VFXManager2D();
     this.camera = new FightCamera2D(1200, WorldCoordinateSystem.DEFAULT_CAM_Y);
     this.renderer2D = new Renderer2D(this.canvas, this.ctx, this.camera);
@@ -134,6 +135,14 @@ export class GameEngine {
         } else if (snap.match.status === 'FINISHED' && this.gameState !== 'MATCH_OVER') {
           this.gameState = 'MATCH_OVER';
           this.callbacks.onGameStateChange(this.gameState);
+        }
+
+        // Phase 7: Online Synchronized Stage Loading
+        if (snap.match.stage) {
+          const remoteStage = snap.match.stage as StageId;
+          if (STAGES[remoteStage] && this.arena.currentStageId !== remoteStage) {
+            this.arena.setStage(remoteStage);
+          }
         }
       }
 
@@ -506,8 +515,12 @@ export class GameEngine {
             const isPunch = p1Hitbox.type.includes('PUNCH');
             this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#00b4ff', isPunch ? 48 : 58);
 
+            // Phase 7: Environmental background & ground reaction to combat impacts
+            this.arena.triggerImpactReaction(p1Hitbox.x, p1Hitbox.y, res.hitbox.knockback > 200 || p1Hitbox.type.startsWith('ULTIMATE'));
+
             // Phase 5: Ultimate & Special impact explosions
             if (p1Hitbox.type.startsWith('ULTIMATE')) {
+              this.arena.triggerUltimateSurge();
               this.vfx.spawnEnergyExplosion(p1Hitbox.x, p1Hitbox.y, '#00e5ff', 32);
               soundManager.playEnergyExplosion();
               this.addScreenShake(26, 0.55);
@@ -579,8 +592,12 @@ export class GameEngine {
             const isPunch = p2Hitbox.type.includes('PUNCH');
             this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#ff1a4b', isPunch ? 48 : 58);
 
+            // Phase 7: Environmental background & ground reaction to combat impacts
+            this.arena.triggerImpactReaction(p2Hitbox.x, p2Hitbox.y, res.hitbox.knockback > 200 || p2Hitbox.type.startsWith('ULTIMATE'));
+
             // Phase 5: Ultimate & Special impact explosions for P2 Shadow
             if (p2Hitbox.type.startsWith('ULTIMATE')) {
+              this.arena.triggerUltimateSurge();
               this.vfx.spawnEnergyExplosion(p2Hitbox.x, p2Hitbox.y, '#ba68c8', 32);
               soundManager.playEnergyExplosion();
               this.addScreenShake(26, 0.55);
@@ -805,6 +822,11 @@ export class GameEngine {
     return this.settings.showHitboxes;
   }
 
+  public setStage(stageId: StageId): void {
+    this.arena.setStage(stageId);
+    soundManager.playStageAmbience(stageId);
+  }
+
   public restartMatch(): void {
     this.matchState = {
       round: 1,
@@ -832,6 +854,7 @@ export class GameEngine {
   }
 
   public dispose(): void {
+    soundManager.stopStageAmbience();
     this.unsubs.forEach((unsub) => unsub());
     this.unsubs = [];
 
