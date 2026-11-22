@@ -98,6 +98,7 @@ export class AnimeFighter2D {
   public jumpImpulse = -780; // px / s
   public walkSpeed = 280;
   public runSpeed = 480;
+  public readonly fighterId: FighterId;
 
   constructor(id: PlayerId, spawnX: number, facing: 1 | -1, fighterId?: FighterId) {
     this.id = id;
@@ -107,6 +108,7 @@ export class AnimeFighter2D {
 
     const isP1 = id === 'P1';
     const fId: FighterId = fighterId || (isP1 ? 'KAI' : 'SHADOW');
+    this.fighterId = fId;
     const profile = ROSTER_FIGHTERS[fId] || ROSTER_FIGHTERS[isP1 ? 'KAI' : 'SHADOW'];
 
     this.name = profile.name.toUpperCase();
@@ -472,16 +474,29 @@ export class AnimeFighter2D {
     // Audio & Visual trigger
     if (type === 'SPECIAL' || type === 'BLUE_WAVE' || type === 'DARK_ORB') {
       soundManager.playProjectileLaunch(this.id === 'P1');
+      soundManager.playVoiceLine(this.fighterId, 'SPECIAL');
     } else if (type === 'FLASH_DASH' || type === 'PHANTOM_DASH') {
       soundManager.playDashWhoosh();
     } else if (type === 'ULTIMATE_CELESTIAL_BURST' || type === 'ULTIMATE_ECLIPSE_DOMINION') {
       soundManager.playUltimateActivation();
+      soundManager.playVoiceLine(this.fighterId, 'ULTIMATE');
       this.isCinematic = true;
       this.cinematicTimer = 2.2;
     } else if (type === 'ENERGY_PUNCH' || type === 'SHADOW_STRIKE' || type === 'SKY_BREAKER' || type === 'VOID_IMPACT') {
       soundManager.playSpecialAttack();
+      soundManager.playVoiceLine(this.fighterId, 'SPECIAL');
+    } else if (type === 'PUNCH_HEAVY') {
+      soundManager.playPunchWhoosh(true);
+      soundManager.playVoiceLine(this.fighterId, 'ATTACK_HEAVY');
+    } else if (type === 'KICK_HEAVY') {
+      soundManager.playKickWhoosh(true);
+      soundManager.playVoiceLine(this.fighterId, 'ATTACK_HEAVY');
+    } else if (type === 'KICK_LIGHT' || type === 'KICK_FRONT' || type === 'KICK_HIGH' || type === 'KICK_LOW') {
+      soundManager.playKickWhoosh(false);
+      soundManager.playVoiceLine(this.fighterId, 'ATTACK_LIGHT');
     } else {
-      soundManager.playPunchWhoosh();
+      soundManager.playPunchWhoosh(false);
+      soundManager.playVoiceLine(this.fighterId, 'ATTACK_LIGHT');
     }
   }
 
@@ -742,7 +757,8 @@ export class AnimeFighter2D {
       this.currentHealth = Math.max(0, this.currentHealth - result.damageDealt);
       this.x += attackerFacing * (result.hitbox.knockback * 0.5);
       this.animController.play('hitHeavy', true);
-      soundManager.playBlockClank();
+      soundManager.playGuardBreak();
+      soundManager.playVoiceLine(this.fighterId, 'HURT_HEAVY');
       return;
     }
 
@@ -759,6 +775,7 @@ export class AnimeFighter2D {
       this.state = 'DEFEAT';
       this.currentAttackType = null;
       this.animController.play('defeat', true);
+      soundManager.playVoiceLine(this.fighterId, 'DEFEAT');
       return;
     }
 
@@ -773,6 +790,8 @@ export class AnimeFighter2D {
         this.isGrounded = false;
       }
       this.animController.play('knockdown', true);
+      soundManager.playKnockdownImpact();
+      soundManager.playVoiceLine(this.fighterId, 'HURT_HEAVY');
     } else if (result.hitbox.knockback > 220 || result.hitbox.verticalKnockback < -100) {
       // Knockback tumble
       this.state = 'KNOCKBACK';
@@ -783,11 +802,13 @@ export class AnimeFighter2D {
         this.isGrounded = false;
       }
       this.animController.play('knockback', true);
+      soundManager.playVoiceLine(this.fighterId, 'HURT_HEAVY');
     } else {
       // Standard Hit Stun
       this.state = 'HIT_STAGGER';
       this.hitStunTimer = result.hitbox.hitStun;
       this.animController.play(result.hitbox.damage >= 16 ? 'hitHeavy' : 'hitLight', true);
+      soundManager.playVoiceLine(this.fighterId, result.hitbox.damage >= 16 ? 'HURT_HEAVY' : 'HURT_LIGHT');
     }
   }
 

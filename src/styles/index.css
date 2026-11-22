@@ -1414,8 +1414,7 @@ html, body, #root {
 
 .pause-modal-card,
 .match-over-card,
-.feature-preview-card,
-.settings-modal-card {
+.feature-preview-card {
   position: relative;
   background: linear-gradient(180deg, #101626 0%, #0a0d18 100%);
   border: 1px solid var(--border-highlight);
@@ -1424,6 +1423,24 @@ html, body, #root {
   padding: 32px 36px;
   width: 90%;
   max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: modalEnter 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.settings-modal-card {
+  position: relative;
+  background: linear-gradient(180deg, #101626 0%, #0a0d18 100%);
+  border: 1px solid var(--border-highlight);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(32, 43, 61, 0.4);
+  border-radius: 12px;
+  padding: 24px 32px;
+  width: 92%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;

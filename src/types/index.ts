@@ -173,6 +173,9 @@ export interface GameSettings {
   masterVolume: number;
   sfxVolume: number;
   musicVolume: number;
+  voiceVolume: number;
+  ambienceVolume: number;
+  isMuted: boolean;
   showHitboxes: boolean;
   showControlsOverlay: boolean;
   enableTouchControls: boolean;

@@ -33,6 +33,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
   const handleCardClick = (id: FighterId) => {
     soundManager.playMenuSelect();
+    soundManager.playVoiceLine(id, 'SELECT');
     setHoveredFighter(id);
     if (activeSlot === 'P1') {
       onSelectP1(id);

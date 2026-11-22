@@ -464,10 +464,14 @@ export class GameEngine {
           this.matchState.winner = 'P1';
           this.matchState.announcement = 'PLAYER 1 VICTORIOUS!';
           this.gameState = 'MATCH_OVER';
+          soundManager.playVictoryMusic();
+          soundManager.playVoiceLine(this.fighterP1.fighterId, 'VICTORY');
         } else if (this.matchState.p2RoundsWon >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) {
           this.matchState.winner = 'P2';
           this.matchState.announcement = 'PLAYER 2 VICTORIOUS!';
           this.gameState = 'MATCH_OVER';
+          soundManager.playVictoryMusic();
+          soundManager.playVoiceLine(this.fighterP2.fighterId, 'VICTORY');
         } else {
           // Next Round
           this.startRoundIntro(this.matchState.round + 1);
@@ -833,6 +837,7 @@ export class GameEngine {
 
   public setStage(stageId: StageId): void {
     this.arena.setStage(stageId);
+    soundManager.playStageMusic(stageId);
     soundManager.playStageAmbience(stageId);
   }
 
@@ -863,6 +868,7 @@ export class GameEngine {
   }
 
   public dispose(): void {
+    soundManager.stopBGM();
     soundManager.stopStageAmbience();
     this.unsubs.forEach((unsub) => unsub());
     this.unsubs = [];

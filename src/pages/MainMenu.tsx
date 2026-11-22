@@ -8,6 +8,10 @@ import {
   User, 
   Settings as SettingsIcon, 
   Volume2, 
+  VolumeX,
+  Music,
+  Mic,
+  Wind,
   Monitor, 
   CheckCircle2, 
   X,
@@ -133,7 +137,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
     render();
 
+    soundManager.playMenuMusic();
+
     return () => {
+      soundManager.stopBGM(0.3);
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
@@ -552,6 +559,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
             </div>
 
+            {/* Audio Channels & Sliders */}
+            <div className="setting-section-header" style={{ marginTop: '14px', marginBottom: '8px', color: '#00e5ff', fontSize: '13px', fontWeight: 'bold', letterSpacing: '1px' }}>
+              AUDIO CHANNELS & CINEMATIC SOUND
+            </div>
+
+            {/* Mute All Toggle */}
+            <div className="setting-row">
+              <div className="setting-label">
+                {settings.isMuted ? <VolumeX size={18} color="#ff1744" /> : <Volume2 size={18} color="#00e5ff" />}
+                <span>Mute All Audio</span>
+              </div>
+              <button
+                className={`toggle-btn ${settings.isMuted ? 'active' : ''}`}
+                onClick={() => {
+                  const muted = soundManager.toggleMute();
+                  onUpdateSettings({ ...settings, isMuted: muted });
+                }}
+              >
+                {settings.isMuted ? 'MUTED' : 'UNMUTED'}
+              </button>
+            </div>
+
             {/* Audio Master Volume */}
             <div className="setting-row">
               <div className="setting-label">
@@ -568,6 +597,92 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   const val = parseFloat(e.target.value);
                   soundManager.setMasterVolume(val);
                   onUpdateSettings({ ...settings, masterVolume: val });
+                }}
+                className="setting-slider"
+              />
+            </div>
+
+            {/* Background Music Volume */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <Music size={18} color="#bb86fc" />
+                <span>Music / BGM ({Math.round(settings.musicVolume * 100)}%)</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.musicVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  soundManager.setMusicVolume(val);
+                  onUpdateSettings({ ...settings, musicVolume: val });
+                }}
+                className="setting-slider"
+              />
+            </div>
+
+            {/* SFX Volume */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <Sparkles size={18} color="#ffb74d" />
+                <span>Combat SFX ({Math.round(settings.sfxVolume * 100)}%)</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.sfxVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  soundManager.setSfxVolume(val);
+                  soundManager.playHeavyHit();
+                  onUpdateSettings({ ...settings, sfxVolume: val });
+                }}
+                className="setting-slider"
+              />
+            </div>
+
+            {/* Character Voices Volume */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <Mic size={18} color="#4fc3f7" />
+                <span>Character Voices ({Math.round(settings.voiceVolume * 100)}%)</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.voiceVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  soundManager.setVoiceVolume(val);
+                  soundManager.playVoiceLine('KAI', 'ATTACK_HEAVY');
+                  onUpdateSettings({ ...settings, voiceVolume: val });
+                }}
+                className="setting-slider"
+              />
+            </div>
+
+            {/* Ambience Volume */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <Wind size={18} color="#81c784" />
+                <span>Stage Ambience ({Math.round(settings.ambienceVolume * 100)}%)</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.ambienceVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  soundManager.setAmbienceVolume(val);
+                  onUpdateSettings({ ...settings, ambienceVolume: val });
                 }}
                 className="setting-slider"
               />

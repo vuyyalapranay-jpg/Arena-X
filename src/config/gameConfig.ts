@@ -56,8 +56,11 @@ export const GAME_CONFIG = {
   DEFAULT_SETTINGS: {
     graphicsQuality: 'high',
     masterVolume: 0.8,
-    sfxVolume: 0.9,
-    musicVolume: 0.7,
+    sfxVolume: 0.85,
+    musicVolume: 0.65,
+    voiceVolume: 0.9,
+    ambienceVolume: 0.5,
+    isMuted: false,
     showHitboxes: false,
     showControlsOverlay: true,
     enableTouchControls: false,
