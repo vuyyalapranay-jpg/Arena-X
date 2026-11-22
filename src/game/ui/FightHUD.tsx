@@ -253,26 +253,32 @@ export const FightHUD: React.FC<FightHUDProps> = ({
         <footer className="target-bottom-controls-bar">
           {/* P1 CONTROLS */}
           <div className="p1-controls-section">
-            <span className="p1-label">P1 CONTROLS:</span>
+            <span className="p1-label">P1 (KAI):</span>
             <div className="key-item"><span className="key-cap">A/D</span> Move</div>
             <div className="key-item"><span className="key-cap">W</span> Jump</div>
             <div className="key-item"><span className="key-cap">S</span> Crouch</div>
             <div className="key-item"><span className="key-cap">F</span> Punch</div>
+            <div className="key-item"><span className="key-cap">R</span> Heavy</div>
             <div className="key-item"><span className="key-cap">G</span> Kick</div>
+            <div className="key-item"><span className="key-cap">T</span> High Kick</div>
             <div className="key-item"><span className="key-cap">H</span> Block</div>
+            <div className="key-item"><span className="key-cap">SPACE</span> Special</div>
           </div>
 
           <div className="controls-glow-divider" />
 
           {/* P2 CONTROLS */}
           <div className="p2-controls-section">
-            <span className="p2-label">P2 CONTROLS:</span>
+            <span className="p2-label">P2 (SHADOW):</span>
             <div className="key-item"><span className="key-cap">← / →</span> Move</div>
             <div className="key-item"><span className="key-cap">↑</span> Jump</div>
             <div className="key-item"><span className="key-cap">↓</span> Crouch</div>
             <div className="key-item"><span className="key-cap">J</span> Punch</div>
+            <div className="key-item"><span className="key-cap">U</span> Heavy</div>
             <div className="key-item"><span className="key-cap">K</span> Kick</div>
+            <div className="key-item"><span className="key-cap">I</span> High Kick</div>
             <div className="key-item"><span className="key-cap">L</span> Block</div>
+            <div className="key-item"><span className="key-cap">O</span> Special</div>
           </div>
         </footer>
       )}

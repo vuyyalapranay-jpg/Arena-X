@@ -67,8 +67,10 @@ export class InputManager {
     
     // Prevent default scroll/tab/focus behavior on fighting game control keys
     const preventCodes = [
-      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH',
-      'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyJ', 'KeyK', 'KeyL',
+      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyR', 'KeyT', 'KeyE', 'KeyQ',
+      'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+      'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'KeyO',
+      'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6', 'NumpadEnter',
       'Space', 'Tab'
     ];
     if (preventCodes.includes(code)) {
@@ -106,12 +108,13 @@ export class InputManager {
     const touch = isP1 ? this.touchInputsP1 : this.touchInputsP2;
 
     if (isP1) {
-      const punchLight = this.isAnyActive('KeyF', 'f', 'KeyJ', 'j') || !!touch.punchLight;
-      const punchHeavy = this.isAnyActive('KeyR', 'r', 'KeyU', 'u') || !!touch.punchHeavy;
-      const kickLight = this.isAnyActive('KeyG', 'g', 'KeyK', 'k') || !!touch.kickLight;
-      const kickHeavy = this.isAnyActive('KeyT', 't', 'KeyI', 'i') || !!touch.kickHeavy;
-      const special = this.isAnyActive('Space', 'space', 'KeyO', 'o', 'KeyE', 'e') || !!touch.special;
-      const isRunning = this.isAnyActive('ShiftLeft', 'ShiftRight');
+      // PLAYER 1 (Left hand / Left side of keyboard + Touch Controls)
+      const punchLight = this.isAnyActive('KeyF', 'f') || !!touch.punchLight;
+      const punchHeavy = this.isAnyActive('KeyR', 'r') || !!touch.punchHeavy;
+      const kickLight = this.isAnyActive('KeyG', 'g') || !!touch.kickLight;
+      const kickHeavy = this.isAnyActive('KeyT', 't') || !!touch.kickHeavy;
+      const special = this.isAnyActive('Space', 'space', 'KeyE', 'e', 'KeyQ', 'q') || !!touch.special;
+      const isRunning = this.isAnyActive('ShiftLeft');
 
       return {
         moveLeft: this.isAnyActive('KeyA', 'a') || touch.moveLeft,
@@ -120,7 +123,7 @@ export class InputManager {
         crouch: this.isAnyActive('KeyS', 's') || touch.crouch,
         punch: punchLight || punchHeavy || touch.punch,
         kick: kickLight || kickHeavy || touch.kick,
-        block: this.isAnyActive('KeyH', 'h', 'KeyL', 'l') || touch.block,
+        block: this.isAnyActive('KeyH', 'h') || touch.block,
         run: isRunning,
         punchLight,
         punchHeavy,
@@ -129,11 +132,13 @@ export class InputManager {
         special,
       };
     } else {
-      const punchLight = this.isAnyActive('Numpad4', 'Digit4', 'KeyJ', 'j') || !!touch.punchLight;
-      const punchHeavy = this.isAnyActive('Numpad5', 'Digit5', 'KeyU', 'u') || !!touch.punchHeavy;
-      const kickLight = this.isAnyActive('Numpad1', 'Digit1', 'KeyK', 'k') || !!touch.kickLight;
-      const kickHeavy = this.isAnyActive('Numpad2', 'Digit2', 'KeyI', 'i') || !!touch.kickHeavy;
-      const special = this.isAnyActive('NumpadEnter', 'Numpad3', 'Digit3', 'KeyO', 'o') || !!touch.special;
+      // PLAYER 2 (Right hand: J, U, K, I, L, O or Numpad + Arrow keys)
+      const punchLight = this.isAnyActive('KeyJ', 'j', 'Numpad4') || !!touch.punchLight;
+      const punchHeavy = this.isAnyActive('KeyU', 'u', 'Numpad5') || !!touch.punchHeavy;
+      const kickLight = this.isAnyActive('KeyK', 'k', 'Numpad1') || !!touch.kickLight;
+      const kickHeavy = this.isAnyActive('KeyI', 'i', 'Numpad2') || !!touch.kickHeavy;
+      const special = this.isAnyActive('KeyO', 'o', 'NumpadEnter', 'Numpad3') || !!touch.special;
+      const isRunning = this.isAnyActive('ShiftRight');
 
       return {
         moveLeft: this.isAnyActive('ArrowLeft', 'arrowleft') || touch.moveLeft,
@@ -142,7 +147,8 @@ export class InputManager {
         crouch: this.isAnyActive('ArrowDown', 'arrowdown') || touch.crouch,
         punch: punchLight || punchHeavy || touch.punch,
         kick: kickLight || kickHeavy || touch.kick,
-        block: this.isAnyActive('Numpad0', 'Numpad6', 'KeyL', 'l') || touch.block,
+        block: this.isAnyActive('KeyL', 'l', 'Numpad0', 'Numpad6') || touch.block,
+        run: isRunning,
         punchLight,
         punchHeavy,
         kickLight,

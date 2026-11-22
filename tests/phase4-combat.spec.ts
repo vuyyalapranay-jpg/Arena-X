@@ -188,4 +188,53 @@ test.describe('ARENA X — Phase 4 Combat System & Hit Detection', () => {
     const koPath = path.join(screenshotDir, `${projectName}-9-round-ko-announcement.png`);
     await page.screenshot({ path: koPath });
   });
+
+  test('Independent P1 and P2 Inputs — Zero Cross-Talk', async ({ page }) => {
+    // 1. Launch Game & Start Versus Match
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
+    await page.locator('.play-btn').click();
+
+    // Wait until countdown finishes and match enters FIGHTING state
+    await page.waitForFunction(() => {
+      // @ts-ignore
+      return window.__ARENA_X_ENGINE__?.gameState === 'FIGHTING';
+    }, { timeout: 10000 });
+    await page.waitForTimeout(200);
+
+    // 2. Press P1 Punch ('KeyF'): Verify P1 attacks, P2 remains IDLE
+    await page.keyboard.down('KeyF');
+    await page.waitForTimeout(80);
+
+    const checkP1 = await page.evaluate(() => {
+      // @ts-ignore
+      const engine = window.__ARENA_X_ENGINE__;
+      return {
+        p1State: engine.fighterP1.state,
+        p2State: engine.fighterP2.state,
+      };
+    });
+    await page.keyboard.up('KeyF');
+    expect(checkP1.p1State).toBe('ATTACKING');
+    expect(checkP1.p2State).toBe('IDLE');
+
+    // Wait for P1 to recover to IDLE
+    await page.waitForTimeout(400);
+
+    // 3. Press P2 Punch ('KeyJ'): Verify P2 attacks, P1 remains IDLE
+    await page.keyboard.down('KeyJ');
+    await page.waitForTimeout(80);
+
+    const checkP2 = await page.evaluate(() => {
+      // @ts-ignore
+      const engine = window.__ARENA_X_ENGINE__;
+      return {
+        p1State: engine.fighterP1.state,
+        p2State: engine.fighterP2.state,
+      };
+    });
+    await page.keyboard.up('KeyJ');
+    expect(checkP2.p2State).toBe('ATTACKING');
+    expect(checkP2.p1State).toBe('IDLE');
+  });
 });
