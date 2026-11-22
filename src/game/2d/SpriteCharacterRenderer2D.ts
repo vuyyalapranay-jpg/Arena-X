@@ -70,7 +70,8 @@ export class SpriteCharacterRenderer2D {
     id: PlayerId,
     superMeter = 0,
     isHitFlashing = false,
-    state: FighterState = 'IDLE'
+    state: FighterState = 'IDLE',
+    fighterId?: string
   ): void {
     this.preload();
 
@@ -113,9 +114,14 @@ export class SpriteCharacterRenderer2D {
     }
 
     // Directional Facing Scale:
-    // All base sprite assets face RIGHT (+1).
-    // ctx.scale(facing, 1) flips the sprite to face LEFT when facing is -1.
-    ctx.scale(facing, 1);
+    // P1 archetype fighters (Kai, Blaze, Volt, Phantom, Viper, Nova, Aether, Eclipse) are authored facing RIGHT (+1).
+    // P2 archetype fighters (Shadow, Frost, Terra, Ronin, Titan, Reaper, Ryuzen, Zenith) are authored facing LEFT (-1).
+    // scaleX = facing * baseFacing ensures any fighter facing the opponent will always be oriented face-to-face.
+    const rawId = (fighterId || (isP1 ? 'kai' : 'shadow')).toLowerCase();
+    const LEFT_FACING_FIGHTERS = new Set(['shadow', 'frost', 'terra', 'ronin', 'titan', 'reaper', 'ryuzen', 'zenith', 'p2']);
+    const baseFacing = LEFT_FACING_FIGHTERS.has(rawId) ? -1 : 1;
+    const flipX = facing * baseFacing;
+    ctx.scale(flipX, 1);
 
     // High-Resolution Character drawing scale and bottom-center foot anchor
     const scale = 0.58;
@@ -170,7 +176,8 @@ export class SpriteCharacterRenderer2D {
     animTime: number,
     id: PlayerId,
     superMeter = 0,
-    isHitFlashing = false
+    isHitFlashing = false,
+    fighterId?: string
   ): void {
     this.preload();
     // Default fallback
@@ -211,7 +218,11 @@ export class SpriteCharacterRenderer2D {
     if (isHitFlashing) {
       ctx.filter = 'brightness(3) contrast(1.5) drop-shadow(0 0 16px #ffffff)';
     }
-    ctx.scale(facing, 1);
+    const rawId = (fighterId || (isP1 ? 'kai' : 'shadow')).toLowerCase();
+    const LEFT_FACING_FIGHTERS = new Set(['shadow', 'frost', 'terra', 'ronin', 'titan', 'reaper', 'ryuzen', 'zenith', 'p2']);
+    const baseFacing = LEFT_FACING_FIGHTERS.has(rawId) ? -1 : 1;
+    const flipX = facing * baseFacing;
+    ctx.scale(flipX, 1);
     const scale = 0.58;
     ctx.drawImage(
       img,

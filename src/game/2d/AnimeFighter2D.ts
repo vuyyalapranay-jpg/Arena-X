@@ -888,7 +888,8 @@ export class AnimeFighter2D {
       this.id,
       this.superMeter,
       this.hitFlashTimer > 0,
-      this.state
+      this.state,
+      this.fighterId
     );
   }
 
