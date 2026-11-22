@@ -9,6 +9,9 @@ import { ParallaxArena2D } from '../2d/ParallaxArena2D';
 import { AnimeFighter2D, Hitbox2D, Hurtbox2D } from '../2d/AnimeFighter2D';
 import { VFXManager2D } from '../2d/VFXManager2D';
 import { Projectile2D } from '../2d/Projectile2D';
+import { FightCamera2D } from '../engine/FightCamera2D';
+import { Renderer2D } from '../engine/Renderer2D';
+import { WorldCoordinateSystem } from '../engine/WorldCoordinateSystem';
 
 export interface GameEngineCallbacks {
   onMatchStateUpdate: (state: MatchState) => void;
@@ -29,6 +32,10 @@ export class GameEngine {
   public vfx: VFXManager2D;
   public projectiles: Projectile2D[] = [];
 
+  // Centralized 2D Engine Components
+  public camera: FightCamera2D;
+  public renderer2D: Renderer2D;
+
   private callbacks: GameEngineCallbacks;
   private settings: GameSettings;
   private gameMode: GameMode;
@@ -42,13 +49,6 @@ export class GameEngine {
     winner: null,
     announcement: 'ROUND 1',
   };
-
-  // 2D Dynamic Camera Tracking
-  private camX = 1200;
-  private camY = 480;
-  private camZoom = 1.0;
-  private shakeTimer = 0;
-  private shakeIntensity = 0;
 
   // Combo Tracking
   private p1Combo = 0;
@@ -89,10 +89,12 @@ export class GameEngine {
     this.ctx = ctx;
     container.appendChild(this.canvas);
 
-    // 2. Initialize Subsystems
+    // 2. Initialize Subsystems & Centralized 2D Camera/Renderer
     this.inputManager = new InputManager();
     this.arena = new ParallaxArena2D();
     this.vfx = new VFXManager2D();
+    this.camera = new FightCamera2D(1200, WorldCoordinateSystem.DEFAULT_CAM_Y);
+    this.renderer2D = new Renderer2D(this.canvas, this.ctx, this.camera);
 
     // 3. Initialize Anime Fighters
     this.fighterP1 = new AnimeFighter2D('P1', 950, 1);
@@ -411,29 +413,21 @@ export class GameEngine {
   }
 
   private addScreenShake(intensity: number, duration: number): void {
-    this.shakeIntensity = intensity;
-    this.shakeTimer = duration;
+    this.camera.addShake(intensity, duration);
   }
 
   private updateCamera(dt: number): void {
-    // Smoothly pan camera to midpoint between fighters
-    const targetX = (this.fighterP1.x + this.fighterP2.x) / 2;
-    const targetY = (this.fighterP1.y + this.fighterP2.y) / 2 - 35;
-    this.camX += (targetX - this.camX) * 0.1;
-    this.camY += (targetY - this.camY) * 0.08;
-
-    // Dynamic zoom based on fighter distance
-    const dist = Math.abs(this.fighterP1.x - this.fighterP2.x);
-    const targetZoom = Math.max(0.82, Math.min(1.18, 920 / (dist + 380)));
-    this.camZoom += (targetZoom - this.camZoom) * 0.06;
-
-    // Decay camera shake
-    if (this.shakeTimer > 0) {
-      this.shakeTimer -= dt;
-      if (this.shakeTimer <= 0) {
-        this.shakeIntensity = 0;
-      }
-    }
+    const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
+    const height = this.canvas.height / Math.min(window.devicePixelRatio || 1, 2);
+    this.camera.update(
+      dt,
+      this.fighterP1.x,
+      this.fighterP1.y,
+      this.fighterP2.x,
+      this.fighterP2.y,
+      width,
+      height
+    );
   }
 
   private handleKnockout(winner: PlayerId): void {
@@ -483,51 +477,21 @@ export class GameEngine {
   }
 
   private render(): void {
-    const width = this.canvas.width / (Math.min(window.devicePixelRatio || 1, 2));
-    const height = this.canvas.height / (Math.min(window.devicePixelRatio || 1, 2));
+    const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
+    const height = this.canvas.height / Math.min(window.devicePixelRatio || 1, 2);
 
     this.ctx.clearRect(0, 0, width, height);
 
-    // 0. Render edge-to-edge dark screen backdrop to eliminate all black gaps 100%
-    this.arena.renderScreenBackdrop(this.ctx, width, height, this.camX);
-
-    this.ctx.save();
-
-    // 1. Camera Transform (Centering, Zoom & Shake)
-    let shakeX = 0;
-    let shakeY = 0;
-    if (this.shakeTimer > 0) {
-      shakeX = (Math.random() - 0.5) * this.shakeIntensity * 2;
-      shakeY = (Math.random() - 0.5) * this.shakeIntensity * 2;
-    }
-
-    this.ctx.translate(width / 2 + shakeX, height / 2 + shakeY);
-    this.ctx.scale(this.camZoom, this.camZoom);
-    this.ctx.translate(-this.camX, -this.camY);
-
-    // 2. Parallax Background & Arena Floor (Layers 1-5)
-    this.arena.renderBackground(this.ctx, this.camX, this.camY, this.camZoom, width, height);
-
-    // 3. Ground Shadows (Layer 6: Decoupled strictly to ground floorY = 560)
-    this.fighterP1.renderShadow(this.ctx);
-    this.fighterP2.renderShadow(this.ctx);
-
-    // 4. Render Anime Fighters (Layer 7: Grounded at groundY + jumpOffsetY)
-    this.fighterP1.render(this.ctx);
-    this.fighterP2.render(this.ctx);
-
-    // 5. Render Projectiles
-    for (const p of this.projectiles) {
-      p.render(this.ctx);
-    }
-
-    // 6. Render VFX (Sparks, Dust, Combo Numbers)
-    this.vfx.render(this.ctx);
-
-    // 7. Parallax Foreground Layer (Sakura Petals & Framing Eaves)
-    this.arena.renderForeground(this.ctx, this.camX, this.camY);
-
-    this.ctx.restore();
+    // Centralized 10-layer rendering execution
+    this.renderer2D.render(
+      width,
+      height,
+      this.arena,
+      this.fighterP1,
+      this.fighterP2,
+      this.projectiles,
+      this.vfx
+    );
   }
 
   public restartMatch(): void {

@@ -191,7 +191,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Swords className="btn-icon" size={24} />
               <div className="btn-text">
                 <span className="title">PLAY VS BATTLE</span>
-                <span className="sub">Local 2-Player 3D Combat (Keyboard / Touch)</span>
+                <span className="sub">Local 2-Player 2D Anime Combat (Keyboard / Touch)</span>
               </div>
             </div>
             <div className="btn-corner-cut" />
@@ -304,7 +304,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
-            <span>ENGINE:</span> <strong>THREE.JS SKELETAL & RAPIER 3D</strong>
+            <span>ENGINE:</span> <strong>PHASER 3 & HTML5 CANVAS 2D</strong>
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
