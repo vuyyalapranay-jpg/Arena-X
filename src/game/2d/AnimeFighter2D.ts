@@ -1,9 +1,12 @@
 // src/game/2d/AnimeFighter2D.ts
+// PHASE 3 ANIME FIGHTER WITH DEDICATED ANIMATION CONTROLLER & SYNCHRONIZED COMBAT
+
 import { AttackType, FighterInputs, FighterState, FighterStats, PlayerId } from '../../types';
-import { AnimeCharacterRenderer2D, FighterAppearance } from './AnimeCharacterRenderer2D';
 import { SpriteCharacterRenderer2D } from './SpriteCharacterRenderer2D';
 import { Projectile2D } from './Projectile2D';
 import { soundManager } from '../core/SoundManager';
+import { AnimationController } from '../animation/AnimationController';
+import { CharacterAnimationSet, P1_ANIMATIONS, P2_ANIMATIONS } from '../animation/AnimationConfig';
 
 export interface Hitbox2D {
   x: number;
@@ -24,7 +27,16 @@ export interface Hurtbox2D {
 export class AnimeFighter2D {
   public id: PlayerId;
   public name: string;
-  public appearance: FighterAppearance;
+  public appearance: {
+    name: string;
+    isP1: boolean;
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    emissiveColor: string;
+    skinColor: string;
+    hairColor: string;
+  };
 
   // 2D World Coordinates (Floor at groundY = 560)
   public x: number;
@@ -49,6 +61,9 @@ export class AnimeFighter2D {
   public roundsWon = 0;
   public isGrounded = true;
 
+  // Dedicated Phase 3 Animation Controller
+  public animController: AnimationController;
+
   // Combat Timers & Attack State
   public currentAttackType: AttackType | 'SPECIAL' | 'ULTIMATE' | null = null;
   public attackTimer = 0;
@@ -61,7 +76,7 @@ export class AnimeFighter2D {
   public hitFlashTimer = 0;
   public animTime = 0;
 
-  // New projectile spawned by special attack
+  // Projectile spawned by special attack
   public pendingProjectile: Projectile2D | null = null;
 
   // Constants
@@ -91,6 +106,9 @@ export class AnimeFighter2D {
       skinColor: isP1 ? '#df9e78' : '#d29672',
       hairColor: isP1 ? '#141416' : '#f0f0f5',
     };
+
+    // Initialize Animation Controller with character-specific animations
+    this.animController = new AnimationController(isP1 ? P1_ANIMATIONS : P2_ANIMATIONS);
   }
 
   public reset(spawnX: number, facing: 1 | -1): void {
@@ -101,17 +119,20 @@ export class AnimeFighter2D {
     this.facing = facing;
     this.state = 'IDLE';
     this.currentHealth = this.maxHealth;
-    this.attackTimer = 0;
+    this.superMeter = 0;
+    this.isGrounded = true;
     this.currentAttackType = null;
+    this.attackTimer = 0;
     this.hasHitCurrentAttack = false;
     this.hitStunTimer = 0;
     this.hitFlashTimer = 0;
-    this.isGrounded = true;
+    this.animTime = 0;
     this.pendingProjectile = null;
+    this.animController.play('idle', true);
   }
 
   public handleInput(inputs: FighterInputs, opponent: AnimeFighter2D): void {
-    // Cannot act while stunned or knocked out
+    // Cannot act while stunned, knocked down, or defeated
     if (
       this.state === 'HIT_STAGGER' ||
       this.state === 'KNOCKBACK' ||
@@ -121,56 +142,55 @@ export class AnimeFighter2D {
       return;
     }
 
-    // Auto-face opponent when grounded and not mid-attack
-    const isAttacking = this.currentAttackType !== null;
-    if (this.isGrounded && !isAttacking && this.state !== 'LAND') {
-      const dirToOpp = opponent.x > this.x ? 1 : -1;
-      if (this.facing !== dirToOpp) {
-        this.facing = dirToOpp;
+    // Auto-facing: turn towards opponent unless performing an attack
+    if (this.currentAttackType === null) {
+      const dirToOpponent = opponent.x > this.x ? 1 : -1;
+      if (this.facing !== dirToOpponent) {
+        this.facing = dirToOpponent;
       }
     }
 
-    if (isAttacking || this.state === 'LAND') {
+    // If an attack is actively executing, cannot interrupt with basic movement
+    if (this.currentAttackType !== null) {
       return;
     }
 
     const now = performance.now();
 
-    // 1. COMBAT ATTACKS (Punch)
+    // 1. COMBAT ATTACKS (Punching)
     if (inputs.punch && this.isGrounded) {
       if (inputs.crouch) {
-        this.startAttack('PUNCH_LEFT', 0.22); // Low jab
+        // Uppercut
+        this.startAttack('PUNCH_HEAVY', 'uppercut');
       } else if (
         (inputs.moveRight && this.facing === 1) ||
         (inputs.moveLeft && this.facing === -1)
       ) {
-        this.startAttack('PUNCH_HEAVY', 0.38); // Forward Heavy Hammer Smash
+        // Heavy Straight Forward Punch (Kyo Flame Strike)
+        this.startAttack('PUNCH_HEAVY', 'punchHeavy');
       } else {
-        // Combo sequence: Jab -> Cross
-        if (now - this.lastAttackTime < 500 && this.comboStep === 1) {
-          this.startAttack('PUNCH_RIGHT', 0.26);
-          this.comboStep = 0;
-        } else {
-          this.startAttack('PUNCH_LEFT', 0.22);
-          this.comboStep = 1;
-        }
+        // Light Jab
+        this.startAttack('PUNCH_LEFT', 'punchLight');
       }
       this.lastAttackTime = now;
       soundManager.playPunchWhoosh();
       return;
     }
 
-    // 2. COMBAT ATTACKS (Kick)
+    // 2. COMBAT ATTACKS (Kicking)
     if (inputs.kick && this.isGrounded) {
       if (inputs.crouch) {
-        this.startAttack('KICK_LOW', 0.32); // Low Shin Sweep
+        // Low Shin Sweep
+        this.startAttack('KICK_LOW', 'kickLow');
       } else if (
         (inputs.moveRight && this.facing === 1) ||
         (inputs.moveLeft && this.facing === -1)
       ) {
-        this.startAttack('KICK_HIGH', 0.35); // Crescent Roundhouse Kick
+        // High Crescent Roundhouse Kick (180° shockwave)
+        this.startAttack('KICK_HIGH', 'kickHigh');
       } else {
-        this.startAttack('KICK_FRONT', 0.28); // Front Snap Kick
+        // Light Front Snap Kick
+        this.startAttack('KICK_FRONT', 'kickLight');
       }
       this.lastAttackTime = now;
       soundManager.playPunchWhoosh();
@@ -181,6 +201,11 @@ export class AnimeFighter2D {
     if (inputs.block && this.isGrounded) {
       this.state = 'BLOCK';
       this.vx = 0;
+      if (inputs.crouch) {
+        this.animController.play('blockCrouch');
+      } else {
+        this.animController.play('blockStand');
+      }
       return;
     }
 
@@ -189,6 +214,7 @@ export class AnimeFighter2D {
       this.vy = this.jumpImpulse;
       this.isGrounded = false;
       this.state = 'JUMP';
+      this.animController.play('jumpStart', true);
       soundManager.playJump();
       return;
     }
@@ -197,6 +223,7 @@ export class AnimeFighter2D {
     if (inputs.crouch && this.isGrounded) {
       this.state = 'CROUCH';
       this.vx = 0;
+      this.animController.play('crouch');
       return;
     }
 
@@ -207,28 +234,40 @@ export class AnimeFighter2D {
 
       if (inputs.moveLeft) {
         this.vx = -speed;
-        this.state = this.facing === 1 ? 'WALK_BWD' : isRunning ? 'RUN' : 'WALK_FWD';
+        const isFwd = this.facing === -1;
+        this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+        this.animController.play(
+          isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
+        );
       } else if (inputs.moveRight) {
         this.vx = speed;
-        this.state = this.facing === 1 ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+        const isFwd = this.facing === 1;
+        this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+        this.animController.play(
+          isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
+        );
       } else {
         this.vx = 0;
         this.state = 'IDLE';
+        this.animController.play('idle');
       }
     } else {
-      // In-air drift
+      // In-air lateral drift
       if (inputs.moveLeft) this.vx = -this.walkSpeed * 0.85;
       else if (inputs.moveRight) this.vx = this.walkSpeed * 0.85;
     }
   }
 
-  public startAttack(type: AttackType | 'SPECIAL', duration: number): void {
+  public startAttack(type: AttackType | 'SPECIAL', animKey: keyof CharacterAnimationSet): void {
     this.currentAttackType = type;
     this.state = type as FighterState;
     this.attackTimer = 0;
-    this.attackDuration = duration;
     this.hasHitCurrentAttack = false;
     this.vx = 0;
+
+    this.animController.play(animKey, true);
+    const def = this.animController.currentAnim;
+    this.attackDuration = def.framesMax / def.frameRate;
   }
 
   public fireSpecialProjectile(): void {
@@ -245,6 +284,7 @@ export class AnimeFighter2D {
 
   public update(dt: number, opponent: AnimeFighter2D): void {
     this.animTime += dt;
+    this.animController.update(dt);
 
     if (this.hitFlashTimer > 0) {
       this.hitFlashTimer -= dt;
@@ -255,16 +295,18 @@ export class AnimeFighter2D {
       this.hitStunTimer -= dt;
       if (this.hitStunTimer <= 0) {
         this.state = 'IDLE';
+        this.animController.play('idle');
       }
     }
 
-    // 2. Process Attack Progress
+    // 2. Process Attack Completion
     if (this.currentAttackType !== null) {
       this.attackTimer += dt;
-      if (this.attackTimer >= this.attackDuration) {
+      if (this.animController.isFinished() || this.attackTimer >= this.attackDuration) {
         this.currentAttackType = null;
         this.hasHitCurrentAttack = false;
         this.state = 'IDLE';
+        this.animController.play('idle');
       }
     }
 
@@ -273,19 +315,29 @@ export class AnimeFighter2D {
       this.vy += this.gravity * dt;
       this.jumpOffsetY += this.vy * dt;
 
-      if (this.vy > 100 && this.state === 'JUMP') {
+      if (this.vy < -80) {
+        this.state = 'JUMP';
+        this.animController.play('jumpRise');
+      } else if (Math.abs(this.vy) <= 80) {
+        this.animController.play('jumpApex');
+      } else {
         this.state = 'FALL';
+        this.animController.play('jumpFall');
       }
 
-      // Precision Ground landing
+      // Precision Ground Landing
       if (this.jumpOffsetY >= 0) {
         this.jumpOffsetY = 0;
         this.vy = 0;
         this.isGrounded = true;
         this.state = 'LAND';
+        this.animController.play('land', true);
         soundManager.playLanding();
         setTimeout(() => {
-          if (this.state === 'LAND') this.state = 'IDLE';
+          if (this.state === 'LAND') {
+            this.state = 'IDLE';
+            this.animController.play('idle');
+          }
         }, 120);
       }
     }
@@ -295,7 +347,7 @@ export class AnimeFighter2D {
     if (this.x < this.minX) this.x = this.minX;
     if (this.x > this.maxX) this.x = this.maxX;
 
-    // 5. Pushbox collision (Fighters don't walk through each other)
+    // 5. Pushbox collision (Fighters maintain spacing)
     const dist = opponent.x - this.x;
     const minSeparation = 72;
     if (Math.abs(dist) < minSeparation && this.isGrounded && opponent.isGrounded) {
@@ -309,65 +361,18 @@ export class AnimeFighter2D {
   public getActiveHitbox(): Hitbox2D | null {
     if (!this.currentAttackType || this.hasHitCurrentAttack) return null;
 
-    const progress = this.attackTimer / this.attackDuration;
+    const info = this.animController.getHitboxInfo();
+    if (!info.isActive || !info.data) return null;
 
-    // Active frames occur in middle window of attack (between 30% and 75% duration)
-    if (progress >= 0.3 && progress <= 0.75) {
-      let reach = 65;
-      let hitY = this.y - 78;
-      let radius = 32;
-      let damage = 10;
-      let knockback = 120;
-
-      switch (this.currentAttackType) {
-        case 'PUNCH_LEFT':
-          reach = 60;
-          damage = 8;
-          knockback = 90;
-          break;
-        case 'PUNCH_RIGHT':
-          reach = 78;
-          damage = 14;
-          knockback = 160;
-          break;
-        case 'PUNCH_HEAVY':
-          reach = 85;
-          hitY = this.y - 60;
-          radius = 42;
-          damage = 22;
-          knockback = 280;
-          break;
-        case 'KICK_FRONT':
-          reach = 82;
-          hitY = this.y - 70;
-          damage = 12;
-          knockback = 140;
-          break;
-        case 'KICK_HIGH':
-          reach = 88;
-          hitY = this.y - 95;
-          damage = 16;
-          knockback = 200;
-          break;
-        case 'KICK_LOW':
-          reach = 75;
-          hitY = this.y - 18; // Low strike
-          damage = 11;
-          knockback = 110;
-          break;
-      }
-
-      return {
-        x: this.x + this.facing * reach,
-        y: hitY,
-        radius,
-        damage,
-        knockback,
-        type: this.currentAttackType,
-      };
-    }
-
-    return null;
+    const timing = info.data;
+    return {
+      x: this.x + this.facing * timing.reach,
+      y: this.groundY + this.jumpOffsetY + timing.heightOffset,
+      radius: timing.radius,
+      damage: timing.damage,
+      knockback: timing.knockback,
+      type: this.currentAttackType,
+    };
   }
 
   public getHurtbox(): Hurtbox2D {
@@ -384,10 +389,10 @@ export class AnimeFighter2D {
 
   public takeHit(damage: number, knockback: number, isBlocked: boolean, attackerFacing: number): boolean {
     if (isBlocked) {
-      // 85% damage reduction when blocking
       const chipDamage = Math.max(1, Math.round(damage * 0.15));
       this.currentHealth = Math.max(0, this.currentHealth - chipDamage);
       this.x += attackerFacing * (knockback * 0.25);
+      this.animController.play(this.state === 'CROUCH' ? 'blockCrouch' : 'blockStand', true);
       return false; // blocked
     }
 
@@ -402,15 +407,18 @@ export class AnimeFighter2D {
     if (this.currentHealth <= 0) {
       this.state = 'DEFEAT';
       this.currentAttackType = null;
+      this.animController.play('defeat', true);
     } else if (knockback > 220) {
       this.state = 'KNOCKBACK';
       this.hitStunTimer = 0.45;
-      this.vy = -220; // Slight upward pop on heavy knockback
+      this.vy = -220;
       this.jumpOffsetY = -5;
       this.isGrounded = false;
+      this.animController.play('knockback', true);
     } else {
       this.state = 'HIT_STAGGER';
       this.hitStunTimer = 0.28;
+      this.animController.play('hitHeavy', true);
     }
 
     return true; // clean hit
@@ -419,11 +427,13 @@ export class AnimeFighter2D {
   public playVictory(): void {
     this.state = 'VICTORY';
     this.vx = 0;
+    this.animController.play('victory', true);
   }
 
   public playDefeat(): void {
     this.state = 'DEFEAT';
     this.vx = 0;
+    this.animController.play('defeat', true);
   }
 
   public renderShadow(ctx: CanvasRenderingContext2D): void {
@@ -431,16 +441,16 @@ export class AnimeFighter2D {
   }
 
   public render(ctx: CanvasRenderingContext2D): void {
-    SpriteCharacterRenderer2D.render(
+    SpriteCharacterRenderer2D.renderAnimatedFighter(
       ctx,
       this.x,
       this.groundY + this.jumpOffsetY,
-      this.state,
+      this.animController,
       this.facing,
-      this.animTime,
       this.id,
       this.superMeter,
-      this.hitFlashTimer > 0
+      this.hitFlashTimer > 0,
+      this.state
     );
   }
 
@@ -464,6 +474,6 @@ export class AnimeFighter2D {
   }
 
   public dispose(): void {
-    // No-op for 2D fighter
+    // No-op
   }
 }

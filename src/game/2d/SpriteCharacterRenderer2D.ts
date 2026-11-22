@@ -1,67 +1,25 @@
 // src/game/2d/SpriteCharacterRenderer2D.ts
-// HIGH-RESOLUTION 2D ANIME SPRITE SHEET RENDERER
+// HIGH-RESOLUTION 2D ANIME SPRITE SHEET RENDERER & ANIMATION INTEGRATION
 
 import { FighterState, PlayerId } from '../../types';
-
-export interface SpriteConfig {
-  imageSrc: string;
-  framesMax: number;
-}
-
-export interface CharacterSprites {
-  idle: SpriteConfig;
-  run: SpriteConfig;
-  jump: SpriteConfig;
-  fall: SpriteConfig;
-  crouch: SpriteConfig;
-  block: SpriteConfig;
-  attack1: SpriteConfig;
-  attack2: SpriteConfig;
-  takeHit: SpriteConfig;
-  death: SpriteConfig;
-}
+import { AnimationController } from '../animation/AnimationController';
+import { P1_ANIMATIONS, P2_ANIMATIONS } from '../animation/AnimationConfig';
 
 export class SpriteCharacterRenderer2D {
   private static imageCache: Map<string, HTMLImageElement> = new Map();
   private static isPreloaded = false;
 
-  public static readonly P1_CONFIG: CharacterSprites = {
-    idle: { imageSrc: '/assets/sprites/p1/Idle.png', framesMax: 4 },
-    run: { imageSrc: '/assets/sprites/p1/Run.png', framesMax: 6 },
-    jump: { imageSrc: '/assets/sprites/p1/Jump.png', framesMax: 3 },
-    fall: { imageSrc: '/assets/sprites/p1/Fall.png', framesMax: 2 },
-    crouch: { imageSrc: '/assets/sprites/p1/Crouch.png', framesMax: 2 },
-    block: { imageSrc: '/assets/sprites/p1/Block.png', framesMax: 2 },
-    attack1: { imageSrc: '/assets/sprites/p1/Attack1.png', framesMax: 5 },
-    attack2: { imageSrc: '/assets/sprites/p1/Attack2.png', framesMax: 5 },
-    takeHit: { imageSrc: '/assets/sprites/p1/Take Hit.png', framesMax: 3 },
-    death: { imageSrc: '/assets/sprites/p1/Death.png', framesMax: 4 },
-  };
-
-  public static readonly P2_CONFIG: CharacterSprites = {
-    idle: { imageSrc: '/assets/sprites/p2/Idle.png', framesMax: 4 },
-    run: { imageSrc: '/assets/sprites/p2/Run.png', framesMax: 6 },
-    jump: { imageSrc: '/assets/sprites/p2/Jump.png', framesMax: 3 },
-    fall: { imageSrc: '/assets/sprites/p2/Fall.png', framesMax: 2 },
-    crouch: { imageSrc: '/assets/sprites/p2/Crouch.png', framesMax: 2 },
-    block: { imageSrc: '/assets/sprites/p2/Block.png', framesMax: 2 },
-    attack1: { imageSrc: '/assets/sprites/p2/Attack1.png', framesMax: 5 },
-    attack2: { imageSrc: '/assets/sprites/p2/Attack2.png', framesMax: 5 },
-    takeHit: { imageSrc: '/assets/sprites/p2/Take Hit.png', framesMax: 3 },
-    death: { imageSrc: '/assets/sprites/p2/Death.png', framesMax: 4 },
-  };
-
   public static preload(): void {
     if (this.isPreloaded) return;
     this.isPreloaded = true;
 
-    const allConfigs = [this.P1_CONFIG, this.P2_CONFIG];
+    const allConfigs = [P1_ANIMATIONS, P2_ANIMATIONS];
     for (const cfg of allConfigs) {
-      for (const sprite of Object.values(cfg)) {
-        if (!this.imageCache.has(sprite.imageSrc)) {
+      for (const anim of Object.values(cfg)) {
+        if (!this.imageCache.has(anim.imageSrc)) {
           const img = new Image();
-          img.src = sprite.imageSrc;
-          this.imageCache.set(sprite.imageSrc, img);
+          img.src = anim.imageSrc;
+          this.imageCache.set(anim.imageSrc, img);
         }
       }
     }
@@ -78,7 +36,7 @@ export class SpriteCharacterRenderer2D {
   }
 
   /**
-   * Renders the fighter's ground shadow anchored strictly on the arena floor (Layer 6).
+   * Renders the fighter's ground shadow anchored strictly on the arena floor (Layer 7).
    * Scales down and fades as the character jumps higher, maintaining physical grounding.
    */
   public static renderShadow(
@@ -101,116 +59,39 @@ export class SpriteCharacterRenderer2D {
   }
 
   /**
-   * Renders a fighter using real, high-resolution 2D sprite sheets.
+   * Renders a fighter using real, high-resolution 2D sprite sheets driven by AnimationController.
    */
-  public static render(
+  public static renderAnimatedFighter(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
-    state: FighterState,
+    animController: AnimationController,
     facing: 1 | -1,
-    animTime: number,
     id: PlayerId,
     superMeter = 0,
-    isHitFlashing = false
+    isHitFlashing = false,
+    state: FighterState = 'IDLE'
   ): void {
     this.preload();
 
     const isP1 = id === 'P1';
-    const cfg = isP1 ? this.P1_CONFIG : this.P2_CONFIG;
+    const anim = animController.currentAnim;
+    const img = this.getImage(anim.imageSrc);
 
-    // Map fighter combat state to the corresponding sprite sheet
-    let activeSprite: SpriteConfig = cfg.idle;
-    let holdOnLastFrame = false;
-    let frameRate = 9; // frames per second
-
-    switch (state) {
-      case 'IDLE':
-        activeSprite = cfg.idle;
-        frameRate = 8;
-        break;
-      case 'WALK_FWD':
-      case 'RUN':
-        activeSprite = cfg.run;
-        frameRate = 12;
-        break;
-      case 'WALK_BWD':
-        activeSprite = cfg.run;
-        frameRate = 8;
-        break;
-      case 'JUMP':
-        activeSprite = cfg.jump;
-        frameRate = 5;
-        holdOnLastFrame = true;
-        break;
-      case 'FALL':
-        activeSprite = cfg.fall;
-        frameRate = 5;
-        holdOnLastFrame = true;
-        break;
-      case 'LAND':
-        activeSprite = cfg.crouch;
-        frameRate = 8;
-        break;
-      case 'CROUCH':
-        activeSprite = cfg.crouch;
-        frameRate = 6;
-        holdOnLastFrame = true;
-        break;
-      case 'PUNCH_LEFT':
-      case 'PUNCH_RIGHT':
-        activeSprite = cfg.attack1;
-        frameRate = 16;
-        break;
-      case 'PUNCH_HEAVY':
-      case 'KICK_FRONT':
-      case 'KICK_HIGH':
-      case 'KICK_LOW':
-        activeSprite = cfg.attack2;
-        frameRate = 14;
-        break;
-      case 'BLOCK':
-        activeSprite = cfg.block;
-        frameRate = 6;
-        holdOnLastFrame = true;
-        break;
-      case 'HIT_STAGGER':
-      case 'KNOCKBACK':
-        activeSprite = cfg.takeHit;
-        frameRate = 10;
-        break;
-      case 'DEFEAT':
-        activeSprite = cfg.death;
-        frameRate = 8;
-        holdOnLastFrame = true;
-        break;
-      case 'VICTORY':
-        activeSprite = cfg.idle;
-        frameRate = 8;
-        break;
-    }
-
-    const img = this.getImage(activeSprite.imageSrc);
     if (!img.complete || img.naturalWidth === 0) {
-      // Still loading image
-      return;
+      return; // Image is loading
     }
 
-    const framesMax = activeSprite.framesMax;
+    const framesMax = anim.framesMax;
     const frameWidth = img.naturalWidth / framesMax;
-    const frameHeight = img.naturalHeight; // 200px
+    const frameHeight = img.naturalHeight; // 500px
 
-    // Compute current frame
-    let frameIndex = Math.floor(animTime * frameRate) % framesMax;
-    if (holdOnLastFrame) {
-      const totalFramesPassed = Math.floor(animTime * frameRate);
-      frameIndex = Math.min(framesMax - 1, totalFramesPassed);
-    }
+    const frameIndex = Math.min(framesMax - 1, Math.max(0, animController.getCurrentFrame()));
 
     ctx.save();
     ctx.translate(x, y);
 
-    // Hit Flash
+    // Hit Flash Effect
     if (isHitFlashing) {
       ctx.filter = 'brightness(3) contrast(1.5) drop-shadow(0 0 16px #ffffff)';
     }
@@ -224,34 +105,27 @@ export class SpriteCharacterRenderer2D {
       radGlow.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
       radGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = radGlow;
-      ctx.globalAlpha = 0.45 + Math.sin(animTime * 8) * 0.2;
+      ctx.globalAlpha = 0.45 + Math.sin(animController.animTime * 8) * 0.2;
       ctx.beginPath();
       ctx.ellipse(0, -75, 65, 85, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
 
-    // Scale and Orient facing:
-    // P1 (Kai) is naturally drawn facing RIGHT (+1).
-    // P2 (Shadow) is naturally drawn facing LEFT (-1).
-    // When facing opponent:
-    // P1 on left facing right: facing = 1 -> flipX = 1
-    // P1 crosses over to right: facing = -1 -> flipX = -1
-    // P2 on right facing left: facing = -1 -> flipX = 1
-    // P2 crosses over to left: facing = 1 -> flipX = -1
+    // Directional Facing Scale:
+    // P1 (Kai) is drawn facing RIGHT (+1).
+    // P2 (Shadow) is drawn facing LEFT (-1).
     const flipX = isP1 ? facing : (facing === -1 ? 1 : -1);
     ctx.scale(flipX, 1);
 
-    // High-Resolution Character drawing scale and offset (Frame is 400x500 HD)
+    // High-Resolution Character drawing scale and bottom-center foot anchor
     const scale = 0.58;
     const scaledWidth = frameWidth * scale;
     const scaledHeight = frameHeight * scale;
 
-    // Center horizontally and align feet cleanly on the floor (y = 0)
     const offsetX = -frameWidth * 0.5 * scale;
-    const offsetY = -475 * scale;
+    const offsetY = -475 * scale; // Soles of shoes contact y=0 (ground contact)
 
-    // Draw the sliced sprite frame
     ctx.drawImage(
       img,
       frameIndex * frameWidth,
@@ -265,7 +139,7 @@ export class SpriteCharacterRenderer2D {
     );
 
     // Block Guard Energy Shield (Anime Hexagonal Barrier)
-    if (state === 'BLOCK') {
+    if (state === 'BLOCK' || anim.name === 'block_stand' || anim.name === 'block_crouch') {
       ctx.save();
       const shieldColor = isP1 ? '#ff1a4b' : '#00d0ff';
       ctx.strokeStyle = shieldColor;
@@ -273,7 +147,8 @@ export class SpriteCharacterRenderer2D {
       ctx.shadowColor = shieldColor;
       ctx.shadowBlur = 16;
       ctx.beginPath();
-      ctx.arc(35, -65, 48, -Math.PI / 2.2, Math.PI / 2.2);
+      const barrierY = anim.name === 'block_crouch' ? -45 : -65;
+      ctx.arc(35, barrierY, 48, -Math.PI / 2.2, Math.PI / 2.2);
       ctx.stroke();
 
       ctx.fillStyle = isP1 ? 'rgba(255, 26, 75, 0.22)' : 'rgba(0, 208, 255, 0.22)';
@@ -281,6 +156,76 @@ export class SpriteCharacterRenderer2D {
       ctx.restore();
     }
 
+    ctx.restore();
+  }
+
+  /**
+   * Backwards compatible render method.
+   */
+  public static render(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    state: FighterState,
+    facing: 1 | -1,
+    animTime: number,
+    id: PlayerId,
+    superMeter = 0,
+    isHitFlashing = false
+  ): void {
+    this.preload();
+    // Default fallback
+    const isP1 = id === 'P1';
+    const set = isP1 ? P1_ANIMATIONS : P2_ANIMATIONS;
+    let anim = set.idle;
+    switch (state) {
+      case 'RUN': anim = set.runFwd; break;
+      case 'WALK_FWD': anim = set.walkFwd; break;
+      case 'WALK_BWD': anim = set.walkBwd; break;
+      case 'JUMP': anim = set.jumpRise; break;
+      case 'FALL': anim = set.jumpFall; break;
+      case 'LAND': anim = set.land; break;
+      case 'CROUCH': anim = set.crouch; break;
+      case 'PUNCH_LEFT': anim = set.punchLight; break;
+      case 'PUNCH_RIGHT':
+      case 'PUNCH_HEAVY': anim = set.punchHeavy; break;
+      case 'KICK_FRONT': anim = set.kickLight; break;
+      case 'KICK_HIGH': anim = set.kickHigh; break;
+      case 'KICK_LOW': anim = set.kickLow; break;
+      case 'BLOCK': anim = set.blockStand; break;
+      case 'HIT_STAGGER': anim = set.hitLight; break;
+      case 'KNOCKBACK': anim = set.knockback; break;
+      case 'DEFEAT': anim = set.defeat; break;
+      case 'VICTORY': anim = set.victory; break;
+    }
+
+    const img = this.getImage(anim.imageSrc);
+    if (!img.complete || img.naturalWidth === 0) return;
+
+    const framesMax = anim.framesMax;
+    const frameWidth = img.naturalWidth / framesMax;
+    const frameHeight = img.naturalHeight;
+    const frameIndex = Math.floor(animTime * anim.frameRate) % framesMax;
+
+    ctx.save();
+    ctx.translate(x, y);
+    if (isHitFlashing) {
+      ctx.filter = 'brightness(3) contrast(1.5) drop-shadow(0 0 16px #ffffff)';
+    }
+    const flipX = isP1 ? facing : (facing === -1 ? 1 : -1);
+    ctx.scale(flipX, 1);
+    const scale = 0.58;
+    ctx.drawImage(
+      img,
+      frameIndex * frameWidth,
+      0,
+      frameWidth,
+      frameHeight,
+      -frameWidth * 0.5 * scale,
+      -475 * scale,
+      frameWidth * scale,
+      frameHeight * scale
+    );
     ctx.restore();
   }
 }
