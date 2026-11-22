@@ -23,9 +23,10 @@ export class FightCamera2D {
   public y = WorldCoordinateSystem.DEFAULT_CAM_Y;
   public zoom = 1.0;
 
-  // Zoom limits
-  public minZoom = 0.45;
-  public maxZoom = 1.08;
+  // Zoom limits optimized for high-res 2D fighting game action
+  // Prevents fighters from shrinking into distant specks or camera zooming out excessively
+  public minZoom = 0.76;
+  public maxZoom = 1.12;
 
   // Screen Shake
   private shakeTimer = 0;
@@ -56,15 +57,15 @@ export class FightCamera2D {
     const midX = (p1X + p2X) * 0.5;
 
     // 2. Dynamic Zoom Calculation with Guaranteed Side Margins
-    // Both fighters must have generous breathing room (paddingX on both sides)
-    const paddingX = 240; // World coordinates margin per side
+    // Generous breathing room (paddingX on both sides) ensures fighters are never cramped
+    const paddingX = 280; // World coordinates margin per side
     const dist = Math.abs(p1X - p2X);
-    const requiredWorldW = Math.max(760, dist + paddingX * 2);
+    const requiredWorldW = Math.max(880, dist + paddingX * 2);
 
     // Vertical framing to ensure heads and ground shadows remain fully in frame
     const highestFighterY = Math.min(p1Y - 240, p2Y - 240) - 40;
     const lowestFighterY = WorldCoordinateSystem.GROUND_Y + 50;
-    const requiredWorldH = Math.max(500, lowestFighterY - highestFighterY);
+    const requiredWorldH = Math.max(520, lowestFighterY - highestFighterY);
 
     const zoomX = viewportW / requiredWorldW;
     const zoomY = viewportH / requiredWorldH;
@@ -90,20 +91,20 @@ export class FightCamera2D {
     }
 
     // 4. Stable Fighting Horizon (Camera Y)
-    // The ground plane (y = 560) is held stable near the bottom third (~73% viewport height)
-    const targetGroundRatio = 0.73;
+    // The ground plane (y = 560) is held stable near the bottom third (~72% viewport height)
+    const targetGroundRatio = 0.72;
     const baseY = WorldCoordinateSystem.GROUND_Y - (viewportH * (targetGroundRatio - 0.5)) / desiredZoom;
 
     // Subtle aerial follow if fighters jump or get juggled
     const p1Air = Math.min(0, p1Y - WorldCoordinateSystem.GROUND_Y);
     const p2Air = Math.min(0, p2Y - WorldCoordinateSystem.GROUND_Y);
     const highestAir = Math.min(p1Air, p2Air);
-    const jumpFollow = highestAir * 0.22; // subtle 22% upward follow
+    const jumpFollow = highestAir * 0.20; // subtle 20% upward follow
     const targetY = baseY + jumpFollow;
 
     // 5. Smooth Exponential Interpolation
-    const lerpRate = 1 - Math.exp(-10.0 * dt);
-    const zoomLerpRate = 1 - Math.exp(-8.0 * dt);
+    const lerpRate = 1 - Math.exp(-12.0 * dt);
+    const zoomLerpRate = 1 - Math.exp(-10.0 * dt);
 
     this.x += (targetX - this.x) * lerpRate;
     this.y += (targetY - this.y) * lerpRate;

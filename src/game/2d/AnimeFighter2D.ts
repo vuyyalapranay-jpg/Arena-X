@@ -81,9 +81,10 @@ export class AnimeFighter2D {
   public pendingProjectile: Projectile2D | null = null;
 
   // Constants
+  public static readonly MAX_SEPARATION = 760; // Max competitive fighting game engagement distance
   public readonly floorY = 560;
-  public readonly minX = 280;
-  public readonly maxX = 2120;
+  public readonly minX = 360;
+  public readonly maxX = 2040;
   public readonly gravity = 1800; // px / s^2
   public readonly jumpImpulse = -780; // px / s
   public readonly walkSpeed = 280;
@@ -303,19 +304,37 @@ export class AnimeFighter2D {
       const speed = isRunning ? this.runSpeed : this.walkSpeed;
 
       if (inputs.moveLeft) {
-        this.vx = -speed;
-        const isFwd = this.facing === -1;
-        this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
-        this.animController.play(
-          isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
-        );
+        // Prevent walking further away if already at max engagement distance
+        const isSeparating = this.x < opponent.x;
+        const currentDist = Math.abs(opponent.x - this.x);
+        if (isSeparating && currentDist >= AnimeFighter2D.MAX_SEPARATION) {
+          this.vx = 0;
+          this.state = 'IDLE';
+          this.animController.play('idle');
+        } else {
+          this.vx = -speed;
+          const isFwd = this.facing === -1;
+          this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+          this.animController.play(
+            isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
+          );
+        }
       } else if (inputs.moveRight) {
-        this.vx = speed;
-        const isFwd = this.facing === 1;
-        this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
-        this.animController.play(
-          isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
-        );
+        // Prevent walking further away if already at max engagement distance
+        const isSeparating = this.x > opponent.x;
+        const currentDist = Math.abs(opponent.x - this.x);
+        if (isSeparating && currentDist >= AnimeFighter2D.MAX_SEPARATION) {
+          this.vx = 0;
+          this.state = 'IDLE';
+          this.animController.play('idle');
+        } else {
+          this.vx = speed;
+          const isFwd = this.facing === 1;
+          this.state = isFwd ? (isRunning ? 'RUN' : 'WALK_FWD') : 'WALK_BWD';
+          this.animController.play(
+            isFwd ? (isRunning ? 'runFwd' : 'walkFwd') : 'walkBwd'
+          );
+        }
       } else {
         this.vx = 0;
         this.state = 'IDLE';
@@ -323,8 +342,17 @@ export class AnimeFighter2D {
       }
     } else {
       // In-air lateral drift
-      if (inputs.moveLeft) this.vx = -this.walkSpeed * 0.85;
-      else if (inputs.moveRight) this.vx = this.walkSpeed * 0.85;
+      if (inputs.moveLeft) {
+        const isSeparating = this.x < opponent.x;
+        if (!isSeparating || Math.abs(opponent.x - this.x) < AnimeFighter2D.MAX_SEPARATION) {
+          this.vx = -this.walkSpeed * 0.85;
+        }
+      } else if (inputs.moveRight) {
+        const isSeparating = this.x > opponent.x;
+        if (!isSeparating || Math.abs(opponent.x - this.x) < AnimeFighter2D.MAX_SEPARATION) {
+          this.vx = this.walkSpeed * 0.85;
+        }
+      }
     }
   }
 

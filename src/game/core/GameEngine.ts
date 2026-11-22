@@ -471,6 +471,8 @@ export class GameEngine {
   /**
    * Enforces fighting-game screen edge boundaries ("corner walls")
    * to guarantee neither fighter is ever pushed or walks off-screen.
+   * Generous margin ensures full character body, limbs, coat, and hair
+   * remain 100% visible with breathing room from the viewport edges.
    */
   private enforceViewportAndStageBounds(): void {
     const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
@@ -478,8 +480,8 @@ export class GameEngine {
     const bounds = this.camera.getVisibleWorldBounds(width, height);
 
     // Generous side margin (in world space) so full body, limbs, and combat poses
-    // never get clipped by the viewport edges
-    const margin = 95;
+    // never get clipped by the viewport edges (sprite width is ~200-240px)
+    const margin = 155;
 
     const minAllowedX = Math.max(WorldCoordinateSystem.STAGE_BOUND_LEFT + margin, bounds.minX + margin);
     const maxAllowedX = Math.min(WorldCoordinateSystem.STAGE_BOUND_RIGHT - margin, bounds.maxX - margin);
