@@ -24,7 +24,10 @@ interface MainMenuProps {
   settings: GameSettings;
   onUpdateSettings: (settings: GameSettings) => void;
   onOpenStageSelect?: () => void;
+  onOpenCharacterSelect?: () => void;
   currentStageName?: string;
+  currentP1Name?: string;
+  currentP2Name?: string;
 }
 
 export const MainMenu: React.FC<MainMenuProps> = ({
@@ -32,7 +35,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   settings,
   onUpdateSettings,
   onOpenStageSelect,
+  onOpenCharacterSelect,
   currentStageName = 'ANCIENT TEMPLE',
+  currentP1Name = 'KAI',
+  currentP2Name = 'SHADOW',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -245,6 +251,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <span className="sub">Practice moves & combos against practice dummy</span>
               </div>
             </div>
+          </button>
+
+          {/* SELECT FIGHTERS (16-Fighter Roster) */}
+          <button
+            className="menu-btn standard-btn char-select-btn"
+            style={{
+              borderColor: '#00e5ff',
+              background: 'linear-gradient(90deg, rgba(0, 229, 255, 0.15) 0%, rgba(10, 14, 24, 0.85) 100%)',
+            }}
+            onMouseEnter={() => soundManager.playMenuHover()}
+            onClick={() => {
+              soundManager.playMenuSelect();
+              if (onOpenCharacterSelect) onOpenCharacterSelect();
+            }}
+          >
+            <div className="btn-content">
+              <User className="btn-icon" size={22} style={{ color: '#00e5ff' }} />
+              <div className="btn-text">
+                <span className="title" style={{ color: '#00e5ff', fontWeight: 900 }}>
+                  SELECT FIGHTERS: {currentP1Name} vs {currentP2Name}
+                </span>
+                <span className="sub">16 Unique Combatants • Custom Martial Arts & Elemental Attacks</span>
+              </div>
+            </div>
+            <span className="status-tag phase2 active-tag" style={{ background: '#00e5ff', color: '#050810', fontWeight: 900 }}>
+              16 ROSTER
+            </span>
           </button>
 
           {/* SELECT ARENA (Phase 7 2.5D Environments) */}

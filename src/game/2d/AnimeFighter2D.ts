@@ -6,7 +6,8 @@ import { SpriteCharacterRenderer2D } from './SpriteCharacterRenderer2D';
 import { Projectile2D } from './Projectile2D';
 import { soundManager } from '../core/SoundManager';
 import { AnimationController } from '../animation/AnimationController';
-import { CharacterAnimationSet, P1_ANIMATIONS, P2_ANIMATIONS } from '../animation/AnimationConfig';
+import { CharacterAnimationSet, P1_ANIMATIONS, P2_ANIMATIONS, getFighterAnimationSet } from '../animation/AnimationConfig';
+import { FighterId, ROSTER_FIGHTERS } from '../characters/RosterConfig';
 import { CombatEngine } from '../combat/CombatEngine';
 import { HitboxInstance, HurtboxInstance } from '../combat/CombatTypes';
 
@@ -94,31 +95,40 @@ export class AnimeFighter2D {
   public readonly minX = 360;
   public readonly maxX = 2040;
   public readonly gravity = 1800; // px / s^2
-  public readonly jumpImpulse = -780; // px / s
-  public readonly walkSpeed = 280;
-  public readonly runSpeed = 480;
+  public jumpImpulse = -780; // px / s
+  public walkSpeed = 280;
+  public runSpeed = 480;
 
-  constructor(id: PlayerId, spawnX: number, facing: 1 | -1) {
+  constructor(id: PlayerId, spawnX: number, facing: 1 | -1, fighterId?: FighterId) {
     this.id = id;
     this.x = spawnX;
     this.jumpOffsetY = 0;
     this.facing = facing;
 
     const isP1 = id === 'P1';
-    this.name = isP1 ? 'KAI' : 'SHADOW';
+    const fId: FighterId = fighterId || (isP1 ? 'KAI' : 'SHADOW');
+    const profile = ROSTER_FIGHTERS[fId] || ROSTER_FIGHTERS[isP1 ? 'KAI' : 'SHADOW'];
+
+    this.name = profile.name.toUpperCase();
+    this.walkSpeed = profile.stats.walkSpeed;
+    this.runSpeed = profile.stats.runSpeed;
+    this.jumpImpulse = profile.stats.jumpImpulse;
+    this.maxHealth = profile.stats.health;
+    this.currentHealth = profile.stats.health;
+
     this.appearance = {
       name: this.name,
       isP1,
-      primaryColor: isP1 ? '#00b4ff' : '#ff1a4b',
-      secondaryColor: isP1 ? '#11131a' : '#0a101d',
-      accentColor: isP1 ? '#00f0ff' : '#ff3366',
-      emissiveColor: isP1 ? '#00d9ff' : '#ff003c',
-      skinColor: isP1 ? '#df9e78' : '#d29672',
-      hairColor: isP1 ? '#141416' : '#f0f0f5',
+      primaryColor: profile.colors.primary,
+      secondaryColor: profile.colors.secondary,
+      accentColor: profile.colors.accent,
+      emissiveColor: profile.colors.emissive,
+      skinColor: profile.colors.skin,
+      hairColor: profile.colors.hair,
     };
 
     // Initialize Animation Controller with character-specific animations
-    this.animController = new AnimationController(isP1 ? P1_ANIMATIONS : P2_ANIMATIONS);
+    this.animController = new AnimationController(getFighterAnimationSet(fId));
   }
 
   public reset(spawnX: number, facing: 1 | -1): void {

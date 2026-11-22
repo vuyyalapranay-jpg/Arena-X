@@ -15,6 +15,7 @@ import { FightCamera2D } from '../engine/FightCamera2D';
 import { Renderer2D } from '../engine/Renderer2D';
 import { WorldCoordinateSystem } from '../engine/WorldCoordinateSystem';
 import { CombatEngine } from '../combat/CombatEngine';
+import { FighterId } from '../characters/RosterConfig';
 
 export interface GameEngineCallbacks {
   onMatchStateUpdate: (state: MatchState) => void;
@@ -71,7 +72,9 @@ export class GameEngine {
     container: HTMLElement,
     settings: GameSettings,
     gameMode: GameMode,
-    callbacks: GameEngineCallbacks
+    callbacks: GameEngineCallbacks,
+    p1Id: FighterId = 'KAI',
+    p2Id: FighterId = 'SHADOW'
   ) {
     this.container = container;
     this.settings = settings;
@@ -100,8 +103,8 @@ export class GameEngine {
     this.renderer2D = new Renderer2D(this.canvas, this.ctx, this.camera);
 
     // 3. Initialize Anime Fighters
-    this.fighterP1 = new AnimeFighter2D('P1', 950, 1);
-    this.fighterP2 = new AnimeFighter2D('P2', 1450, -1);
+    this.fighterP1 = new AnimeFighter2D('P1', 950, 1, p1Id);
+    this.fighterP2 = new AnimeFighter2D('P2', 1450, -1, p2Id);
 
     // 4. Handle Window Resize
     this.handleResize();

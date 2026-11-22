@@ -7,15 +7,21 @@ import { OrientationWarning } from './components/OrientationWarning';
 import { GameMode, GameSettings } from './types';
 import { StageId, STAGES } from './game/stages/StageConfig';
 import { StageSelectModal } from './components/StageSelectModal';
+import { FighterId, ROSTER_FIGHTERS } from './game/characters/RosterConfig';
+import { CharacterSelectModal } from './components/CharacterSelectModal';
 import { GAME_CONFIG } from './config/gameConfig';
 import './styles/online.css';
 import './styles/stages.css';
+import './styles/characters.css';
 
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'MENU' | 'ONLINE' | 'ARENA'>('MENU');
   const [gameMode, setGameMode] = useState<GameMode>('VERSUS');
   const [selectedStage, setSelectedStage] = useState<StageId>('ANCIENT_TEMPLE');
+  const [selectedP1, setSelectedP1] = useState<FighterId>('KAI');
+  const [selectedP2, setSelectedP2] = useState<FighterId>('SHADOW');
   const [showStageSelect, setShowStageSelect] = useState<boolean>(false);
+  const [showCharSelect, setShowCharSelect] = useState<boolean>(false);
   const [pendingMode, setPendingMode] = useState<GameMode>('VERSUS');
   const [settings, setSettings] = useState<GameSettings>(GAME_CONFIG.DEFAULT_SETTINGS);
   const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
@@ -74,7 +80,10 @@ export const App: React.FC = () => {
           settings={settings}
           onUpdateSettings={setSettings}
           onOpenStageSelect={handleOpenStageSelect}
+          onOpenCharacterSelect={() => setShowCharSelect(true)}
           currentStageName={STAGES[selectedStage]?.name}
+          currentP1Name={ROSTER_FIGHTERS[selectedP1]?.name}
+          currentP2Name={ROSTER_FIGHTERS[selectedP2]?.name}
         />
       )}
 
@@ -91,6 +100,8 @@ export const App: React.FC = () => {
           gameMode={gameMode}
           settings={settings}
           stageId={selectedStage}
+          fighterP1={selectedP1}
+          fighterP2={selectedP2}
           onReturnToMenu={handleReturnToMenu}
         />
       )}
@@ -102,6 +113,17 @@ export const App: React.FC = () => {
         onSelectStage={handleStageConfirmed}
         onClose={() => setShowStageSelect(false)}
         isHost={true}
+      />
+
+      {/* 16-Fighter Character Selection Modal */}
+      <CharacterSelectModal
+        isOpen={showCharSelect}
+        selectedP1={selectedP1}
+        selectedP2={selectedP2}
+        onSelectP1={(id) => setSelectedP1(id)}
+        onSelectP2={(id) => setSelectedP2(id)}
+        onConfirm={() => setShowCharSelect(false)}
+        onClose={() => setShowCharSelect(false)}
       />
     </div>
   );

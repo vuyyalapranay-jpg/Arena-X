@@ -1,0 +1,233 @@
+{
+  "character": "Reaper",
+  "id": "REAPER",
+  "title": "Soul Harvester",
+  "martialArt": "Scythe Combat",
+  "element": "Soul Essence Drain",
+  "frameWidth": 400,
+  "frameHeight": 500,
+  "groundAnchorY": 475,
+  "scale": 0.58,
+  "animations": {
+    "Idle": {
+      "name": "Idle",
+      "category": "idle",
+      "image": "Idle.png",
+      "framesMax": 10,
+      "frameRate": 8,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Idle_Blink": {
+      "name": "Idle_Blink",
+      "category": "idle",
+      "image": "Idle_Blink.png",
+      "framesMax": 10,
+      "frameRate": 8,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Walk": {
+      "name": "Walk",
+      "category": "movement",
+      "image": "Walk.png",
+      "framesMax": 8,
+      "frameRate": 10,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Walk_Fwd": {
+      "name": "Walk_Fwd",
+      "category": "movement",
+      "image": "Walk_Fwd.png",
+      "framesMax": 8,
+      "frameRate": 10,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Walk_Bwd": {
+      "name": "Walk_Bwd",
+      "category": "movement",
+      "image": "Walk_Bwd.png",
+      "framesMax": 8,
+      "frameRate": 8,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Run": {
+      "name": "Run",
+      "category": "movement",
+      "image": "Run.png",
+      "framesMax": 8,
+      "frameRate": 13,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Jump": {
+      "name": "Jump",
+      "category": "movement",
+      "image": "Jump.png",
+      "framesMax": 3,
+      "frameRate": 8,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Fall": {
+      "name": "Fall",
+      "category": "movement",
+      "image": "Fall.png",
+      "framesMax": 2,
+      "frameRate": 6,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Crouch": {
+      "name": "Crouch",
+      "category": "movement",
+      "image": "Crouch.png",
+      "framesMax": 2,
+      "frameRate": 8,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Punch_Light": {
+      "name": "Punch_Light",
+      "category": "attacks",
+      "image": "Punch_Light.png",
+      "framesMax": 3,
+      "frameRate": 18,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Attack1": {
+      "name": "Attack1",
+      "category": "attacks",
+      "image": "Attack1.png",
+      "framesMax": 5,
+      "frameRate": 15,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Uppercut": {
+      "name": "Uppercut",
+      "category": "attacks",
+      "image": "Uppercut.png",
+      "framesMax": 4,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Kick_Light": {
+      "name": "Kick_Light",
+      "category": "attacks",
+      "image": "Kick_Light.png",
+      "framesMax": 3,
+      "frameRate": 16,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Kick_Heavy": {
+      "name": "Kick_Heavy",
+      "category": "attacks",
+      "image": "Kick_Heavy.png",
+      "framesMax": 4,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Attack2": {
+      "name": "Attack2",
+      "category": "attacks",
+      "image": "Attack2.png",
+      "framesMax": 4,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Kick_Low": {
+      "name": "Kick_Low",
+      "category": "attacks",
+      "image": "Kick_Low.png",
+      "framesMax": 3,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Block": {
+      "name": "Block",
+      "category": "reactions",
+      "image": "Block.png",
+      "framesMax": 2,
+      "frameRate": 10,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Block_Crouch": {
+      "name": "Block_Crouch",
+      "category": "reactions",
+      "image": "Block_Crouch.png",
+      "framesMax": 2,
+      "frameRate": 10,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Take Hit": {
+      "name": "Take Hit",
+      "category": "reactions",
+      "image": "Take Hit.png",
+      "framesMax": 3,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Death": {
+      "name": "Death",
+      "category": "reactions",
+      "image": "Death.png",
+      "framesMax": 4,
+      "frameRate": 8,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Special": {
+      "name": "Special",
+      "category": "specials",
+      "image": "Special.png",
+      "framesMax": 4,
+      "frameRate": 14,
+      "loop": false,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Victory": {
+      "name": "Victory",
+      "category": "victory",
+      "image": "Victory.png",
+      "framesMax": 2,
+      "frameRate": 6,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    }
+  }
+}

@@ -14,12 +14,15 @@ import {
   FighterInputs 
 } from '../types';
 import { StageId } from '../game/stages/StageConfig';
+import { FighterId } from '../game/characters/RosterConfig';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 interface GameArenaPageProps {
   gameMode: GameMode;
   settings: GameSettings;
   stageId?: StageId;
+  fighterP1?: FighterId;
+  fighterP2?: FighterId;
   onReturnToMenu: () => void;
 }
 
@@ -27,6 +30,8 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
   gameMode,
   settings,
   stageId = 'ANCIENT_TEMPLE',
+  fighterP1 = 'KAI',
+  fighterP2 = 'SHADOW',
   onReturnToMenu,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +104,7 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Instantiate Arena X 3D Game Engine
+    // Instantiate Arena X 2D Game Engine
     const engine = new GameEngine(
       containerRef.current,
       settings,
@@ -118,7 +123,9 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
         onFpsUpdate: (currentFps) => {
           setFps(currentFps);
         },
-      }
+      },
+      fighterP1,
+      fighterP2
     );
 
     engineRef.current = engine;

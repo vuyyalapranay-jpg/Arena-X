@@ -96,8 +96,8 @@ export const ANIMATION_PRIORITIES = {
   CINEMATIC: 7,
 };
 
-export const createFighterAnimationSet = (fighterPrefix: 'p1' | 'p2'): CharacterAnimationSet => {
-  const base = `/assets/sprites/${fighterPrefix}`;
+export const createFighterAnimationSet = (fighterPrefix: string): CharacterAnimationSet => {
+  const base = fighterPrefix.startsWith('/') ? fighterPrefix : `/assets/sprites/${fighterPrefix}`;
 
   return {
     // 1. Movement
@@ -598,3 +598,10 @@ export const createFighterAnimationSet = (fighterPrefix: 'p1' | 'p2'): Character
 
 export const P1_ANIMATIONS = createFighterAnimationSet('p1');
 export const P2_ANIMATIONS = createFighterAnimationSet('p2');
+
+export const getFighterAnimationSet = (fighterId: string): CharacterAnimationSet => {
+  const upper = fighterId.toUpperCase();
+  if (upper === 'KAI' || upper === 'P1') return P1_ANIMATIONS;
+  if (upper === 'SHADOW' || upper === 'P2') return P2_ANIMATIONS;
+  return createFighterAnimationSet(`roster/${fighterId.toLowerCase()}`);
+};

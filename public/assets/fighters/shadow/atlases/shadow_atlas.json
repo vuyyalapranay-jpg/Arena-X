@@ -1,10 +1,34 @@
 {
   "character": "Shadow",
+  "id": "SHADOW",
+  "title": "Shadow Fighter",
+  "martialArt": "Ninjutsu & Kenpo",
+  "element": "Dark Void",
   "frameWidth": 400,
   "frameHeight": 500,
   "groundAnchorY": 475,
   "scale": 0.58,
   "animations": {
+    "Idle": {
+      "name": "Idle",
+      "category": "idle",
+      "image": "Idle.png",
+      "framesMax": 10,
+      "frameRate": 8,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
+    "Idle_Blink": {
+      "name": "Idle_Blink",
+      "category": "idle",
+      "image": "Idle_Blink.png",
+      "framesMax": 10,
+      "frameRate": 8,
+      "loop": true,
+      "frameWidth": 400,
+      "frameHeight": 500
+    },
     "Walk": {
       "name": "Walk",
       "category": "movement",
