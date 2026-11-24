@@ -25,7 +25,19 @@ This deployment replaces the prior plan with an edge-first architecture:
 
 ---
 
-## 3. GitHub Git Integration & Automated CI/CD Setup
+## 3. Active Live Cloudflare Resources (Created & Initialized)
+
+- **Account:** `Streamverseiq@gmail.com's Account` (`d4b1911c9e29635728948f7474fc53fd`)
+- **Pages Project:** `arena-x` (ID: `6903e118-ed76-4a73-a507-cff06b358fab`)
+- **Live Assigned Domain:** `arena-x-894.pages.dev`
+- **D1 Database:** `arena-x-db` (UUID: `a9ddc36e-0909-4a51-bcea-6814f0978d61`, Region: `APAC`)
+  - **Schema:** Applied & verified (tables: `players`, `fighter_unlocks`, `match_history`)
+  - **Seed Contenders:** Master Ronin (1740 Elo), Titan Colossus (1690 Elo), Shadow Assassin (1580 Elo), Kai Protagonist (1420 Elo), Frost Vanguard (1310 Elo)
+- **Functions & D1 Binding:** `DB` &rarr; `a9ddc36e-0909-4a51-bcea-6814f0978d61` (attached to both Production and Preview environments)
+
+---
+
+## 4. GitHub Git Integration & Automated CI/CD Setup
 
 GitHub remains the source of truth at:
 **`https://github.com/vuyyalapranay-jpg/Arena-X.git`**
@@ -33,31 +45,20 @@ GitHub remains the source of truth at:
 ### Step-by-Step Connection Instructions:
 
 1. **Log in to Cloudflare:**
-   Navigate to [dash.cloudflare.com](https://dash.cloudflare.com/) and sign in to your free Cloudflare account.
+   Navigate to [dash.cloudflare.com](https://dash.cloudflare.com/) and sign in with `streamverseiq@gmail.com`.
 
 2. **Navigate to Workers & Pages:**
-   In the left sidebar, click **Compute (Workers & Pages)** &rarr; **Create application** &rarr; select the **Pages** tab.
+   In the left sidebar, click **Compute (Workers & Pages)** &rarr; select **Pages** &rarr; open project **`arena-x`**.
 
-3. **Connect to GitHub:**
-   Click **Connect to Git** and authorize your GitHub account. Select the repository:
-   `vuyyalapranay-jpg/Arena-X`
+3. **Connect to Git:**
+   - In project settings, link repository `vuyyalapranay-jpg/Arena-X`.
+   - Production branch: `main`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
 
-4. **Configure Build Settings:**
-   - **Project Name:** `arena-x`
-   - **Production Branch:** `main`
-   - **Framework Preset:** `Vite`
-   - **Build Command:** `npm run build`
-   - **Build Output Directory:** `dist`
-   - **Root Directory:** `/` (leave default)
-
-5. **Deploy Site:**
-   Click **Save and Deploy**. Cloudflare Pages will clone the repo, run `npm run build`, and deploy the production bundle to a public live URL:
-   `https://arena-x.pages.dev` (or your chosen project slug).
-
-6. **(Optional) Attach D1 Database & Durable Objects in Cloudflare Dashboard:**
-   - Go to **Storage & Databases** &rarr; **D1** &rarr; **Create database** named `arena-x-db`.
-   - Run migration: `npx wrangler d1 execute arena-x-db --file=./migrations/0001_initial_schema.sql` (or paste SQL in Cloudflare D1 Console).
-   - In Pages Project Settings &rarr; **Functions** &rarr; **D1 Database bindings** &rarr; Bind `DB` to `arena-x-db`.
+4. **Verify Live Deployment:**
+   - Live URL: `https://arena-x-894.pages.dev`
+   - Every commit pushed to `main` automatically triggers an edge build and deployment on Cloudflare Pages.
 
 ---
 
