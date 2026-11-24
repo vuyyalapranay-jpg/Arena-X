@@ -31,6 +31,7 @@
 
 - **Total Test Suites:** 10
 - **Total Test Cases:** 42
-- **Build Status:** Passing (`tsc && vite build` generates clean production bundle in 7.3s)
+- **Build Status:** Passing (`tsc && vite build` generates clean production bundle in 8.4s)
 - **TypeScript Health:** 0 compile errors
 - **Git State:** Synchronized with active `main` branch
+- **Combat Resolution:** 16 unique authentic playable combat models implemented with unbroken joint kinematics; frame slicing bugs in AnimationConfig (`Attack2.png`, `Special.png`, `Victory.png`) fully fixed with 0 severed limbs.
