@@ -283,8 +283,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <div className="btn-content">
               <Swords className="btn-icon" size={24} />
               <div className="btn-text">
-                <span className="title">PLAY VERSUS BATTLE</span>
-                <span className="sub">Local 2-Player 2D Combat • Responsive Martial Arts</span>
+                <span className="title">DUEL (VS AI OPPONENT)</span>
+                <span className="sub">Battle Against Autonomous AI • Combos, Spacing & Defense</span>
               </div>
             </div>
             <div className="btn-corner-cut" />
@@ -415,12 +415,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <div className="btn-content">
               <Trophy className="btn-icon" size={22} style={{ color: '#eab308' }} />
               <div className="btn-text">
-                <span className="title">TOURNAMENT</span>
-                <span className="sub">16-Player Championship single-elimination bracket</span>
+                <span className="title">TOURNAMENT ROOM</span>
+                <span className="sub">4 to 16 Contenders • Automated Single-Elimination Bracket</span>
               </div>
             </div>
             <span className="status-tag phase4" style={{ borderColor: '#eab308', color: '#eab308' }}>
-              16 BRACKET
+              4–16 PLAYERS
             </span>
           </button>
 

@@ -74,8 +74,9 @@ export class TournamentRoomDO {
     }
     if (message.type === 'start') {
       if (tournament.hostId !== sessionId) return this.error(socket, 'Only the host can start this bracket.');
-      if (tournament.entrants.length !== 16) return this.error(socket, 'A 16-player bracket needs all 16 fighters.');
-      if (!tournament.entrants.every((entrant) => entrant.ready)) return this.error(socket, 'Every fighter must be ready.');
+      if (tournament.entrants.length < 4) return this.error(socket, 'At least 4 fighters are required to start a room tournament.');
+      if (tournament.entrants.length > 16) return this.error(socket, 'Maximum 16 fighters allowed in one room tournament.');
+      if (!tournament.entrants.every((entrant) => entrant.ready)) return this.error(socket, 'Every fighter must be marked ready.');
       tournament.phase = 'IN_PROGRESS';
       tournament.matches = this.makeBracket(tournament.entrants.map((entrant) => entrant.id));
       await this.save(tournament);
@@ -84,14 +85,54 @@ export class TournamentRoomDO {
   }
 
   private makeBracket(ids: string[]): BracketMatch[] {
+    const n = ids.length;
+    // Dynamic bracket sizing: 4 for 4 players, 8 for 5-8 players, 16 for 9-16 players
+    const bracketSize = n <= 4 ? 4 : n <= 8 ? 8 : 16;
+    const totalRounds = bracketSize === 4 ? 2 : bracketSize === 8 ? 3 : 4;
     const matches: BracketMatch[] = [];
-    for (let round = 1, count = 8; round <= 4; round += 1, count /= 2) {
-      for (let index = 0; index < count; index += 1) {
-        const a = round === 1 ? ids[index * 2] : null;
-        const b = round === 1 ? ids[index * 2 + 1] : null;
-        matches.push({ id: `r${round}m${index + 1}`, round, index, a, b, winner: null, loser: null, status: a && b ? 'READY' : 'WAITING' });
+
+    for (let round = 1, matchCount = bracketSize / 2; round <= totalRounds; round += 1, matchCount /= 2) {
+      for (let index = 0; index < matchCount; index += 1) {
+        let a: string | null = null;
+        let b: string | null = null;
+        let status: 'WAITING' | 'READY' | 'COMPLETE' = 'WAITING';
+        let winner: string | null = null;
+
+        if (round === 1) {
+          a = ids[index * 2] || null;
+          b = ids[index * 2 + 1] || null;
+          if (a && b) {
+            status = 'READY';
+          } else if (a && !b) {
+            // Single entrant bye: advances automatically
+            status = 'COMPLETE';
+            winner = a;
+          }
+        }
+
+        matches.push({
+          id: `r${round}m${index + 1}`,
+          round,
+          index,
+          a,
+          b,
+          winner,
+          loser: null,
+          status,
+        });
       }
     }
+
+    // Auto-advance Round 1 bye winners into Round 2
+    for (const m of matches.filter((m) => m.round === 1 && m.status === 'COMPLETE' && m.winner)) {
+      const next = matches.find((item) => item.round === 2 && item.index === Math.floor(m.index / 2));
+      if (next) {
+        if (m.index % 2 === 0) next.a = m.winner;
+        else next.b = m.winner;
+        if (next.a && next.b) next.status = 'READY';
+      }
+    }
+
     return matches;
   }
 

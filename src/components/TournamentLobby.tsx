@@ -37,10 +37,10 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
     <section className="tournament-hero" aria-labelledby="tournament-title">
       <div className="tournament-hero-copy">
         <p className="t-kicker">Private room tournament</p>
-        <h1 id="tournament-title">16-player fighting bracket</h1>
-        <p>Share one invite link, fill the room, then run eight 1v1 opening matches in parallel. The final and a third-place match decide the top four.</p>
+        <h1 id="tournament-title">4 to 16 Player Fighting Bracket</h1>
+        <p>Share one invite link with friends. Minimum 4 fighters to start, supporting up to 16 contenders in an automated championship bracket.</p>
       </div>
-      <div className="tournament-visual" aria-hidden="true"><Trophy /><span>16</span><small>fighters</small></div>
+      <div className="tournament-visual" aria-hidden="true"><Trophy /><span>{state?.entrants.length || 0}/16</span><small>fighters</small></div>
     </section>
     {!joined ? <section className="t-entry" aria-labelledby="entry-title">
       <div><p className="t-kicker">Join a room</p><h2 id="entry-title">Set your fighter tag</h2><p>Hosting creates a private code. Joining accepts a code from a friend.</p></div>
@@ -55,10 +55,26 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
         <button className="t-secondary" onClick={copyInvite}><LinkIcon size={17} /> {copied ? 'Invite copied' : 'Copy invite link'}</button>
         <div className="t-command-actions">
           <button className={`t-ready ${me?.ready ? 'is-ready' : ''}`} onClick={() => client.setReady(!me?.ready)}>{me?.ready ? <Check size={17} /> : <Users size={17} />}{me?.ready ? 'Ready' : 'Mark ready'}</button>
-          {isHost && <button className="t-primary" disabled={state?.entrants.length !== 16 || !state.entrants.every((entrant) => entrant.ready)} onClick={() => client.start()}><Swords size={17} /> Start bracket</button>}
+          {isHost && (
+            <button
+              className="t-primary"
+              disabled={
+                (state?.entrants.length || 0) < 4 ||
+                (state?.entrants.length || 0) > 16 ||
+                !state?.entrants.every((entrant) => entrant.ready)
+              }
+              onClick={() => client.start()}
+            >
+              <Swords size={17} /> Start bracket ({(state?.entrants.length || 0)}/16)
+            </button>
+          )}
         </div>
       </section>
-      <section className="t-roster" aria-labelledby="roster-title"><div><p className="t-kicker">Lobby roster</p><h2 id="roster-title">{state?.entrants.length || 0} of 16 fighters</h2></div><div className="t-slots">{Array.from({ length: 16 }, (_, index) => { const entrant = state?.entrants[index]; return <div className={`t-slot ${entrant ? 'filled' : ''}`} key={index}><span>{String(index + 1).padStart(2, '0')}</span><strong>{entrant?.name || 'Open slot'}</strong>{entrant?.ready && <Check size={15} />}</div>; })}</div></section>
+      <section className="t-roster" aria-labelledby="roster-title">
+        <div>
+          <p className="t-kicker">Lobby roster</p>
+          <h2 id="roster-title">{state?.entrants.length || 0} of 16 fighters (min 4 to start)</h2>
+        </div><div className="t-slots">{Array.from({ length: 16 }, (_, index) => { const entrant = state?.entrants[index]; return <div className={`t-slot ${entrant ? 'filled' : ''}`} key={index}><span>{String(index + 1).padStart(2, '0')}</span><strong>{entrant?.name || 'Open slot'}</strong>{entrant?.ready && <Check size={15} />}</div>; })}</div></section>
       {state?.phase !== 'LOBBY' && <section className="t-bracket" aria-labelledby="bracket-title"><div className="t-bracket-heading"><div><p className="t-kicker">Live bracket</p><h2 id="bracket-title">Tournament matches</h2></div><span>{state?.phase === 'COMPLETE' ? 'Champion decided' : 'Matches advance on verified results'}</span></div><div className="t-bracket-scroll">{matchesByRound.map((matches, index) => <div className="t-round" key={index}><h3>{roundName(index + 1)}</h3>{matches.map((match) => <div className={`t-match t-${match.status.toLowerCase()}`} key={match.id}><div className={match.winner === match.a ? 'winner' : ''}>{entrantsById.get(match.a || '') || 'Awaiting fighter'}</div><div className={match.winner === match.b ? 'winner' : ''}>{entrantsById.get(match.b || '') || 'Awaiting fighter'}</div></div>)}</div>)}</div><div className="t-placement"><Crown size={18} /><span>1st: final winner · 2nd: final opponent · 3rd/4th: semifinal playoff</span></div></section>}
     </>}
     {error && <p className="t-error" role="alert">{error}</p>}

@@ -16,6 +16,7 @@ import { Renderer2D } from '../engine/Renderer2D';
 import { WorldCoordinateSystem } from '../engine/WorldCoordinateSystem';
 import { CombatEngine } from '../combat/CombatEngine';
 import { FighterId } from '../characters/RosterConfig';
+import { FighterAIController, AIDifficulty } from '../ai/FighterAIController';
 
 export interface GameEngineCallbacks {
   onMatchStateUpdate: (state: MatchState) => void;
@@ -30,6 +31,8 @@ export class GameEngine {
   private ctx: CanvasRenderingContext2D;
 
   public inputManager: InputManager;
+  public aiController: FighterAIController;
+  public isP2AI: boolean = true;
   public fighterP1: AnimeFighter2D;
   public fighterP2: AnimeFighter2D;
   public arena: Stage2D;
@@ -102,6 +105,7 @@ export class GameEngine {
 
     // 2. Initialize Subsystems & Centralized 2D Camera/Renderer
     this.inputManager = new InputManager();
+    this.aiController = new FighterAIController('NORMAL');
     this.arena = new Stage2D('ANCIENT_TEMPLE');
     this.vfx = new VFXManager2D();
     this.camera = new FightCamera2D(1200, WorldCoordinateSystem.DEFAULT_CAM_Y);
@@ -245,6 +249,7 @@ export class GameEngine {
     // Reset Fighters to starting coordinates
     this.fighterP1.reset(950, 1);
     this.fighterP2.reset(1450, -1);
+    this.aiController.reset();
     this.projectiles = [];
     this.p1Combo = 0;
     this.p2Combo = 0;
@@ -360,8 +365,14 @@ export class GameEngine {
         this.fighterP1.handleInput(p1Inputs, this.fighterP2);
 
         if (this.gameMode === 'VERSUS') {
-          const p2Inputs = this.inputManager.getInputs('P2');
-          this.fighterP2.handleInput(p2Inputs, this.fighterP1);
+          // Autonomous fighting AI or local Player 2 controls
+          if (this.isP2AI) {
+            const aiInputs = this.aiController.update(this.fighterP2, this.fighterP1, deltaTime);
+            this.fighterP2.handleInput(aiInputs, this.fighterP1);
+          } else {
+            const p2Inputs = this.inputManager.getInputs('P2');
+            this.fighterP2.handleInput(p2Inputs, this.fighterP1);
+          }
         } else {
           // Training Dummy: keeps facing player
           const dir = this.fighterP1.x > this.fighterP2.x ? 1 : -1;
@@ -969,6 +980,13 @@ export class GameEngine {
     if (this.gameState === 'PAUSED') {
       this.gameState = 'FIGHTING';
       this.callbacks.onGameStateChange('FIGHTING');
+    }
+  }
+
+  public setP2AI(enabled: boolean, difficulty?: AIDifficulty): void {
+    this.isP2AI = enabled;
+    if (difficulty) {
+      this.aiController.difficulty = difficulty;
     }
   }
 
