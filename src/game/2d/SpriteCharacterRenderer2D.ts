@@ -111,7 +111,11 @@ export class SpriteCharacterRenderer2D {
     }
 
     // Directional facing
-    ctx.scale(facing, 1);
+    // Notice: The Kenji sprite sheet was authored natively facing left (-1).
+    // Invert facing for Kenji so that facing = 1 means looking RIGHT, and facing = -1 means looking LEFT.
+    const isNativelyFacingLeft = anim.imageSrc.includes('kenji');
+    const effectiveFacing = isNativelyFacingLeft ? -facing : facing;
+    ctx.scale(effectiveFacing, 1);
 
     // Super / EX Aura when meter is full (100%)
     if (superMeter >= 100) {
