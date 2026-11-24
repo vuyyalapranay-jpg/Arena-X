@@ -736,8 +736,9 @@ export class AnimeFighter2D {
 
   public getHurtbox(): HurtboxInstance {
     const isCrouched = this.state === 'CROUCH' || this.animController.currentAnimKey === 'blockCrouch';
-    const height = isCrouched ? 85 : 140;
-    const width = 56;
+    // Calibrated for 5.4 arcade character scale (~285px tall, ~120px wide)
+    const height = isCrouched ? 170 : 260;
+    const width = 120;
     return {
       owner: this.id,
       x: this.x - width / 2,

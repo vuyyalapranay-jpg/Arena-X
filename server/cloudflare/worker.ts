@@ -2,13 +2,15 @@
 // Unified Cloudflare Worker with Workers Static Assets, D1 Database, and Durable Objects WebSocket Rooms
 
 import { MatchRoomDO } from './MatchRoomDO';
+import { TournamentRoomDO } from './TournamentRoomDO';
 
-export { MatchRoomDO };
+export { MatchRoomDO, TournamentRoomDO };
 
 interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   DB: any;
   MATCH_ROOM: any;
+  TOURNAMENT_ROOM: any;
   ENVIRONMENT?: string;
   GAME_TITLE?: string;
 }
@@ -36,6 +38,7 @@ export default {
               static_assets: env.ASSETS ? 'BOUND' : 'FALLBACK',
               d1_database: env.DB ? 'BOUND' : 'OFFLINE',
               durable_objects: env.MATCH_ROOM ? 'BOUND' : 'OFFLINE',
+              tournaments: env.TOURNAMENT_ROOM ? 'BOUND' : 'OFFLINE',
             },
             timestamp: Date.now(),
           },
@@ -50,6 +53,13 @@ export default {
           },
         }
       );
+    }
+
+    if (url.pathname.startsWith('/api/tournament/')) {
+      if (!env.TOURNAMENT_ROOM) return Response.json({ error: 'Tournament service is not configured.' }, { status: 503 });
+      const code = url.pathname.split('/')[3]?.toUpperCase() || '';
+      const doId = env.TOURNAMENT_ROOM.idFromName(`tournament:${code}`);
+      return env.TOURNAMENT_ROOM.get(doId).fetch(request);
     }
 
     if (url.pathname === '/api/leaderboard') {

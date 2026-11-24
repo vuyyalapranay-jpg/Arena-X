@@ -41,6 +41,7 @@ interface MainMenuProps {
   currentStageName?: string;
   currentP1Name?: string;
   currentP2Name?: string;
+  onOpenTournament?: () => void;
 }
 
 const ROSTER_ARRAY = Object.values(ROSTER_FIGHTERS);
@@ -54,6 +55,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   currentStageName = 'ANCIENT TEMPLE',
   currentP1Name = 'KAI',
   currentP2Name = 'SHADOW',
+  onOpenTournament,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -408,7 +410,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => setActiveModal('TOURNAMENT')}
+            onClick={() => { soundManager.playMenuSelect(); onOpenTournament?.(); }}
           >
             <div className="btn-content">
               <Trophy className="btn-icon" size={22} style={{ color: '#eab308' }} />

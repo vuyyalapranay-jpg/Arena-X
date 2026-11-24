@@ -21,6 +21,10 @@
       {
         "name": "MATCH_ROOM",
         "class_name": "MatchRoomDO"
+      },
+      {
+        "name": "TOURNAMENT_ROOM",
+        "class_name": "TournamentRoomDO"
       }
     ]
   },
@@ -28,6 +32,10 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["MatchRoomDO"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["TournamentRoomDO"]
     }
   ],
   "vars": {

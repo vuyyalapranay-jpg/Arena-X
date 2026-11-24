@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MainMenu } from './pages/MainMenu';
 import { GameArenaPage } from './pages/GameArenaPage';
 import { OnlineMultiplayerMenu } from './components/OnlineMultiplayerMenu';
+import { TournamentLobby } from './components/TournamentLobby';
 import { OrientationWarning } from './components/OrientationWarning';
 import { GameMode, GameSettings } from './types';
 import { StageId, STAGES } from './game/stages/StageConfig';
@@ -13,9 +14,10 @@ import { GAME_CONFIG } from './config/gameConfig';
 import './styles/online.css';
 import './styles/stages.css';
 import './styles/characters.css';
+import './styles/tournament.css';
 
 export const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'MENU' | 'ONLINE' | 'ARENA'>('MENU');
+  const [currentPage, setCurrentPage] = useState<'MENU' | 'ONLINE' | 'TOURNAMENT' | 'ARENA'>('MENU');
   const [gameMode, setGameMode] = useState<GameMode>('VERSUS');
   const [selectedStage, setSelectedStage] = useState<StageId>('ANCIENT_TEMPLE');
   const [selectedP1, setSelectedP1] = useState<FighterId>('KAI');
@@ -25,15 +27,21 @@ export const App: React.FC = () => {
   const [pendingMode, setPendingMode] = useState<GameMode>('VERSUS');
   const [settings, setSettings] = useState<GameSettings>(GAME_CONFIG.DEFAULT_SETTINGS);
   const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
+  const [initialTournamentCode, setInitialTournamentCode] = useState<string | null>(null);
 
   // Check URL query param ?room=AX-XXXX on mount
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
+      const tournamentParam = params.get('tournament');
       if (roomParam) {
         setInitialRoomCode(roomParam.toUpperCase());
         setCurrentPage('ONLINE');
+      }
+      if (tournamentParam) {
+        setInitialTournamentCode(tournamentParam.toUpperCase());
+        setCurrentPage('TOURNAMENT');
       }
     } catch (e) {}
   }, []);
@@ -60,6 +68,8 @@ export const App: React.FC = () => {
     setCurrentPage('MENU');
   };
 
+  const handleOpenTournament = () => setCurrentPage('TOURNAMENT');
+
   const handleLaunchOnlineFight = (stageId?: string) => {
     if (stageId) {
       setSelectedStage(stageId as StageId);
@@ -84,6 +94,7 @@ export const App: React.FC = () => {
           currentStageName={STAGES[selectedStage]?.name}
           currentP1Name={ROSTER_FIGHTERS[selectedP1]?.name}
           currentP2Name={ROSTER_FIGHTERS[selectedP2]?.name}
+          onOpenTournament={handleOpenTournament}
         />
       )}
 
@@ -93,6 +104,10 @@ export const App: React.FC = () => {
           onLaunchOnlineFight={handleLaunchOnlineFight}
           initialRoomCode={initialRoomCode}
         />
+      )}
+
+      {currentPage === 'TOURNAMENT' && (
+        <TournamentLobby onBack={handleReturnToMenu} initialCode={initialTournamentCode} />
       )}
 
       {currentPage === 'ARENA' && (
