@@ -464,13 +464,13 @@ export class GameEngine {
       if (this.roundTransitionTimer <= 0) {
         if (this.matchState.p1RoundsWon >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) {
           this.matchState.winner = 'P1';
-          this.matchState.announcement = 'PLAYER 1 VICTORIOUS!';
+          this.matchState.announcement = `${this.fighterP1.name.toUpperCase()} VICTORIOUS!`;
           this.gameState = 'MATCH_OVER';
           soundManager.playVictoryMusic();
           soundManager.playVoiceLine(this.fighterP1.fighterId, 'VICTORY');
         } else if (this.matchState.p2RoundsWon >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) {
           this.matchState.winner = 'P2';
-          this.matchState.announcement = 'PLAYER 2 VICTORIOUS!';
+          this.matchState.announcement = `${this.fighterP2.name.toUpperCase()} VICTORIOUS!`;
           this.gameState = 'MATCH_OVER';
           soundManager.playVictoryMusic();
           soundManager.playVoiceLine(this.fighterP2.fighterId, 'VICTORY');
@@ -775,14 +775,19 @@ export class GameEngine {
     this.addScreenShake(18, 0.45);
     this.vfx.triggerScreenFlash('#ffffff', 0.65);
 
-    if (winner === 'P1') {
+    const isP1 = winner === 'P1';
+    const winningFighter = isP1 ? this.fighterP1 : this.fighterP2;
+    const isPerfect = winningFighter.currentHealth >= winningFighter.maxHealth;
+    const winnerName = winningFighter.name.toUpperCase();
+
+    if (isP1) {
       this.matchState.p1RoundsWon++;
-      this.matchState.announcement = 'K.O.! PLAYER 1 WINS ROUND';
+      this.matchState.announcement = isPerfect ? `PERFECT! ${winnerName} WINS ROUND` : `K.O.! ${winnerName} WINS ROUND`;
       this.fighterP1.playVictory();
       this.fighterP2.playDefeat();
     } else {
       this.matchState.p2RoundsWon++;
-      this.matchState.announcement = 'K.O.! PLAYER 2 WINS ROUND';
+      this.matchState.announcement = isPerfect ? `PERFECT! ${winnerName} WINS ROUND` : `K.O.! ${winnerName} WINS ROUND`;
       this.fighterP2.playVictory();
       this.fighterP1.playDefeat();
     }
@@ -798,12 +803,12 @@ export class GameEngine {
 
     if (this.fighterP1.currentHealth > this.fighterP2.currentHealth) {
       this.matchState.p1RoundsWon++;
-      this.matchState.announcement = 'TIME UP! PLAYER 1 WINS';
+      this.matchState.announcement = `TIME UP! ${this.fighterP1.name.toUpperCase()} WINS`;
       this.fighterP1.playVictory();
       this.fighterP2.playDefeat();
     } else if (this.fighterP2.currentHealth > this.fighterP1.currentHealth) {
       this.matchState.p2RoundsWon++;
-      this.matchState.announcement = 'TIME UP! PLAYER 2 WINS';
+      this.matchState.announcement = `TIME UP! ${this.fighterP2.name.toUpperCase()} WINS`;
       this.fighterP2.playVictory();
       this.fighterP1.playDefeat();
     } else {
