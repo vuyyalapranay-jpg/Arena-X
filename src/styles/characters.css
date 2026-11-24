@@ -305,3 +305,194 @@
   transform: scale(1.03);
   box-shadow: 0 0 25px rgba(0, 229, 255, 0.5);
 }
+
+/* ================================================= */
+/* PHASE 3: CONSOLE FIGHTER SELECTION ENHANCEMENTS   */
+/* ================================================= */
+
+.char-select-vs-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 18px;
+  background: rgba(14, 20, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.vs-fighter-p1 {
+  color: #00e5ff;
+}
+
+.vs-divider-icon {
+  color: #ff1a4b;
+  font-style: italic;
+  font-size: 11px;
+}
+
+.vs-fighter-p2 {
+  color: #ff1a4b;
+}
+
+.hovered-card {
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.4) !important;
+}
+
+/* Detail Standee Showcase */
+.detail-standee-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: radial-gradient(circle at center, rgba(18, 25, 42, 0.8) 0%, rgba(6, 9, 16, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+}
+
+.detail-standee-aura {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  filter: blur(28px);
+  z-index: 1;
+  animation: auraGlow 3s ease-in-out infinite alternate;
+}
+
+.detail-standee-image {
+  position: relative;
+  z-index: 2;
+  height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.9));
+  animation: fighterBreathe 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Weapon & Difficulty Meta Row */
+.detail-weapon-difficulty-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(14, 20, 32, 0.65);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+}
+
+.spec-meta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.meta-label {
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.difficulty-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.difficulty-text {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #f59e0b;
+}
+
+.ultimate-item {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(18, 25, 42, 0.7) 100%) !important;
+  border-left: 3px solid #f59e0b !important;
+}
+
+/* Detail Preview Header & Tags */
+.detail-preview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-name-large {
+  font-size: 26px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 16px rgba(0, 0, 0, 0.8);
+}
+
+.detail-title-large {
+  font-size: 13px;
+  color: #94a3b8;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+}
+
+.detail-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 2px 0 6px 0;
+}
+
+.detail-tag {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  text-transform: uppercase;
+}
+
+.detail-tag.archetype {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: #0ea5e9;
+  color: #38bdf8;
+}
+
+.detail-tag.element {
+  background: rgba(225, 29, 72, 0.15);
+  color: #fb7185;
+}
+
+/* Scrollbar polish for character detail panel */
+.char-detail-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.char-detail-panel::-webkit-scrollbar-track {
+  background: rgba(6, 9, 16, 0.6);
+  border-radius: 3px;
+}
+
+.char-detail-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.char-detail-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.4);
+}
+
