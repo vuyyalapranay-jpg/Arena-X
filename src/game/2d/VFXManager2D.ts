@@ -342,6 +342,53 @@ export class VFXManager2D {
     }
   }
 
+  public spawnFloatingText(x: number, y: number, text: string, color = '#ffffff', size = 24, lifetime = 0.85): void {
+    this.floatingTexts.push({
+      x,
+      y,
+      text,
+      color,
+      size,
+      alpha: 1,
+      vy: -40,
+      lifetime,
+      age: 0,
+      isCombo: false,
+    });
+  }
+
+  public spawnFinisherExplosion(x: number, y: number, color = '#ffd700', moveName = 'CINEMATIC FINISHER'): void {
+    // 1. Concentric shockwave cascade
+    this.spawnShockwave(x, y, color, 380);
+    this.spawnShockwave(x, y, '#ffffff', 220);
+    this.triggerScreenFlash('#ffffff', 0.85);
+
+    // 2. High-impact hitsparks
+    this.spawnHitSpark(x, y, color, 140);
+    this.spawnHitSpark(x, y, '#ffffff', 90);
+
+    // 3. Dense radial particle blast
+    for (let i = 0; i < 40; i++) {
+      const angle = (i * Math.PI * 2) / 40 + (Math.random() - 0.5) * 0.3;
+      const speed = 220 + Math.random() * 420;
+      this.auraParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 35,
+        radius: 8 + Math.random() * 14,
+        color: Math.random() < 0.4 ? '#ffffff' : color,
+        alpha: 1,
+        lifetime: 0.65 + Math.random() * 0.35,
+        age: 0,
+      });
+    }
+
+    // 4. Large dramatic floating text
+    this.spawnFloatingText(x, y - 80, moveName.toUpperCase(), color, 34, 1.8);
+    this.spawnFloatingText(x, y - 40, '★ FINISHER K.O.! ★', '#ff1a4b', 26, 1.8);
+  }
+
   public render(ctx: CanvasRenderingContext2D): void {
     // 1. Render Shockwaves (Projected on floor plane)
     ctx.save();

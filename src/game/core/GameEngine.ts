@@ -772,13 +772,28 @@ export class GameEngine {
   private handleKnockout(winner: PlayerId): void {
     this.gameState = 'ROUND_OVER';
     soundManager.playKOGong();
-    this.addScreenShake(18, 0.45);
-    this.vfx.triggerScreenFlash('#ffffff', 0.65);
 
     const isP1 = winner === 'P1';
     const winningFighter = isP1 ? this.fighterP1 : this.fighterP2;
+    const defeatedFighter = isP1 ? this.fighterP2 : this.fighterP1;
     const isPerfect = winningFighter.currentHealth >= winningFighter.maxHealth;
     const winnerName = winningFighter.name.toUpperCase();
+    const isDecidingMatchRound = (this.matchState.p1RoundsWon + (isP1 ? 1 : 0) >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) ||
+                                (this.matchState.p2RoundsWon + (!isP1 ? 1 : 0) >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN);
+
+    if (isDecidingMatchRound || winningFighter.isCinematic) {
+      // Phase 8: Cinematic Finisher Explosion & Dynamic Shockwave Cascade
+      this.vfx.spawnFinisherExplosion(
+        defeatedFighter.x,
+        defeatedFighter.y - 80,
+        winningFighter.appearance.accentColor || '#ffd700',
+        winningFighter.isCinematic ? 'CINEMATIC FINISHER' : 'DECISIVE K.O.'
+      );
+      this.addScreenShake(26, 0.75);
+    } else {
+      this.addScreenShake(18, 0.45);
+      this.vfx.triggerScreenFlash('#ffffff', 0.65);
+    }
 
     if (isP1) {
       this.matchState.p1RoundsWon++;
