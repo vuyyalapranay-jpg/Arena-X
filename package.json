@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.14.0",
-    "colyseus": "^0.18.12",
-    "colyseus.js": "^0.16.22",
     "lucide-react": "^0.460.0",
     "phaser": "^4.2.1",
     "react": "^18.3.1",
