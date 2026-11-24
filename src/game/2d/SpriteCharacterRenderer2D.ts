@@ -53,7 +53,7 @@ export class SpriteCharacterRenderer2D {
     ctx.translate(worldX, groundY);
     ctx.fillStyle = `rgba(5, 8, 15, ${shadowAlpha})`;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 75 * shadowScale, 20 * shadowScale, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 85 * shadowScale, 22 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -89,10 +89,10 @@ export class SpriteCharacterRenderer2D {
     const img = this.getImage(anim.imageSrc);
     const frameH = img && img.naturalHeight > 0 ? img.naturalHeight : 200;
 
-    // Scale: 4.0 for authentic arcade fighting game proportion (approx 350-380px tall)
-    let scale = 4.0;
+    // Scale: 5.4 for true arcade fighting game stature (~285-295px character height)
+    let scale = 5.4;
     if (frameH <= 150) {
-      scale = 4.6; // Huntress 150x150 scaling
+      scale = 6.8; // Huntress 150x150 frames
     }
 
     // Titan has a 15% larger frame
@@ -102,8 +102,8 @@ export class SpriteCharacterRenderer2D {
 
     // High visibility rim lighting & edge definition
     // Guarantees characters pop distinctly against any stage background
-    const rimColor = isP1 ? 'rgba(0, 240, 255, 0.55)' : 'rgba(255, 50, 100, 0.55)';
-    ctx.filter = `drop-shadow(0 0 2px rgba(255,255,255,0.85)) drop-shadow(0 2px 8px ${rimColor}) contrast(1.15) brightness(1.1)`;
+    const rimColor = isP1 ? 'rgba(0, 240, 255, 0.65)' : 'rgba(255, 50, 100, 0.65)';
+    ctx.filter = `drop-shadow(0 0 2px rgba(255,255,255,0.95)) drop-shadow(0 2px 10px ${rimColor}) contrast(1.15) brightness(1.1)`;
 
     // Hit Flash Effect (High impact visual on clean strikes overrides rim)
     if (isHitFlashing) {
@@ -133,12 +133,25 @@ export class SpriteCharacterRenderer2D {
     if (img && img.complete && img.naturalWidth > 0) {
       const framesMax = Math.max(1, anim.framesMax);
       const frameW = img.naturalWidth / framesMax;
-      const actualH = img.naturalHeight;
       const frameIndex = Math.min(animController.frameIndex, framesMax - 1);
 
-      // Foot anchor offset: in 200x200 frames, feet contact ground at y = ~145-148px
-      const footAnchorY = frameH <= 150 ? frameH * 0.74 : frameH * 0.725;
-      const centerFootX = frameW * 0.5;
+      // Exact pixel-measured foot ground contact rows
+      let footAnchorY = 125;
+      let centerFootX = frameW * 0.5;
+
+      if (anim.imageSrc.includes('samuraiMack')) {
+        footAnchorY = 122; // Exact sole level in 200x200
+        centerFootX = 95;
+      } else if (anim.imageSrc.includes('kenji')) {
+        footAnchorY = 128; // Exact sole level in 200x200
+        centerFootX = 102;
+      } else if (anim.imageSrc.includes('huntress')) {
+        footAnchorY = 97;  // Exact sole level in 150x150
+        centerFootX = 77;
+      } else if (frameH <= 150) {
+        footAnchorY = 97;
+        centerFootX = frameW * 0.5;
+      }
 
       // Crisp pixel/canvas rendering
       ctx.imageSmoothingEnabled = false;
