@@ -254,19 +254,19 @@
   flex-shrink: 0;
 }
 
-.btn-content {
+.online-action-btn .btn-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.btn-primary-text {
+.online-action-btn .btn-primary-text {
   font-size: 19px;
   font-weight: 800;
   letter-spacing: 2px;
 }
 
-.btn-sub-text {
+.online-action-btn .btn-sub-text {
   font-size: 12px;
   color: #8fa0b5;
   letter-spacing: 0.5px;
