@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "arena-x",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "arena-x-db",
+      "database_id": "arena-x-db-id"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MATCH_ROOM",
+        "class_name": "MatchRoomDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["MatchRoomDO"]
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "GAME_TITLE": "ARENA X — 2D Martial Arts Fighting Game"
+  }
+}

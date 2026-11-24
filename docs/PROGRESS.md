@@ -35,3 +35,4 @@
 - **TypeScript Health:** 0 compile errors
 - **Git State:** Synchronized with active `main` branch
 - **Combat Resolution:** 16 unique authentic playable combat models implemented with unbroken joint kinematics; frame slicing bugs in AnimationConfig (`Attack2.png`, `Special.png`, `Victory.png`) fully fixed with 0 severed limbs.
+- **Deployment Architecture:** Cloudflare Free Ecosystem architecture implemented: Cloudflare Pages (`_redirects`, `_headers`), Pages Functions API (`/api/health`, `/api/profile`, `/api/leaderboard`, `/api/rooms`), D1 database migrations (`0001_initial_schema.sql`), Durable Objects WebSocket room with hibernation (`MatchRoomDO.ts`), and `wrangler.jsonc`. Production build verified passing in 5.5s with zero errors.

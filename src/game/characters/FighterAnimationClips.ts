@@ -27,7 +27,8 @@ export class FighterAnimationClips {
   ): THREE.VectorKeyframeTrack {
     const values: number[] = [];
     for (const [x, y, z] of positions) {
-      values.push(x, y, z);
+      // Scale centimeters (Mixamo default) to Three.js world meters (0.01)
+      values.push(x * 0.01, y * 0.01, z * 0.01);
     }
     return new THREE.VectorKeyframeTrack(`${boneName}.position`, times, values);
   }
