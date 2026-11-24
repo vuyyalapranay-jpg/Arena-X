@@ -54,6 +54,7 @@ export const GAME_CONFIG = {
 
   // Default Game Settings
   DEFAULT_SETTINGS: {
+    renderMode: '2D',
     graphicsQuality: 'high',
     masterVolume: 0.8,
     sfxVolume: 0.85,

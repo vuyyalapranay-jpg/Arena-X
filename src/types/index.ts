@@ -169,6 +169,7 @@ export interface FighterStats {
 export type GraphicsQuality = 'low' | 'medium' | 'high';
 
 export interface GameSettings {
+  renderMode?: '3D' | '2D';
   graphicsQuality: GraphicsQuality;
   masterVolume: number;
   sfxVolume: number;

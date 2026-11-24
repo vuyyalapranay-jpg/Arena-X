@@ -18,7 +18,8 @@ import {
   Smartphone,
   Sparkles,
   Globe,
-  Radio
+  Radio,
+  Flame
 } from 'lucide-react';
 import { GameMode, GameSettings, GraphicsQuality } from '../types';
 import { soundManager } from '../game/core/SoundManager';
@@ -172,7 +173,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <header className="menu-header">
           <div className="logo-badge">
             <span className="badge-dot" />
-            <span>2.5D FIGHTING ENGINE • PHASE 7 ADVANCED ARENAS</span>
+            <span>ARENA X • COMPETITIVE 2D MARTIAL ARTS</span>
           </div>
 
           <div className="arena-logo-wrapper">
@@ -192,7 +193,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
 
           <p className="menu-tagline">
-            SIX ORIGINAL 2.5D FIGHTING ARENAS • MULTI-LAYER PARALLAX • ATMOSPHERIC 2D EFFECTS
+            SIX ORIGINAL 2D FIGHTING ARENAS • 16 UNIQUE FIGHTERS • AUTHORITATIVE NETPLAY
           </p>
         </header>
 
@@ -211,14 +212,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <div className="btn-content">
               <Swords className="btn-icon" size={24} />
               <div className="btn-text">
-                <span className="title">PLAY VS BATTLE</span>
-                <span className="sub">Local 2-Player 2D Anime Combat (Keyboard / Touch)</span>
+                <span className="title">PLAY VERSUS BATTLE</span>
+                <span className="sub">Local 2-Player 2D Martial Arts • Responsive Controls & Parallax Arenas</span>
               </div>
             </div>
             <div className="btn-corner-cut" />
           </button>
 
-          {/* ONLINE PLAY (2XKO Aesthetic) */}
+          {/* ONLINE PLAY */}
           <button
             className="menu-btn standard-btn online-menu-btn"
             style={{
@@ -235,8 +236,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <div className="btn-content">
               <Radio className="btn-icon" size={22} style={{ color: '#00e5ff' }} />
               <div className="btn-text">
-                <span className="title" style={{ color: '#00e5ff', fontWeight: 900 }}>ONLINE PLAY</span>
-                <span className="sub">Public Rooms • Private Duels • Quick Matchmaking</span>
+                <span className="title" style={{ color: '#00e5ff', fontWeight: 900 }}>ONLINE 1v1 NETPLAY</span>
+                <span className="sub">Public Matchmaking • Private Rooms • Authoritative 60Hz Netplay</span>
               </div>
             </div>
             <span className="status-tag phase2 active-tag" style={{ background: '#00e5ff', color: '#000000', fontWeight: 900 }}>
@@ -316,23 +317,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </span>
           </button>
 
-          {/* 3. CHARACTER STUDIO (Phase 2 Active Showcase) */}
+          {/* 3. ARCADE MODE */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => {
-              soundManager.playMenuSelect();
-              setActiveModal('CHARACTER_STUDIO');
-            }}
+            onClick={() => 
+              openComingSoon(
+                'ARCADE MODE',
+                'Battle through a ladder of 8 computer-controlled fighters culminating in a climactic boss showdown.',
+                'ARCADE LADDER'
+              )
+            }
           >
             <div className="btn-content">
-              <Wrench className="btn-icon" size={22} />
+              <Flame className="btn-icon" size={22} style={{ color: '#f59e0b' }} />
               <div className="btn-text">
-                <span className="title">CHARACTER STUDIO</span>
-                <span className="sub">Inspect 3D Skeletal Rigs & 21-Animation Suite</span>
+                <span className="title">ARCADE MODE</span>
+                <span className="sub">Classic fighting ladder & boss encounters</span>
               </div>
             </div>
-            <span className="status-tag phase2 active-tag">PHASE 2 ACTIVE</span>
+            <span className="status-tag phase2 active-tag" style={{ background: '#f59e0b', color: '#040714', fontWeight: 900 }}>
+              SOLO RUN
+            </span>
           </button>
 
           {/* 4. TOURNAMENT (Coming Phase 4) */}
@@ -400,7 +406,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* FOOTER INFO BAR */}
         <footer className="menu-footer">
           <div className="footer-item">
-            <span>VERSION:</span> <strong className="highlight">0.2.0-ALPHA</strong>
+            <span>VERSION:</span> <strong className="highlight">1.0.0-PROD</strong>
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
@@ -408,7 +414,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
           <div className="footer-dot">•</div>
           <div className="footer-item">
-            <span>BUILD:</span> <strong>PHASE 2 VERIFIED</strong>
+            <span>BUILD:</span> <strong>PHASE 2 DESIGN SYSTEM</strong>
           </div>
         </footer>
       </div>
