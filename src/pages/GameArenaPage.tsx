@@ -1,7 +1,6 @@
 // src/pages/GameArenaPage.tsx
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine } from '../game/core/GameEngine';
-import { Engine3D } from '../game/3d/Engine3D';
 import { FightHUD } from '../game/ui/FightHUD';
 import { multiplayerClient } from '../multiplayer/MultiplayerClient';
 import { Wifi, AlertTriangle } from 'lucide-react';
@@ -105,78 +104,41 @@ export const GameArenaPage: React.FC<GameArenaPageProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const is3D = settings.renderMode === '3D';
-
-    if (is3D) {
-      // Instantiate Arena X 3D Game Engine (Phase B Prototype)
-      const engine3d = new Engine3D(
-        containerRef.current,
-        settings,
-        gameMode,
-        {
-          onGameStateChange: (newState) => {
-            setGameState(newState);
-          },
-          onMatchStateUpdate: (newMatchState) => {
-            setMatchState({ ...newMatchState });
-          },
-          onFightersUpdate: (p1, p2) => {
-            setP1Stats(p1);
-            setP2Stats(p2);
-          },
-          onFpsUpdate: (currentFps) => {
-            setFps(currentFps);
-          },
+    // 2D Canvas Game Engine
+    const engine = new GameEngine(
+      containerRef.current,
+      settings,
+      gameMode,
+      {
+        onGameStateChange: (newState) => {
+          setGameState(newState);
         },
-        fighterP1,
-        fighterP2
-      );
-
-      (window as any).__ARENA_X_ENGINE_3D__ = engine3d;
-      (window as any).__ARENA_X_ENGINE__ = engine3d;
-
-      return () => {
-        engine3d.dispose();
-        delete (window as any).__ARENA_X_ENGINE_3D__;
-        delete (window as any).__ARENA_X_ENGINE__;
-      };
-    } else {
-      // Classic 2D Engine Fallback
-      const engine = new GameEngine(
-        containerRef.current,
-        settings,
-        gameMode,
-        {
-          onGameStateChange: (newState) => {
-            setGameState(newState);
-          },
-          onMatchStateUpdate: (newMatchState) => {
-            setMatchState({ ...newMatchState });
-          },
-          onFightersUpdate: (p1, p2) => {
-            setP1Stats(p1.getStats());
-            setP2Stats(p2.getStats());
-          },
-          onFpsUpdate: (currentFps) => {
-            setFps(currentFps);
-          },
+        onMatchStateUpdate: (newMatchState) => {
+          setMatchState({ ...newMatchState });
         },
-        fighterP1,
-        fighterP2
-      );
+        onFightersUpdate: (p1, p2) => {
+          setP1Stats(p1.getStats());
+          setP2Stats(p2.getStats());
+        },
+        onFpsUpdate: (currentFps) => {
+          setFps(currentFps);
+        },
+      },
+      fighterP1,
+      fighterP2
+    );
 
-      engineRef.current = engine;
-      (window as any).__ARENA_X_ENGINE__ = engine;
-      if (stageId) {
-        engine.setStage(stageId);
-      }
-
-      return () => {
-        engine.dispose();
-        engineRef.current = null;
-        delete (window as any).__ARENA_X_ENGINE__;
-      };
+    engineRef.current = engine;
+    (window as any).__ARENA_X_ENGINE__ = engine;
+    if (stageId) {
+      engine.setStage(stageId);
     }
+
+    return () => {
+      engine.dispose();
+      engineRef.current = null;
+      delete (window as any).__ARENA_X_ENGINE__;
+    };
   }, [gameMode, settings, stageId, fighterP1, fighterP2]);
 
   const handlePause = useCallback(() => {
