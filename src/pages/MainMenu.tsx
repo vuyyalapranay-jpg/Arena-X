@@ -1,9 +1,10 @@
 // src/pages/MainMenu.tsx
+// ARENA X — CONSOLE-GRADE 2D FIGHTING GAME LOBBY & MAIN MENU (PHASE 2)
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Swords, 
-  Wrench, 
   Trophy, 
   User, 
   Settings as SettingsIcon, 
@@ -17,13 +18,19 @@ import {
   X,
   Smartphone,
   Sparkles,
-  Globe,
   Radio,
-  Flame
+  Flame,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  Coins,
+  Crown
 } from 'lucide-react';
 import { GameMode, GameSettings, GraphicsQuality } from '../types';
 import { soundManager } from '../game/core/SoundManager';
 import { PlayerProfileModal } from '../components/PlayerProfileModal';
+import { ROSTER_FIGHTERS, FighterId } from '../game/characters/RosterConfig';
+import { progressionManager } from '../game/progression/ProgressionManager';
 
 interface MainMenuProps {
   onStartGame: (mode: GameMode) => void;
@@ -35,6 +42,8 @@ interface MainMenuProps {
   currentP1Name?: string;
   currentP2Name?: string;
 }
+
+const ROSTER_ARRAY = Object.values(ROSTER_FIGHTERS);
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   onStartGame,
@@ -52,6 +61,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [modalDescription, setModalDescription] = useState('');
   const [modalPhase, setModalPhase] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  // Get current profile
+  const [profile, setProfile] = useState(() => progressionManager.getProfile());
+
+  useEffect(() => {
+    const unsub = progressionManager.subscribe((updated) => setProfile({ ...updated }));
+    return () => unsub();
+  }, []);
+
+  const currentHero = ROSTER_ARRAY[featuredIndex] || ROSTER_ARRAY[0];
 
   // Animated background cyber canvas
   useEffect(() => {
@@ -88,7 +108,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     let time = 0;
     const render = () => {
       time += 0.015;
-      ctx.fillStyle = '#06080e';
+      ctx.fillStyle = '#04060a';
       ctx.fillRect(0, 0, width, height);
 
       // Atmospheric radial gradient
@@ -96,8 +116,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         width / 2, height / 2, 80,
         width / 2, height / 2, Math.max(width, height) * 0.75
       );
-      grad.addColorStop(0, 'rgba(16, 23, 38, 0.6)');
-      grad.addColorStop(1, 'rgba(4, 6, 10, 0.95)');
+      grad.addColorStop(0, 'rgba(14, 20, 34, 0.65)');
+      grad.addColorStop(1, 'rgba(4, 6, 10, 0.98)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
@@ -162,44 +182,93 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     onUpdateSettings({ ...settings, graphicsQuality: quality });
   };
 
+  const handleNextHero = () => {
+    soundManager.playMenuSelect();
+    setFeaturedIndex((prev) => (prev + 1) % ROSTER_ARRAY.length);
+  };
+
+  const handlePrevHero = () => {
+    soundManager.playMenuSelect();
+    setFeaturedIndex((prev) => (prev - 1 + ROSTER_ARRAY.length) % ROSTER_ARRAY.length);
+  };
+
   return (
-    <div className="main-menu-root">
+    <div className="main-menu-root menu-console-root">
       {/* Background Animated Canvas */}
       <canvas ref={canvasRef} className="menu-bg-canvas" />
 
-      {/* Main Container */}
-      <div className="menu-content-container">
-        {/* ORIGINAL ARENA X LOGO */}
-        <header className="menu-header">
-          <div className="logo-badge">
-            <span className="badge-dot" />
-            <span>ARENA X • COMPETITIVE 2D MARTIAL ARTS</span>
+      {/* 1. TOP STATUS STRIP (FULL WIDTH) */}
+      <header className="menu-top-bar">
+        <div className="top-bar-brand">
+          <div className="brand-icon-emblem">
+            <span className="x-slash red-slash" />
+            <span className="x-slash blue-slash" />
+            <span className="emblem-core" />
+          </div>
+          <div className="brand-titles">
+            <span className="brand-main-title">ARENA X</span>
+            <span className="brand-sub-title">2D MARTIAL ARTS • 16 FIGHTERS</span>
+          </div>
+        </div>
+
+        {/* Live Netplay Server Status */}
+        <div className="top-bar-server">
+          <span className="server-dot-live" />
+          <span className="server-text-live">60Hz NETPLAY READY</span>
+        </div>
+
+        {/* Player Profile & Currency */}
+        <div className="top-bar-profile">
+          <div 
+            className="profile-pill-card"
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setIsProfileOpen(true);
+            }}
+          >
+            <span className="profile-rank-badge">{profile.rankTier}</span>
+            <div className="profile-info-compact">
+              <span className="profile-name-text">{profile.username}</span>
+              <span className="profile-level-text">LEVEL {profile.level} • {profile.currentXp}/{profile.nextLevelXp} XP</span>
+            </div>
           </div>
 
-          <div className="arena-logo-wrapper">
-            <div className="logo-text-group">
-              <span className="logo-arena">ARENA</span>
-              <div className="logo-x-symbol">
-                <span className="x-slash red-slash" />
-                <span className="x-slash blue-slash" />
-                <span className="x-core" />
-              </div>
-            </div>
-            <div className="logo-underline">
-              <span className="underline-red" />
-              <span className="underline-center" />
-              <span className="underline-blue" />
-            </div>
+          <div className="profile-coins-display">
+            <Coins size={14} />
+            <span>{profile.coins} AX</span>
           </div>
 
-          <p className="menu-tagline">
-            SIX ORIGINAL 2D FIGHTING ARENAS • 16 UNIQUE FIGHTERS • AUTHORITATIVE NETPLAY
-          </p>
-        </header>
+          <div className="top-bar-actions">
+            <button 
+              className="icon-action-btn"
+              title="Toggle Audio"
+              onClick={() => {
+                const muted = soundManager.toggleMute();
+                onUpdateSettings({ ...settings, isMuted: muted });
+              }}
+            >
+              {settings.isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            </button>
 
-        {/* INTERACTIVE NAVIGATION BUTTONS */}
-        <nav className="menu-button-stack">
-          {/* 1. PLAY BUTTON (Primary) */}
+            <button 
+              className="icon-action-btn"
+              title="Settings"
+              onClick={() => {
+                soundManager.playMenuSelect();
+                setActiveModal('SETTINGS');
+              }}
+            >
+              <SettingsIcon size={16} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONSOLE STAGE (TWO COLUMNS) */}
+      <div className="menu-arena-stage-container">
+        {/* LEFT COLUMN: NAVIGATION DECK */}
+        <nav className="menu-nav-deck">
+          {/* PLAY BUTTON (Primary) */}
           <button
             className="menu-btn play-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
@@ -213,7 +282,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Swords className="btn-icon" size={24} />
               <div className="btn-text">
                 <span className="title">PLAY VERSUS BATTLE</span>
-                <span className="sub">Local 2-Player 2D Martial Arts • Responsive Controls & Parallax Arenas</span>
+                <span className="sub">Local 2-Player 2D Combat • Responsive Martial Arts</span>
               </div>
             </div>
             <div className="btn-corner-cut" />
@@ -237,30 +306,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Radio className="btn-icon" size={22} style={{ color: '#00e5ff' }} />
               <div className="btn-text">
                 <span className="title" style={{ color: '#00e5ff', fontWeight: 900 }}>ONLINE 1v1 NETPLAY</span>
-                <span className="sub">Public Matchmaking • Private Rooms • Authoritative 60Hz Netplay</span>
+                <span className="sub">Ranked & Casual Matchmaking • Private Rooms</span>
               </div>
             </div>
             <span className="status-tag phase2 active-tag" style={{ background: '#00e5ff', color: '#000000', fontWeight: 900 }}>
               LIVE NETPLAY
             </span>
-          </button>
-
-          {/* 2. TRAINING MODE */}
-          <button
-            className="menu-btn standard-btn"
-            onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => {
-              soundManager.playMenuSelect();
-              onStartGame('TRAINING');
-            }}
-          >
-            <div className="btn-content">
-              <Play className="btn-icon" size={22} />
-              <div className="btn-text">
-                <span className="title">TRAINING DOJO</span>
-                <span className="sub">Practice moves & combos against practice dummy</span>
-              </div>
-            </div>
           </button>
 
           {/* SELECT FIGHTERS (16-Fighter Roster) */}
@@ -290,7 +341,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </span>
           </button>
 
-          {/* SELECT ARENA (Phase 7 2.5D Environments) */}
+          {/* SELECT ARENA */}
           <button
             className="menu-btn standard-btn stage-select-btn"
             style={{
@@ -309,7 +360,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <span className="title" style={{ color: '#ff00aa', fontWeight: 900 }}>
                   STAGE SELECT: {currentStageName}
                 </span>
-                <span className="sub">Six Original 2.5D Arenas • Parallax & Weather FX</span>
+                <span className="sub">Six Original 2D Arenas • Parallax & Weather FX</span>
               </div>
             </div>
             <span className="status-tag phase2 active-tag" style={{ background: '#ff00aa', color: '#ffffff', fontWeight: 900 }}>
@@ -317,23 +368,35 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </span>
           </button>
 
-          {/* 3. ARCADE MODE */}
+          {/* TRAINING DOJO */}
+          <button
+            className="menu-btn standard-btn"
+            onMouseEnter={() => soundManager.playMenuHover()}
+            onClick={() => {
+              soundManager.playMenuSelect();
+              onStartGame('TRAINING');
+            }}
+          >
+            <div className="btn-content">
+              <Play className="btn-icon" size={22} />
+              <div className="btn-text">
+                <span className="title">TRAINING DOJO</span>
+                <span className="sub">Practice combos & specials against training dummy</span>
+              </div>
+            </div>
+          </button>
+
+          {/* ARCADE MODE */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => 
-              openComingSoon(
-                'ARCADE MODE',
-                'Battle through a ladder of 8 computer-controlled fighters culminating in a climactic boss showdown.',
-                'ARCADE LADDER'
-              )
-            }
+            onClick={() => setActiveModal('ARCADE')}
           >
             <div className="btn-content">
               <Flame className="btn-icon" size={22} style={{ color: '#f59e0b' }} />
               <div className="btn-text">
                 <span className="title">ARCADE MODE</span>
-                <span className="sub">Classic fighting ladder & boss encounters</span>
+                <span className="sub">Classic 8-fighter ladder run & final boss showdown</span>
               </div>
             </div>
             <span className="status-tag phase2 active-tag" style={{ background: '#f59e0b', color: '#040714', fontWeight: 900 }}>
@@ -341,29 +404,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </span>
           </button>
 
-          {/* 4. TOURNAMENT (Coming Phase 4) */}
+          {/* TOURNAMENT (16-Player Bracket) */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
-            onClick={() => 
-              openComingSoon(
-                'TOURNAMENT SYSTEM',
-                'Phase 4 introduces online bracket matchmaking, ranked divisions, spectator cameras, and global fighting game leaderboards.',
-                'PHASE 4: MULTIPLAYER & TOURNAMENTS'
-              )
-            }
+            onClick={() => setActiveModal('TOURNAMENT')}
           >
             <div className="btn-content">
-              <Trophy className="btn-icon" size={22} />
+              <Trophy className="btn-icon" size={22} style={{ color: '#eab308' }} />
               <div className="btn-text">
                 <span className="title">TOURNAMENT</span>
-                <span className="sub">Championship brackets & ranked leagues</span>
+                <span className="sub">16-Player Championship single-elimination bracket</span>
               </div>
             </div>
-            <span className="status-tag phase4">COMING PHASE 4</span>
+            <span className="status-tag phase4" style={{ borderColor: '#eab308', color: '#eab308' }}>
+              16 BRACKET
+            </span>
           </button>
 
-          {/* 5. PROFILE (Phase 9 Active) */}
+          {/* PROFILE */}
           <button
             className="menu-btn standard-btn feature-badge-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
@@ -384,7 +443,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </span>
           </button>
 
-          {/* 6. SETTINGS */}
+          {/* SETTINGS */}
           <button
             className="menu-btn standard-btn"
             onMouseEnter={() => soundManager.playMenuHover()}
@@ -403,91 +462,248 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </button>
         </nav>
 
-        {/* FOOTER INFO BAR */}
-        <footer className="menu-footer">
-          <div className="footer-item">
-            <span>VERSION:</span> <strong className="highlight">1.0.0-PROD</strong>
+        {/* RIGHT COLUMN: FEATURED FIGHTER STAGE */}
+        <div className="menu-fighter-stage">
+          {/* Elemental Aura */}
+          <div 
+            className="fighter-stage-aura" 
+            style={{ 
+              background: `radial-gradient(circle, ${currentHero.colors.aura}44 0%, ${currentHero.colors.projectile}22 45%, transparent 70%)` 
+            }} 
+          />
+
+          {/* Pedestal Light Shadow */}
+          <div 
+            className="fighter-stage-pedestal" 
+            style={{
+              background: `radial-gradient(ellipse at center, ${currentHero.colors.aura}66 0%, ${currentHero.colors.projectile}33 50%, transparent 80%)`
+            }}
+          />
+
+          {/* Character Cycle Controls */}
+          <div className="stage-hero-cycle-controls">
+            <button className="hero-cycle-btn" onClick={handlePrevHero} title="Previous Fighter">
+              <ChevronLeft size={16} />
+            </button>
+            <button className="hero-cycle-btn" onClick={handleNextHero} title="Next Fighter">
+              <ChevronRight size={16} />
+            </button>
           </div>
-          <div className="footer-dot">•</div>
-          <div className="footer-item">
-            <span>ENGINE:</span> <strong>PHASER 3 & HTML5 CANVAS 2D</strong>
+
+          {/* Full-Height Standee Character Artwork */}
+          <img 
+            src={`/assets/characters_full/${currentHero.id.toLowerCase()}.png`}
+            alt={currentHero.name}
+            className="fighter-stage-standee"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/assets/characters_full/01_kai.png';
+            }}
+          />
+
+          {/* Fighter Info Card */}
+          <div className="fighter-stage-info-card">
+            <div className="stage-fighter-name-row">
+              <span className="stage-fighter-name">{currentHero.name}</span>
+              <span 
+                className="status-tag"
+                style={{ 
+                  background: `${currentHero.colors.aura}33`,
+                  borderColor: currentHero.colors.aura,
+                  color: '#ffffff'
+                }}
+              >
+                {currentHero.element}
+              </span>
+            </div>
+            <div className="stage-fighter-title">{currentHero.title}</div>
+
+            <div className="stage-fighter-specs">
+              <div className="stage-fighter-spec-item">
+                <span>Martial Art:</span>
+                <strong>{currentHero.martialArt.split('&')[0]}</strong>
+              </div>
+              <div className="stage-fighter-spec-item">
+                <span>Archetype:</span>
+                <strong>{currentHero.archetype}</strong>
+              </div>
+              <div className="stage-fighter-spec-item">
+                <span>Ultimate:</span>
+                <strong style={{ color: '#00e5ff' }}>{currentHero.specials.ultimate.name}</strong>
+              </div>
+            </div>
           </div>
-          <div className="footer-dot">•</div>
-          <div className="footer-item">
-            <span>BUILD:</span> <strong>PHASE 2 DESIGN SYSTEM</strong>
-          </div>
-        </footer>
+        </div>
       </div>
 
-      {/* --- MODAL 0: CHARACTER STUDIO (PHASE 2 SHOWCASE) --- */}
-      {activeModal === 'CHARACTER_STUDIO' && (
+      {/* 3. BOTTOM TICKER BAR (FULL WIDTH) */}
+      <footer className="menu-ticker-bar">
+        <div className="ticker-item-urgent">
+          <Flame size={14} color="#f59e0b" />
+          <span>TOURNAMENT SEASON 1 PRE-QUALIFIERS ACTIVE • COMPLETE MATCHES TO EARN +250 AX COINS</span>
+        </div>
+
+        <div className="ticker-controls-guide">
+          <span>CONTROLS:</span>
+          <span><strong className="ticker-key-badge">[A / D]</strong> MOVE</span>
+          <span><strong className="ticker-key-badge">[W]</strong> JUMP</span>
+          <span><strong className="ticker-key-badge">[F]</strong> PUNCH</span>
+          <span><strong className="ticker-key-badge">[G]</strong> KICK</span>
+          <span><strong className="ticker-key-badge">[H]</strong> BLOCK</span>
+          <span><strong className="ticker-key-badge">[SPACE]</strong> SPECIAL</span>
+        </div>
+      </footer>
+
+      {/* --- MODAL: 16-PLAYER TOURNAMENT BRACKET --- */}
+      {activeModal === 'TOURNAMENT' && (
         <div className="modal-backdrop">
-          <div className="feature-preview-card character-studio-card">
+          <div className="tournament-modal-card">
             <button className="modal-close-btn" onClick={() => setActiveModal(null)}>
               <X size={20} />
             </button>
-            <div className="preview-phase-pill">PHASE 2: 3D SKELETAL FIGHTERS & RIGS</div>
-            <h2 className="preview-title">CHARACTER STUDIO</h2>
+            <div className="preview-phase-pill" style={{ background: '#f59e0b', color: '#000000' }}>
+              PHASE 10: 16-PLAYER SINGLE ELIMINATION
+            </div>
+            <h2 className="preview-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Trophy size={24} color="#f59e0b" />
+              ARENA X CHAMPIONSHIP BRACKET
+            </h2>
             <div className="preview-divider" />
             <p className="preview-description">
-              Professional 21-bone humanoid skeletal rigs with 21 distinct fighting-game animations and unique athletic aesthetics.
+              Single-elimination championship featuring all 16 ARENA X warriors. Win 4 consecutive 1v1 matches to claim the Grand Champion title and 5,000 AX Coins!
             </p>
 
-            <div className="studio-fighter-grid">
-              {/* Fighter 1 Showcase */}
-              <div className="studio-fighter-panel p1-panel">
-                <div className="panel-badge p1-badge">PLAYER 1</div>
-                <h3 className="fighter-title">KAI</h3>
-                <span className="fighter-subtitle">CRIMSON STRIKER</span>
-                <ul className="fighter-specs">
-                  <li><strong>Aesthetic:</strong> Athletic Martial Artist</li>
-                  <li><strong>Hair:</strong> Spiked Black Hair & Red Headband</li>
-                  <li><strong>Outfit:</strong> Open Combat Gi Vest with Dragon Crest</li>
-                  <li><strong>Hands:</strong> Wrapped Red Martial Arts Tapes</li>
-                  <li><strong>Legs:</strong> Black Fighting Pants & Steel-Toe Boots</li>
-                </ul>
+            <div className="tournament-bracket-tree">
+              {/* ROUND 1 (8 MATCHES) */}
+              <div className="bracket-round-col">
+                <div className="bracket-round-header">ROUND OF 16</div>
+                {[
+                  ['KAI', 'SHADOW', '2 - 1', true],
+                  ['BLAZE', 'FROST', '2 - 0', true],
+                  ['VOLT', 'TERRA', '1 - 2', false],
+                  ['PHANTOM', 'RONIN', '2 - 1', true],
+                  ['VIPER', 'TITAN', '2 - 0', true],
+                  ['NOVA', 'REAPER', '1 - 2', false],
+                  ['AETHER', 'RYUZEN', '2 - 1', true],
+                  ['ECLIPSE', 'ZENITH', '0 - 2', false],
+                ].map(([f1, f2, score, f1Wins], idx) => (
+                  <div key={idx} className="bracket-match-node">
+                    <div className={`bracket-fighter-slot ${f1Wins ? 'winner' : ''}`}>
+                      <span>{f1}</span>
+                      <span className="bracket-score">{f1Wins ? '2' : '0/1'}</span>
+                    </div>
+                    <div className={`bracket-fighter-slot ${!f1Wins ? 'winner' : ''}`}>
+                      <span>{f2}</span>
+                      <span className="bracket-score">{!f1Wins ? '2' : '0/1'}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Fighter 2 Showcase */}
-              <div className="studio-fighter-panel p2-panel">
-                <div className="panel-badge p2-badge">PLAYER 2</div>
-                <h3 className="fighter-title">ION</h3>
-                <span className="fighter-subtitle">COBALT VANGUARD</span>
-                <ul className="fighter-specs">
-                  <li><strong>Aesthetic:</strong> Cyber Kickboxer</li>
-                  <li><strong>Hair:</strong> Undercut Fade with Cyan Edge</li>
-                  <li><strong>Outfit:</strong> High-Collar Combat Jacket & Blue Piping</li>
-                  <li><strong>Hands:</strong> Tactical Fingerless Cyber Gloves</li>
-                  <li><strong>Legs:</strong> Armored Cargo Trousers & Neon Sneakers</li>
-                </ul>
+              {/* QUARTERFINALS (4 MATCHES) */}
+              <div className="bracket-round-col">
+                <div className="bracket-round-header">QUARTERFINALS</div>
+                {[
+                  ['KAI', 'BLAZE', '2 - 1', true],
+                  ['TERRA', 'PHANTOM', '1 - 2', false],
+                  ['VIPER', 'REAPER', '2 - 1', true],
+                  ['AETHER', 'ZENITH', '1 - 2', false],
+                ].map(([f1, f2, score, f1Wins], idx) => (
+                  <div key={idx} className="bracket-match-node">
+                    <div className={`bracket-fighter-slot ${f1Wins ? 'winner' : ''}`}>
+                      <span>{f1}</span>
+                      <span className="bracket-score">{f1Wins ? '2' : '1'}</span>
+                    </div>
+                    <div className={`bracket-fighter-slot ${!f1Wins ? 'winner' : ''}`}>
+                      <span>{f2}</span>
+                      <span className="bracket-score">{!f1Wins ? '2' : '1'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* SEMIFINALS (2 MATCHES) */}
+              <div className="bracket-round-col">
+                <div className="bracket-round-header">SEMIFINALS</div>
+                {[
+                  ['KAI', 'PHANTOM', '2 - 0', true],
+                  ['VIPER', 'ZENITH', '1 - 2', false],
+                ].map(([f1, f2, score, f1Wins], idx) => (
+                  <div key={idx} className="bracket-match-node">
+                    <div className={`bracket-fighter-slot ${f1Wins ? 'winner' : ''}`}>
+                      <span>{f1}</span>
+                      <span className="bracket-score">{f1Wins ? '2' : '0/1'}</span>
+                    </div>
+                    <div className={`bracket-fighter-slot ${!f1Wins ? 'winner' : ''}`}>
+                      <span>{f2}</span>
+                      <span className="bracket-score">{!f1Wins ? '2' : '0/1'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* GRAND FINAL (1 MATCH) */}
+              <div className="bracket-round-col">
+                <div className="bracket-round-header" style={{ color: '#f59e0b' }}>
+                  GRAND FINALS
+                </div>
+                <div className="bracket-match-node" style={{ borderColor: '#f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
+                  <div className="bracket-fighter-slot winner" style={{ fontSize: '13px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Crown size={14} color="#f59e0b" />
+                      <span>KAI</span>
+                    </div>
+                    <span className="bracket-score">3</span>
+                  </div>
+                  <div className="bracket-fighter-slot" style={{ fontSize: '13px' }}>
+                    <span>ZENITH</span>
+                    <span className="bracket-score">1</span>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <button 
+                    className="arena-btn primary-btn"
+                    onClick={() => {
+                      soundManager.playMenuSelect();
+                      setActiveModal(null);
+                      onStartGame('VERSUS');
+                    }}
+                  >
+                    ENTER TOURNAMENT QUEUE
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="animation-suite-list">
-              <h4>21-ANIMATION SKELETAL SYSTEM:</h4>
-              <div className="anim-chips">
-                <span>Idle</span>
-                <span>Breathing</span>
-                <span>Walk Fwd</span>
-                <span>Walk Bwd</span>
-                <span>Run</span>
-                <span>Jump</span>
-                <span>Fall</span>
-                <span>Land</span>
-                <span>Crouch</span>
-                <span>Lead Jab</span>
-                <span>Cross</span>
-                <span>Overhand Smash</span>
-                <span>Front Kick</span>
-                <span>Roundhouse</span>
-                <span>Low Sweep</span>
-                <span>Guard Block</span>
-                <span>Hit Reaction</span>
-                <span>Knockback</span>
-                <span>Stagger</span>
-                <span>Victory</span>
-                <span>Defeat</span>
-              </div>
+      {/* --- MODAL: ARCADE LADDER --- */}
+      {activeModal === 'ARCADE' && (
+        <div className="modal-backdrop">
+          <div className="feature-preview-card" style={{ maxWidth: '640px' }}>
+            <button className="modal-close-btn" onClick={() => setActiveModal(null)}>
+              <X size={20} />
+            </button>
+            <div className="preview-phase-pill" style={{ background: '#f59e0b', color: '#000000' }}>
+              SOLO RUN
+            </div>
+            <h2 className="preview-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Flame size={24} color="#f59e0b" />
+              ARCADE LADDER CHALLENGE
+            </h2>
+            <div className="preview-divider" />
+            <p className="preview-description">
+              Battle through an 8-fighter gauntlet against increasing AI difficulties. Defeat the final master boss without continuing to earn the legendary Master Belt.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '20px 0' }}>
+              {['STAGE 1: KAI vs SHADOW (Novice)', 'STAGE 2: BLAZE (Striker)', 'STAGE 3: FROST (Zoner)', 'STAGE 4: VOLT (Speedster)', 'STAGE 5: TERRA (Titan Armor)', 'STAGE 6: RONIN (Blade Master)', 'STAGE 7: REAPER (Shadow Phantom)', 'STAGE 8 (FINAL BOSS): ZENITH (Solar Emperor)'].map((stg, i) => (
+                <div key={i} style={{ padding: '8px 14px', background: i === 7 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(14, 20, 32, 0.75)', border: i === 7 ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', fontSize: '12px', fontWeight: i === 7 ? 900 : 600, color: i === 7 ? '#f59e0b' : '#e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{stg}</span>
+                  <span>{i === 7 ? '⭐ BOSS' : `+${(i+1)*50} XP`}</span>
+                </div>
+              ))}
             </div>
 
             <button 
@@ -495,15 +711,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               onClick={() => {
                 soundManager.playMenuSelect();
                 setActiveModal(null);
+                onStartGame('VERSUS');
               }}
             >
-              CLOSE STUDIO
+              START ARCADE RUN
             </button>
           </div>
         </div>
       )}
 
-      {/* --- MODAL 1: COMING SOON PREVIEW --- */}
+      {/* --- MODAL: COMING SOON --- */}
       {activeModal === 'COMING_SOON' && (
         <div className="modal-backdrop">
           <div className="feature-preview-card">
@@ -514,18 +731,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <h2 className="preview-title">{modalTitle}</h2>
             <div className="preview-divider" />
             <p className="preview-description">{modalDescription}</p>
-            <div className="preview-checklist">
-              <div className="checklist-item">
-                <CheckCircle2 size={16} className="check-icon" />
-                <span>Phase 1 Core 3D Prototype Running</span>
-              </div>
-              <div className="checklist-item">
-                <Sparkles size={16} className="sparkle-icon" />
-                <span>Awaiting Phase Completion Approval</span>
-              </div>
-            </div>
             <button 
-              className="arena-btn primary-btn"
+              className="arena-btn primary-btn full-width"
               onClick={() => {
                 soundManager.playMenuSelect();
                 setActiveModal(null);
@@ -537,7 +744,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </div>
       )}
 
-      {/* --- MODAL 2: SETTINGS MODAL --- */}
+      {/* --- MODAL: SETTINGS --- */}
       {activeModal === 'SETTINGS' && (
         <div className="modal-backdrop">
           <div className="settings-modal-card">
@@ -731,7 +938,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </div>
       )}
 
-      {/* --- MODAL 3: PLAYER PROFILE MODAL --- */}
+      {/* --- MODAL: PLAYER PROFILE --- */}
       <PlayerProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
