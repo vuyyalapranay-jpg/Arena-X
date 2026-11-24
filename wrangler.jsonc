@@ -27,7 +27,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["MatchRoomDO"]
+      "new_sqlite_classes": ["MatchRoomDO"]
     }
   ],
   "vars": {
