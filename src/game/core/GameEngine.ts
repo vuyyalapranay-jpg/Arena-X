@@ -63,6 +63,11 @@ export class GameEngine {
   private lastTime = 0;
   private hitFreezeTimer = 0;
   private roundTransitionTimer = 0;
+  private finisherAnnouncementTimer = 0;
+  private finisherVignetteTimer = 0;
+  private finisherWinnerName = '';
+  private renderDpr = 0;
+  private highFpsDuration = 0;
 
   // FPS tracking
   private frameCount = 0;
@@ -221,11 +226,12 @@ export class GameEngine {
     if (!this.container || !this.canvas) return;
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const maxDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    if (this.renderDpr <= 0) this.renderDpr = maxDpr;
 
-    this.canvas.width = width * dpr;
-    this.canvas.height = height * dpr;
-    this.ctx.scale(dpr, dpr);
+    this.canvas.width = Math.round(width * this.renderDpr);
+    this.canvas.height = Math.round(height * this.renderDpr);
+    this.ctx.setTransform(this.renderDpr, 0, 0, this.renderDpr, 0, 0);
   };
 
   private startRoundIntro(roundNumber: number): void {
@@ -242,6 +248,9 @@ export class GameEngine {
     this.projectiles = [];
     this.p1Combo = 0;
     this.p2Combo = 0;
+    this.finisherAnnouncementTimer = 0;
+    this.finisherVignetteTimer = 0;
+    this.finisherWinnerName = '';
     this.roundTransitionTimer = 1.6;
 
     soundManager.playRoundStartGong();
@@ -257,8 +266,24 @@ export class GameEngine {
     this.frameCount++;
     this.fpsTimer += deltaTime;
     if (this.fpsTimer >= 1.0) {
+      const measuredFps = Math.round(this.frameCount / this.fpsTimer);
       if (this.callbacks.onFpsUpdate) {
-        this.callbacks.onFpsUpdate(Math.round(this.frameCount / this.fpsTimer));
+        this.callbacks.onFpsUpdate(measuredFps);
+      }
+      const maxDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      if (measuredFps < 55 && this.renderDpr > 1) {
+        this.renderDpr = Math.max(1, this.renderDpr - 0.15);
+        this.highFpsDuration = 0;
+        this.handleResize();
+      } else if (measuredFps >= 58 && this.renderDpr < maxDpr) {
+        this.highFpsDuration += this.fpsTimer;
+        if (this.highFpsDuration >= 4) {
+          this.renderDpr = Math.min(maxDpr, this.renderDpr + 0.1);
+          this.highFpsDuration = 0;
+          this.handleResize();
+        }
+      } else {
+        this.highFpsDuration = 0;
       }
       this.frameCount = 0;
       this.fpsTimer = 0;
@@ -410,6 +435,9 @@ export class GameEngine {
 
     // Phase 5: Aura & Cinematic VFX Processing
     const activeCinematic = this.fighterP1.isCinematic ? this.fighterP1 : this.fighterP2.isCinematic ? this.fighterP2 : null;
+    if (this.finisherVignetteTimer > 0) {
+      this.finisherVignetteTimer = Math.max(0, this.finisherVignetteTimer - deltaTime);
+    }
     if (activeCinematic) {
       this.vfx.cinematicVignetteAlpha = 0.65;
       this.vfx.cinematicVignetteColor = activeCinematic.id === 'P1' ? '#001a33' : '#1a0033';
@@ -417,6 +445,9 @@ export class GameEngine {
       if (Math.random() < 0.4) {
         this.vfx.spawnAuraParticle(activeCinematic.x, activeCinematic.y - 15, auraColor);
       }
+    } else if (this.finisherVignetteTimer > 0) {
+      this.vfx.cinematicVignetteAlpha = 0.7 * Math.min(1, this.finisherVignetteTimer / 1.15);
+      this.vfx.cinematicVignetteColor = '#160407';
     } else {
       this.vfx.cinematicVignetteAlpha = 0;
     }
@@ -460,6 +491,12 @@ export class GameEngine {
 
     // 10. Round Over / Transition
     if (this.gameState === 'ROUND_OVER') {
+      if (this.finisherAnnouncementTimer > 0) {
+        this.finisherAnnouncementTimer -= deltaTime;
+        if (this.finisherAnnouncementTimer <= 0) {
+          this.matchState.announcement = `K.O.! ${this.finisherWinnerName} WINS ROUND`;
+        }
+      }
       this.roundTransitionTimer -= deltaTime;
       if (this.roundTransitionTimer <= 0) {
         if (this.matchState.p1RoundsWon >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) {
@@ -770,6 +807,7 @@ export class GameEngine {
   }
 
   private handleKnockout(winner: PlayerId): void {
+    if (this.gameState === 'ROUND_OVER' || this.gameState === 'MATCH_OVER') return;
     this.gameState = 'ROUND_OVER';
     soundManager.playKOGong();
 
@@ -778,10 +816,50 @@ export class GameEngine {
     const defeatedFighter = isP1 ? this.fighterP2 : this.fighterP1;
     const isPerfect = winningFighter.currentHealth >= winningFighter.maxHealth;
     const winnerName = winningFighter.name.toUpperCase();
+    const winningMove = winningFighter.currentAttackType;
+    const isProjectileFinisher = winningMove === 'BLUE_WAVE' || winningMove === 'DARK_ORB' ||
+      winningMove === 'CRIMSON_FIREBALL' || winningMove === 'SHADOW_SHURIKEN';
+    const isExecution = Boolean(winningMove) && !isProjectileFinisher &&
+      Math.abs(winningFighter.x - defeatedFighter.x) <= 320;
+    if (isExecution) {
+      const direction = winningFighter.facing;
+      const stagedX = Math.max(
+        winningFighter.minX + 80,
+        Math.min(winningFighter.maxX - 80, winningFighter.x)
+      );
+      winningFighter.x = stagedX;
+      winningFighter.jumpOffsetY = 0;
+      winningFighter.isGrounded = true;
+      defeatedFighter.x = Math.max(
+        defeatedFighter.minX,
+        Math.min(defeatedFighter.maxX, stagedX + direction * 110)
+      );
+      defeatedFighter.jumpOffsetY = 0;
+      defeatedFighter.vy = 0;
+      defeatedFighter.isGrounded = true;
+      defeatedFighter.facing = direction === 1 ? -1 : 1;
+    }
     const isDecidingMatchRound = (this.matchState.p1RoundsWon + (isP1 ? 1 : 0) >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN) ||
                                 (this.matchState.p2RoundsWon + (!isP1 ? 1 : 0) >= GAME_CONFIG.MATCH.ROUNDS_TO_WIN);
+    const roundAnnouncement = isExecution
+      ? 'FINISHER!'
+      : isPerfect
+        ? `PERFECT! ${winnerName} WINS ROUND`
+        : `K.O.! ${winnerName} WINS ROUND`;
 
-    if (isDecidingMatchRound || winningFighter.isCinematic) {
+    if (isExecution) {
+      this.vfx.spawnFinisherExplosion(
+        defeatedFighter.x,
+        defeatedFighter.y - 80,
+        winningFighter.appearance.accentColor || '#ffd700',
+        'FINISHER!'
+      );
+      this.addScreenShake(25, 0.65);
+      this.vfx.triggerScreenFlash('#fff0d2', 0.72);
+      this.finisherAnnouncementTimer = 1.15;
+      this.finisherVignetteTimer = 1.15;
+      this.finisherWinnerName = winnerName;
+    } else if (isDecidingMatchRound || winningFighter.isCinematic) {
       // Phase 8: Cinematic Finisher Explosion & Dynamic Shockwave Cascade
       this.vfx.spawnFinisherExplosion(
         defeatedFighter.x,
@@ -797,17 +875,20 @@ export class GameEngine {
 
     if (isP1) {
       this.matchState.p1RoundsWon++;
-      this.matchState.announcement = isPerfect ? `PERFECT! ${winnerName} WINS ROUND` : `K.O.! ${winnerName} WINS ROUND`;
-      this.fighterP1.playVictory();
+      this.matchState.announcement = roundAnnouncement;
+      if (isExecution) this.fighterP1.playFinisher();
+      else this.fighterP1.playVictory();
       this.fighterP2.playDefeat();
     } else {
       this.matchState.p2RoundsWon++;
-      this.matchState.announcement = isPerfect ? `PERFECT! ${winnerName} WINS ROUND` : `K.O.! ${winnerName} WINS ROUND`;
-      this.fighterP2.playVictory();
+      this.matchState.announcement = roundAnnouncement;
+      if (isExecution) this.fighterP2.playFinisher();
+      else this.fighterP2.playVictory();
       this.fighterP1.playDefeat();
     }
 
-    this.roundTransitionTimer = 2.4;
+    if (!isExecution) this.finisherAnnouncementTimer = 0;
+    this.roundTransitionTimer = isExecution ? 3.2 : 2.4;
     this.callbacks.onGameStateChange(this.gameState);
     this.callbacks.onMatchStateUpdate({ ...this.matchState });
   }
@@ -836,8 +917,8 @@ export class GameEngine {
   }
 
   private render(): void {
-    const width = this.canvas.width / Math.min(window.devicePixelRatio || 1, 2);
-    const height = this.canvas.height / Math.min(window.devicePixelRatio || 1, 2);
+    const width = this.canvas.width / this.renderDpr;
+    const height = this.canvas.height / this.renderDpr;
 
     this.ctx.clearRect(0, 0, width, height);
 

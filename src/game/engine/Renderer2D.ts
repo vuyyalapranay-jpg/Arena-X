@@ -54,9 +54,12 @@ export class Renderer2D {
     ctx.translate(-cam.x, -cam.y);
 
     // ==============================================================
-    // LAYERS 2-6: ENVIRONMENTAL STAGE & ARENA FLOOR
+    // LAYERS 2-6: ENVIRONMENTAL STAGE & ARENA FLOOR (CINEMATIC DEPTH)
     // ==============================================================
+    ctx.save();
+    ctx.filter = 'brightness(0.84) contrast(0.96) saturate(0.9)';
     arena.renderBackground(ctx, cam.x, cam.y, cam.zoom, viewportW, viewportH);
+    ctx.restore();
 
     // ==============================================================
     // LAYER 7: GROUND SHADOWS (DECOUPLED AT GROUND PLANE groundY = 560)

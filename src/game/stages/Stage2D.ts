@@ -12,6 +12,7 @@ export class Stage2D {
 
   private bgImages: Map<StageId, HTMLImageElement> = new Map();
   private loadedStages: Set<StageId> = new Set();
+  private failedStages: Set<StageId> = new Set();
 
   public stageWidth = WorldCoordinateSystem.STAGE_WIDTH; // 2400
   public floorY = WorldCoordinateSystem.GROUND_Y; // 560
@@ -30,35 +31,25 @@ export class Stage2D {
       this.floorY
     );
 
-    this.preloadAllStages();
+    this.loadStageBackground(initialStageId);
   }
 
-  private preloadAllStages(): void {
-    const stageIds: StageId[] = [
-      'NEON_CITY',
-      'ANCIENT_TEMPLE',
-      'VOLCANIC_BATTLEFIELD',
-      'FROZEN_WASTELAND',
-      'CYBERPUNK_ROOFTOP',
-      'MYSTIC_FOREST',
-    ];
+  private loadStageBackground(stageId: StageId): void {
+    if (this.bgImages.has(stageId) || this.failedStages.has(stageId)) return;
 
-    for (const id of stageIds) {
-      const def = STAGES[id];
-      const img = new Image();
-      img.src = def.bgImage;
-      img.onload = () => {
-        this.loadedStages.add(id);
-      };
-      // Fallback for missing or pending generation
-      img.onerror = () => {
-        // Fall back to existing shrine_night if a background is loading
-        if (img.src.indexOf('shrine_night') === -1) {
-          img.src = '/assets/backgrounds/shrine_night.jpg';
-        }
-      };
-      this.bgImages.set(id, img);
-    }
+    const img = new Image();
+    img.decoding = 'async';
+    this.bgImages.set(stageId, img);
+    img.onload = () => {
+      this.loadedStages.add(stageId);
+    };
+    img.onerror = () => {
+      // A missing stage image keeps the procedural backdrop available without
+      // repeatedly retrying a failed request on every render.
+      this.bgImages.delete(stageId);
+      this.failedStages.add(stageId);
+    };
+    img.src = STAGES[stageId].bgImage;
   }
 
   public setStage(stageId: StageId): void {
@@ -66,6 +57,7 @@ export class Stage2D {
     this.currentStageId = stageId;
     this.currentStage = STAGES[stageId];
     this.particleSystem.setRules(this.currentStage.particleRules);
+    this.loadStageBackground(stageId);
   }
 
   public update(dt: number): void {
@@ -147,7 +139,7 @@ export class Stage2D {
 
       ctx.save();
       // Draw background centered with generous margins covering 2400x1200 world space
-      const bgW = 3200;
+      const bgW = 2600;
       const bgH = 3200 * (img.naturalHeight / img.naturalWidth);
       const drawX = 1200 - bgW * 0.5 - pX;
       const drawY = this.floorY - bgH * 0.68 - pY;

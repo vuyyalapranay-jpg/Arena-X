@@ -92,6 +92,8 @@ export class AnimeFighter2D {
   public isCinematic = false;
   public cinematicTimer = 0;
   public afterImageTimer = 0;
+  private isFinishing = false;
+  private finisherTimer = 0;
 
   // Constants
   public static readonly MAX_SEPARATION = 760; // Max competitive fighting game engagement distance
@@ -168,6 +170,8 @@ export class AnimeFighter2D {
     this.isCinematic = false;
     this.cinematicTimer = 0;
     this.afterImageTimer = 0;
+    this.isFinishing = false;
+    this.finisherTimer = 0;
     this.animController.play('idle', true);
   }
 
@@ -524,6 +528,14 @@ export class AnimeFighter2D {
       this.hitFlashTimer -= dt;
     }
 
+    // Keep the execution pose isolated from normal movement, gravity, and
+    // recovery state updates until the short cinematic beat has completed.
+    if (this.isFinishing) {
+      this.finisherTimer -= dt;
+      if (this.finisherTimer <= 0) this.playVictory();
+      return;
+    }
+
     // 0. Energy Charging State (Hold C)
     if (this.isCharging && this.isGrounded) {
       this.superMeter = Math.min(100, this.superMeter + 35 * dt);
@@ -867,14 +879,61 @@ export class AnimeFighter2D {
   }
 
   public playVictory(): void {
+    this.isFinishing = false;
+    this.currentAttackType = null;
+    this.attackTimer = 0;
+    this.attackDuration = 0;
+    this.hitStunTimer = 0;
+    this.guardStunTimer = 0;
+    this.guardBreakTimer = 0;
+    this.knockdownTimer = 0;
+    this.recoveryTimer = 0;
+    this.isInvulnerable = false;
     this.state = 'VICTORY';
     this.vx = 0;
+    this.vy = 0;
+    this.isGrounded = true;
+    this.jumpOffsetY = 0;
     this.animController.play('victory', true);
   }
 
+  public playFinisher(): void {
+    this.isFinishing = true;
+    this.finisherTimer = 0.62;
+    this.currentAttackType = null;
+    this.attackTimer = 0;
+    this.attackDuration = 0;
+    this.hasHitCurrentAttack = false;
+    this.canCancelIntoSpecial = false;
+    this.hitStunTimer = 0;
+    this.guardStunTimer = 0;
+    this.guardBreakTimer = 0;
+    this.knockdownTimer = 0;
+    this.recoveryTimer = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.jumpOffsetY = 0;
+    this.isGrounded = true;
+    this.state = 'ATTACKING';
+    this.animController.play('special', true, 0.72);
+  }
+
   public playDefeat(): void {
+    this.isFinishing = false;
+    this.currentAttackType = null;
+    this.attackTimer = 0;
+    this.attackDuration = 0;
+    this.hitStunTimer = 0;
+    this.guardStunTimer = 0;
+    this.guardBreakTimer = 0;
+    this.knockdownTimer = 0;
+    this.recoveryTimer = 0;
+    this.isInvulnerable = true;
     this.state = 'DEFEAT';
     this.vx = 0;
+    this.vy = 0;
+    this.isGrounded = true;
+    this.jumpOffsetY = 0;
     this.animController.play('defeat', true);
   }
 
