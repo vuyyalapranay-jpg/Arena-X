@@ -158,6 +158,8 @@ export interface FighterStats {
   facing: 1 | -1; // 1 = right, -1 = left
   state: FighterState;
   currentAnimation?: AnimationName;
+  comboCount?: number;
+  comboDamage?: number;
   colorScheme: {
     primary: string;
     secondary: string;

@@ -17,6 +17,7 @@ import {
   User
 } from 'lucide-react';
 import { FighterStats, GameState, MatchState, PlayerId } from '../../types';
+import { FighterId, ROSTER_FIGHTERS } from '../characters/RosterConfig';
 import { soundManager } from '../core/SoundManager';
 import { progressionManager } from '../progression/ProgressionManager';
 import { MatchRewards } from '../progression/ProgressionTypes';
@@ -124,22 +125,29 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   const p2HealthPercent = Math.max(0, (p2Stats.currentHealth / p2Stats.maxHealth) * 100);
   const p2GhostPercent = Math.max(0, (p2GhostHealth / p2Stats.maxHealth) * 100);
 
+  const p1Id = ((p1Stats.name || 'KAI').toUpperCase()) as FighterId;
+  const p2Id = ((p2Stats.name || 'SHADOW').toUpperCase()) as FighterId;
+  const p1Profile = ROSTER_FIGHTERS[p1Id] || ROSTER_FIGHTERS.KAI;
+  const p2Profile = ROSTER_FIGHTERS[p2Id] || ROSTER_FIGHTERS.SHADOW;
+
   return (
     <div className="fight-hud-root">
       {/* ============================================================== */}
-      {/* 1. TOP FIGHTING STATUS BAR (MATCHING VISUAL TARGET)            */}
+      {/* 1. TOP FIGHTING STATUS BAR (CONSOLE 2D COMBAT HUD)             */}
       {/* ============================================================== */}
       <header className="target-hud-top-bar">
-        {/* PLAYER 1: KAI */}
+        {/* PLAYER 1 FIGHTER CARD */}
         <div className="p1-fighter-card">
-          <div className="avatar-wrapper p1-avatar-ring">
+          <div 
+            className="avatar-wrapper p1-avatar-ring"
+            style={{ borderColor: p1Profile.colors.accent, boxShadow: `0 0 16px ${p1Profile.colors.aura}88` }}
+          >
             <img 
-              src="/assets/sprites/portrait_kai.png" 
-              alt="Kai" 
+              src={`/assets/sprites/portraits/portrait_${p1Id.toLowerCase()}.png`} 
+              alt={p1Profile.name} 
               className="avatar-img"
               onError={(e) => {
-                // Fallback to stylized SVG if image missing
-                (e.target as HTMLElement).style.display = 'none';
+                (e.target as HTMLImageElement).src = `/assets/characters_full/${p1Id.toLowerCase()}.png`;
               }}
             />
             <div className="player-badge p1-badge">P1</div>
@@ -147,8 +155,13 @@ export const FightHUD: React.FC<FightHUDProps> = ({
 
           <div className="fighter-status-block">
             <div className="fighter-meta-line">
-              <span className="fighter-title-name">KAI</span>
-              <span className="fighter-subtitle-tag">CRIMSON STRIKER</span>
+              <span className="fighter-title-name" style={{ color: p1Profile.colors.accent }}>
+                {p1Profile.name}
+              </span>
+              <span className="fighter-subtitle-tag">{p1Profile.title}</span>
+              <span className="fighter-hp-readout">
+                {Math.max(0, Math.round(p1Stats.currentHealth))} / {p1Stats.maxHealth}
+              </span>
               {/* Round Win Dots */}
               <div className="round-dots-group">
                 <span className={`target-dot ${matchState.p1RoundsWon >= 1 ? 'dot-won-p1' : ''}`} />
@@ -157,25 +170,42 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               </div>
             </div>
 
-            {/* Angular Neon Green-to-Cyan Health Bar */}
-            <div className="target-health-bar p1-health-bar">
+            {/* Slanted Neon Life Bar with Yellow Ghost Recovery Buffer */}
+            <div className={`target-health-bar p1-health-bar ${p1HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
               <div className="target-health-ghost" style={{ width: `${p1GhostPercent}%` }} />
-              <div className="target-health-fill p1-fill" style={{ width: `${p1HealthPercent}%` }} />
+              <div 
+                className="target-health-fill p1-fill" 
+                style={{ 
+                  width: `${p1HealthPercent}%`,
+                  background: p1HealthPercent < 25 
+                    ? 'linear-gradient(90deg, #ff1744 0%, #ff5252 100%)' 
+                    : 'linear-gradient(90deg, #00ff88 0%, #20e3b2 50%, #00d4ff 100%)'
+                }} 
+              />
               <div className="target-health-sheen" />
             </div>
 
-            {/* Guard Meter */}
+            {/* Guard Stun Meter */}
             <div className="target-guard-bar p1-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, p1Stats.guardMeter || 100)}%`, background: (p1Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#00f0ff', transition: 'width 0.1s linear' }} />
             </div>
 
-            {/* Phase 5: Super Meter (0-100) */}
-            <div className="target-super-bar p1-super-bar" style={{ height: '6px', background: 'rgba(0,10,25,0.7)', marginTop: '3px', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(0,229,255,0.3)', position: 'relative' }}>
-              <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, p1Stats.superMeter || 0))}%`, background: (p1Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #00e5ff, #fffb00)' : 'linear-gradient(90deg, #0052cc, #00e5ff)', transition: 'width 0.08s linear' }} />
+            {/* 3-Segment Super Meter (0-100) */}
+            <div className="target-super-bar-wrapper p1-super-bar" style={{ marginTop: '3px' }}>
+              <div className="target-super-bar" style={{ height: '6px', background: 'rgba(0,10,25,0.7)', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(0,229,255,0.3)', position: 'relative' }}>
+                <div 
+                  style={{ 
+                    height: '100%', 
+                    width: `${Math.min(100, Math.max(0, p1Stats.superMeter || 0))}%`, 
+                    background: (p1Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #00e5ff, #fffb00)' : 'linear-gradient(90deg, #0052cc, #00e5ff)', 
+                    transition: 'width 0.08s linear' 
+                  }} 
+                />
+              </div>
             </div>
             {(p1Stats.superMeter || 0) >= 100 && (
-              <span style={{ fontSize: '10px', fontWeight: 900, color: '#00e5ff', textShadow: '0 0 8px #00e5ff', letterSpacing: '1px', marginTop: '2px', display: 'inline-block' }}>
-                ★ CELESTIAL BURST READY [V]
+              <span className="ultimate-ready-badge p1-ready">
+                ★ {p1Profile.specials.ultimate.name.toUpperCase()} READY [V]
               </span>
             )}
           </div>
@@ -195,15 +225,18 @@ export const FightHUD: React.FC<FightHUDProps> = ({
           </div>
         </div>
 
-        {/* PLAYER 2: SHADOW */}
+        {/* PLAYER 2 FIGHTER CARD */}
         <div className="p2-fighter-card">
-          <div className="avatar-wrapper p2-avatar-ring">
+          <div 
+            className="avatar-wrapper p2-avatar-ring"
+            style={{ borderColor: p2Profile.colors.accent, boxShadow: `0 0 16px ${p2Profile.colors.aura}88` }}
+          >
             <img 
-              src="/assets/sprites/portrait_shadow.png" 
-              alt="Shadow" 
+              src={`/assets/sprites/portraits/portrait_${p2Id.toLowerCase()}.png`} 
+              alt={p2Profile.name} 
               className="avatar-img"
               onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
+                (e.target as HTMLImageElement).src = `/assets/characters_full/${p2Id.toLowerCase()}.png`;
               }}
             />
             <div className="player-badge p2-badge">P2</div>
@@ -211,8 +244,13 @@ export const FightHUD: React.FC<FightHUDProps> = ({
 
           <div className="fighter-status-block reversed">
             <div className="fighter-meta-line reversed">
-              <span className="fighter-title-name">SHADOW</span>
-              <span className="fighter-subtitle-tag">SHADOW FIGHTER</span>
+              <span className="fighter-title-name" style={{ color: p2Profile.colors.accent }}>
+                {p2Profile.name}
+              </span>
+              <span className="fighter-subtitle-tag">{p2Profile.title}</span>
+              <span className="fighter-hp-readout">
+                {Math.max(0, Math.round(p2Stats.currentHealth))} / {p2Stats.maxHealth}
+              </span>
               <div className="round-dots-group">
                 <span className={`target-dot ${matchState.p2RoundsWon >= 1 ? 'dot-won-p2' : ''}`} />
                 <span className={`target-dot ${matchState.p2RoundsWon >= 2 ? 'dot-won-p2' : ''}`} />
@@ -220,30 +258,81 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               </div>
             </div>
 
-            {/* Angular Neon Green-to-Cyan Health Bar */}
-            <div className="target-health-bar p2-health-bar">
+            {/* Slanted Neon Life Bar with Yellow Ghost Recovery Buffer */}
+            <div className={`target-health-bar p2-health-bar ${p2HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
               <div className="target-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
-              <div className="target-health-fill p2-fill" style={{ width: `${p2HealthPercent}%` }} />
+              <div 
+                className="target-health-fill p2-fill" 
+                style={{ 
+                  width: `${p2HealthPercent}%`,
+                  background: p2HealthPercent < 25 
+                    ? 'linear-gradient(270deg, #ff1744 0%, #ff5252 100%)' 
+                    : 'linear-gradient(270deg, #00ff88 0%, #20e3b2 50%, #00d4ff 100%)'
+                }} 
+              />
               <div className="target-health-sheen" />
             </div>
 
-            {/* Guard Meter */}
+            {/* Guard Stun Meter */}
             <div className="target-guard-bar p2-guard-bar" style={{ height: '4px', background: 'rgba(0,0,0,0.6)', marginTop: '3px', borderRadius: '2px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, p2Stats.guardMeter || 100)}%`, background: (p2Stats.guardMeter || 100) < 30 ? '#ff1e3c' : '#ff0055', transition: 'width 0.1s linear', marginLeft: 'auto' }} />
             </div>
 
-            {/* Phase 5: Super Meter (0-100) */}
-            <div className="target-super-bar p2-super-bar" style={{ height: '6px', background: 'rgba(20,0,30,0.7)', marginTop: '3px', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(186,104,200,0.3)', position: 'relative' }}>
-              <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, p2Stats.superMeter || 0))}%`, background: (p2Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #ba68c8, #ff007f)' : 'linear-gradient(90deg, #4a148c, #ba68c8)', transition: 'width 0.08s linear', marginLeft: 'auto' }} />
+            {/* 3-Segment Super Meter (0-100) */}
+            <div className="target-super-bar-wrapper p2-super-bar" style={{ marginTop: '3px' }}>
+              <div className="target-super-bar" style={{ height: '6px', background: 'rgba(20,0,30,0.7)', borderRadius: '3px', overflow: 'hidden', border: '1px solid rgba(186,104,200,0.3)', position: 'relative' }}>
+                <div 
+                  style={{ 
+                    height: '100%', 
+                    width: `${Math.min(100, Math.max(0, p2Stats.superMeter || 0))}%`, 
+                    background: (p2Stats.superMeter || 0) >= 100 ? 'linear-gradient(90deg, #ba68c8, #ff007f)' : 'linear-gradient(90deg, #4a148c, #ba68c8)', 
+                    transition: 'width 0.08s linear', 
+                    marginLeft: 'auto' 
+                  }} 
+                />
+              </div>
             </div>
             {(p2Stats.superMeter || 0) >= 100 && (
-              <span style={{ fontSize: '10px', fontWeight: 900, color: '#ff007f', textShadow: '0 0 8px #ff007f', letterSpacing: '1px', marginTop: '2px', display: 'inline-block', textAlign: 'right' }}>
-                ★ ECLIPSE DOMINION READY [P2]
+              <span className="ultimate-ready-badge p2-ready">
+                ★ {p2Profile.specials.ultimate.name.toUpperCase()} READY [P2]
               </span>
             )}
           </div>
         </div>
       </header>
+
+      {/* ============================================================== */}
+      {/* 1.5 DYNAMIC COMBAT COMBO COUNTERS                             */}
+      {/* ============================================================== */}
+      <div className="hud-combos-layer">
+        {p1Stats.comboCount && p1Stats.comboCount >= 2 ? (
+          <div className="hud-combo-badge p1-combo-badge">
+            <span className="combo-number">{p1Stats.comboCount}</span>
+            <div className="combo-meta">
+              <span className="combo-title">HITS!</span>
+              <span className="combo-tier">
+                {p1Stats.comboCount >= 10 ? '★ GODLIKE!' :
+                 p1Stats.comboCount >= 7 ? 'SUPER COMBO!' :
+                 p1Stats.comboCount >= 4 ? 'GREAT COMBO!' : 'GOOD HIT!'}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {p2Stats.comboCount && p2Stats.comboCount >= 2 ? (
+          <div className="hud-combo-badge p2-combo-badge">
+            <span className="combo-number">{p2Stats.comboCount}</span>
+            <div className="combo-meta">
+              <span className="combo-title">HITS!</span>
+              <span className="combo-tier">
+                {p2Stats.comboCount >= 10 ? '★ GODLIKE!' :
+                 p2Stats.comboCount >= 7 ? 'SUPER COMBO!' :
+                 p2Stats.comboCount >= 4 ? 'GREAT COMBO!' : 'GOOD HIT!'}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {/* ============================================================== */}
       {/* 2. TOP UTILITY TOOLBAR (Mute, Fullscreen, Pause)               */}

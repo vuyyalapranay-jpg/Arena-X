@@ -81,6 +81,10 @@ export class AnimeFighter2D {
   // Projectile spawned by special attack
   public pendingProjectile: Projectile2D | null = null;
 
+  // Active Combo Tracking
+  public comboCount = 0;
+  public comboDamage = 0;
+
   // Phase 5: Super Energy, Charging, Surge & Cinematic Ultimates
   public isCharging = false;
   public isSurging = false;
@@ -907,6 +911,8 @@ export class AnimeFighter2D {
       isGrounded: this.isGrounded,
       facing: this.facing,
       state: this.state,
+      comboCount: this.comboCount,
+      comboDamage: this.comboDamage,
       colorScheme: {
         primary: this.appearance.primaryColor,
         secondary: this.appearance.secondaryColor,

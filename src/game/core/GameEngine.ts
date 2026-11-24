@@ -453,6 +453,8 @@ export class GameEngine {
       if (this.comboResetTimer <= 0) {
         this.p1Combo = 0;
         this.p2Combo = 0;
+        this.fighterP1.comboCount = 0;
+        this.fighterP2.comboCount = 0;
       }
     }
 
@@ -553,6 +555,7 @@ export class GameEngine {
 
             // Combo chaining & tracking
             this.p1Combo++;
+            this.fighterP1.comboCount = this.p1Combo;
             this.comboResetTimer = 1.25;
             if (this.p1Combo >= 2) {
               this.vfx.spawnComboText(this.fighterP2.x, this.fighterP2.y - 120, this.p1Combo, true);
@@ -629,6 +632,7 @@ export class GameEngine {
             }
 
             this.p2Combo++;
+            this.fighterP2.comboCount = this.p2Combo;
             this.comboResetTimer = 1.25;
             if (this.p2Combo >= 2) {
               this.vfx.spawnComboText(this.fighterP1.x, this.fighterP1.y - 120, this.p2Combo, false);
