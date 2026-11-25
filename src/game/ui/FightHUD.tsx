@@ -28,6 +28,8 @@ import { soundManager } from '../core/SoundManager';
 import { progressionManager } from '../progression/ProgressionManager';
 import { MatchRewards } from '../progression/ProgressionTypes';
 import { PlayerProfileModal } from '../../components/PlayerProfileModal';
+import { VirtualJoystick } from './VirtualJoystick';
+import { ShadowFightTouchControls } from './ShadowFightTouchControls';
 import '../../styles/brutalist-tactical-hud.css';
 
 interface FightHUDProps {
@@ -472,7 +474,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       {/* ============================================================== */}
       {/* 5. TACTICAL COMBAT OPERATION STRIP (TEAM-UI & INDUSTRIAL)      */}
       {/* ============================================================== */}
-      {showControls && (
+      {showControls && !showTouchControls && (
         <footer className="target-bottom-controls-bar brutalist-controls-strip font-mono">
           <div className="controls-telemetry-tag">[ TACTICAL INPUTS ]</div>
           <div className="p1-controls-section">
@@ -515,125 +517,16 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       {/* 6. VIRTUAL TOUCH CONTROLS FOR MOBILE / TABLET                  */}
       {/* ============================================================== */}
       {showTouchControls && (
-        <div className="touch-controls-layer font-mono">
-          <div className="touch-dpad brutalist-dpad">
-            <button
-              className="dpad-btn up"
-              onTouchStart={() => onTouchInput('P1', 'jump', true)}
-              onTouchEnd={() => onTouchInput('P1', 'jump', false)}
-              onMouseDown={() => onTouchInput('P1', 'jump', true)}
-              onMouseUp={() => onTouchInput('P1', 'jump', false)}
-              aria-label="Jump [W]"
-            >
-              ▲
-            </button>
-            <div className="dpad-middle">
-              <button
-                className="dpad-btn left"
-                onTouchStart={() => onTouchInput('P1', 'moveLeft', true)}
-                onTouchEnd={() => onTouchInput('P1', 'moveLeft', false)}
-                onMouseDown={() => onTouchInput('P1', 'moveLeft', true)}
-                onMouseUp={() => onTouchInput('P1', 'moveLeft', false)}
-                aria-label="Move Left [A]"
-              >
-                ◀
-              </button>
-              <div className="dpad-center">[+]</div>
-              <button
-                className="dpad-btn right"
-                onTouchStart={() => onTouchInput('P1', 'moveRight', true)}
-                onTouchEnd={() => onTouchInput('P1', 'moveRight', false)}
-                onMouseDown={() => onTouchInput('P1', 'moveRight', true)}
-                onMouseUp={() => onTouchInput('P1', 'moveRight', false)}
-                aria-label="Move Right [D]"
-              >
-                ▶
-              </button>
-            </div>
-            <button
-              className="dpad-btn down"
-              onTouchStart={() => onTouchInput('P1', 'crouch', true)}
-              onTouchEnd={() => onTouchInput('P1', 'crouch', false)}
-              onMouseDown={() => onTouchInput('P1', 'crouch', true)}
-              onMouseUp={() => onTouchInput('P1', 'crouch', false)}
-              aria-label="Crouch [S]"
-            >
-              ▼
-            </button>
-          </div>
+        <div className="touch-controls-layer sf-touch-controls-layer font-mono">
+          {/* Left: Modern Floating / Invisible Dynamic Joystick */}
+          <VirtualJoystick player="P1" onTouchInput={onTouchInput} />
 
-          <div className="touch-action-buttons brutalist-actions">
-            <button
-              className="action-btn jump-btn"
-              onTouchStart={() => onTouchInput('P1', 'jump', true)}
-              onTouchEnd={() => onTouchInput('P1', 'jump', false)}
-              onMouseDown={() => onTouchInput('P1', 'jump', true)}
-              onMouseUp={() => onTouchInput('P1', 'jump', false)}
-            >
-              <span>JUMP</span>
-              <small>[W]</small>
-            </button>
-            <button
-              className="action-btn punch-btn"
-              onTouchStart={() => onTouchInput('P1', 'punch', true)}
-              onTouchEnd={() => onTouchInput('P1', 'punch', false)}
-              onMouseDown={() => onTouchInput('P1', 'punch', true)}
-              onMouseUp={() => onTouchInput('P1', 'punch', false)}
-            >
-              <span>STRIKE</span>
-              <small>[F]</small>
-            </button>
-            <button
-              className="action-btn kick-btn"
-              onTouchStart={() => onTouchInput('P1', 'kick', true)}
-              onTouchEnd={() => onTouchInput('P1', 'kick', false)}
-              onMouseDown={() => onTouchInput('P1', 'kick', true)}
-              onMouseUp={() => onTouchInput('P1', 'kick', false)}
-            >
-              <span>KICK</span>
-              <small>[G]</small>
-            </button>
-            <button
-              className="action-btn block-btn"
-              onTouchStart={() => onTouchInput('P1', 'block', true)}
-              onTouchEnd={() => onTouchInput('P1', 'block', false)}
-              onMouseDown={() => onTouchInput('P1', 'block', true)}
-              onMouseUp={() => onTouchInput('P1', 'block', false)}
-            >
-              <span>GUARD</span>
-              <small>[H]</small>
-            </button>
-            <button
-              className="action-btn charge-btn"
-              onTouchStart={() => onTouchInput('P1', 'charge', true)}
-              onTouchEnd={() => onTouchInput('P1', 'charge', false)}
-              onMouseDown={() => onTouchInput('P1', 'charge', true)}
-              onMouseUp={() => onTouchInput('P1', 'charge', false)}
-            >
-              <span>CHARGE</span>
-              <small>[C]</small>
-            </button>
-            <button
-              className="action-btn special-btn"
-              onTouchStart={() => onTouchInput('P1', 'special', true)}
-              onTouchEnd={() => onTouchInput('P1', 'special', false)}
-              onMouseDown={() => onTouchInput('P1', 'special', true)}
-              onMouseUp={() => onTouchInput('P1', 'special', false)}
-            >
-              <span>SPECIAL</span>
-              <small>[SPACE]</small>
-            </button>
-            <button
-              className={`action-btn burst-btn ${p1Super >= 100 ? 'overdrive-pulse' : ''}`}
-              onTouchStart={() => onTouchInput('P1', 'ultimate', true)}
-              onTouchEnd={() => onTouchInput('P1', 'ultimate', false)}
-              onMouseDown={() => onTouchInput('P1', 'ultimate', true)}
-              onMouseUp={() => onTouchInput('P1', 'ultimate', false)}
-            >
-              <span>BURST!</span>
-              <small>[V]</small>
-            </button>
-          </div>
+          {/* Right: Ergonomic Shadow Fight Action Cluster */}
+          <ShadowFightTouchControls
+            player="P1"
+            superMeter={p1Super}
+            onTouchInput={onTouchInput}
+          />
         </div>
       )}
 

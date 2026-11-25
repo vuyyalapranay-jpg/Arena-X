@@ -575,60 +575,226 @@
   100% { transform: scale(1.08); }
 }
 
-/* 11. Tactical Touch Controls */
-.brutalist-dpad .dpad-btn,
-.brutalist-actions .action-btn {
-  border-radius: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  background: rgba(15, 20, 30, 0.9) !important;
+/* 11. Modern Floating Virtual Joystick & Shadow Fight Touch Cluster */
+.sf-touch-controls-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  z-index: 35 !important;
+}
+
+/* Left Touchzone: Dynamic Floating Invisible Joystick */
+.virtual-joystick-touchzone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 48vw;
+  height: 65vh;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.joystick-base {
+  position: absolute;
+  width: 114px;
+  height: 114px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(0, 240, 255, 0.45);
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, rgba(10, 16, 26, 0.65) 75%, transparent 100%);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 14px rgba(0, 240, 255, 0.15);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.joystick-ring-crosshair {
+  position: absolute;
+  background: rgba(0, 240, 255, 0.35);
+  pointer-events: none;
+}
+
+.joystick-ring-crosshair.horizontal {
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.joystick-ring-crosshair.vertical {
+  left: 50%;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00f0ff 0%, #0077b6 65%, #051329 100%);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.75), 0 4px 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.knob-core-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+/* Right Touchzone: Ergonomic Shadow Fight Action Cluster */
+.shadow-fight-cluster {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  width: 270px;
+  height: 250px;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sf-btn {
+  border-radius: 50% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: #ffffff !important;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7) !important;
+  transition: transform 0.08s ease, filter 0.08s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-.brutalist-actions .jump-btn {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
+.sf-btn:active {
+  transform: scale(0.91) !important;
+  filter: brightness(1.35) !important;
 }
 
-.brutalist-actions .punch-btn {
-  background: rgba(255, 75, 75, 0.25) !important;
-  border-color: #ff4b4b !important;
+.sf-btn-label {
+  font-family: var(--font-hud, monospace);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin-top: 2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
-.brutalist-actions .kick-btn {
-  background: rgba(255, 140, 0, 0.25) !important;
-  border-color: #ff8c00 !important;
+/* 1. STRIKE (Center-Right, Largest) */
+.sf-btn-strike {
+  position: absolute;
+  right: 6px;
+  bottom: 74px;
+  width: 76px;
+  height: 76px;
+  background: radial-gradient(circle, rgba(255, 42, 75, 0.45) 0%, rgba(180, 10, 40, 0.9) 100%) !important;
+  border: 2px solid #ff2a4b !important;
+  box-shadow: 0 0 20px rgba(255, 42, 75, 0.55), 0 8px 24px rgba(0, 0, 0, 0.8) !important;
 }
 
-.brutalist-actions .block-btn {
-  background: rgba(0, 240, 255, 0.2) !important;
-  border-color: var(--hud-cyan) !important;
+/* 2. KICK (Lower-Left Arc, Large) */
+.sf-btn-kick {
+  position: absolute;
+  right: 86px;
+  bottom: 12px;
+  width: 68px;
+  height: 68px;
+  background: radial-gradient(circle, rgba(255, 140, 0, 0.45) 0%, rgba(190, 80, 0, 0.9) 100%) !important;
+  border: 2px solid #ff8c00 !important;
+  box-shadow: 0 0 18px rgba(255, 140, 0, 0.55), 0 8px 20px rgba(0, 0, 0, 0.8) !important;
 }
 
-.brutalist-actions .charge-btn {
-  background: rgba(0, 120, 255, 0.28) !important;
-  border-color: #00aaff !important;
+.sf-kick-glyph {
+  font-size: 22px;
+  line-height: 1;
 }
 
-.brutalist-actions .special-btn {
-  background: rgba(168, 85, 247, 0.28) !important;
-  border-color: #ba68c8 !important;
+/* 3. BURST / ULTIMATE (Top-Center, Glowing Orb when 100%) */
+.sf-btn-burst {
+  position: absolute;
+  right: 64px;
+  bottom: 156px;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(240, 168, 58, 0.35) 0%, rgba(160, 100, 20, 0.85) 100%) !important;
+  border: 2px solid #f0a83a !important;
+  box-shadow: 0 0 14px rgba(240, 168, 58, 0.4) !important;
+  position: absolute;
 }
 
-.brutalist-actions .burst-btn {
-  background: rgba(240, 168, 58, 0.22) !important;
-  border-color: rgba(240, 168, 58, 0.6) !important;
+.sf-btn-burst.sf-burst-ready {
+  border-color: #ffd700 !important;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.6) 0%, rgba(240, 140, 0, 0.95) 100%) !important;
+  box-shadow: 0 0 26px rgba(255, 215, 0, 0.9), 0 0 45px rgba(240, 168, 58, 0.6) !important;
+  animation: sfBurstPulse 0.75s infinite alternate;
 }
 
-.brutalist-actions .action-btn:active {
-  filter: brightness(1.3);
-  transform: scale(0.96);
+@keyframes sfBurstPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.09); }
 }
 
-.brutalist-actions .action-btn.overdrive-pulse {
-  border-color: var(--hud-amber) !important;
-  background: rgba(240, 168, 58, 0.4) !important;
-  box-shadow: 0 0 15px rgba(240, 168, 58, 0.7);
-  animation: keyOverdriveGlow 0.6s infinite alternate;
+/* 4. SPECIAL / RANGED (Top-Left Arc) */
+.sf-btn-special {
+  position: absolute;
+  right: 142px;
+  bottom: 108px;
+  width: 56px;
+  height: 56px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.38) 0%, rgba(110, 40, 180, 0.85) 100%) !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.45) !important;
+}
+
+/* 5. GUARD / BLOCK (Lower-Center, Easy Thumb Rest) */
+.sf-btn-guard {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 54px;
+  height: 54px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.3) 0%, rgba(0, 120, 180, 0.85) 100%) !important;
+  border: 2px solid #00f0ff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4) !important;
+}
+
+/* 6. CHARGE METER (Inner Flank, Utility) */
+.sf-btn-charge {
+  position: absolute;
+  right: 164px;
+  bottom: 38px;
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle, rgba(0, 140, 255, 0.3) 0%, rgba(0, 60, 150, 0.85) 100%) !important;
+  border: 2px solid #008cff !important;
+  box-shadow: 0 0 12px rgba(0, 140, 255, 0.35) !important;
 }
 
 /* 12. Tactical Modal Dialogs (Pause & Match Over) */
@@ -701,34 +867,106 @@
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
-/* 13. Responsive Viewports & Mobile Landscape */
-@media (max-width: 860px), (max-height: 520px) {
-  .brutalist-tactical-hud .target-hud-top-bar {
-    margin-top: 6px !important;
-    padding: 0 8px !important;
+/* 13. Responsive Mobile Viewports & Screen-Packed Optimization */
+@media (max-width: 900px), (max-height: 520px) {
+  .brutalist-tactical-hud {
+    padding: env(safe-area-inset-top, 4px) env(safe-area-inset-right, 8px) env(safe-area-inset-bottom, 4px) env(safe-area-inset-left, 8px) !important;
   }
+
+  .brutalist-tactical-hud .target-hud-top-bar {
+    margin-top: 4px !important;
+    padding: 0 4px !important;
+    gap: 4px !important;
+  }
+
   .avatar-wrapper.p1-avatar-frame,
   .avatar-wrapper.p2-avatar-frame {
-    width: 46px !important;
-    height: 46px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
+
   .p1-fighter-card.brutalist-card,
   .p2-fighter-card.brutalist-card {
-    padding: 4px 6px !important;
-    min-width: 200px !important;
+    padding: 3px 6px !important;
+    min-width: 175px !important;
+    gap: 6px !important;
   }
+
+  .fighter-subtitle-tag {
+    display: none !important;
+  }
+
+  .fighter-tag-callsign {
+    font-size: 11px !important;
+  }
+
+  .fighter-hp-readout {
+    font-size: 9px !important;
+  }
+
+  .target-health-bar {
+    height: 14px !important;
+  }
+
+  .target-bottom-controls-bar {
+    display: none !important;
+  }
+
+  .sub-meters-row {
+    gap: 6px !important;
+  }
+
+  .target-center-node.brutalist-center-node {
+    padding: 3px 10px !important;
+    min-width: 75px !important;
+  }
+
+  .target-center-node .target-round-pill {
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+  }
+
+  .target-center-node .target-match-timer {
+    font-size: 26px !important;
+  }
+
+  .target-center-node .telemetry-sub-status {
+    font-size: 7.5px !important;
+  }
+
   .brutalist-tactical-hud .hud-combos-layer {
-    top: 130px !important;
+    top: 105px !important;
   }
-  .touch-actions.brutalist-actions {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 4px !important;
-    max-width: 260px !important;
+
+  /* Compact Virtual Joystick & Shadow Fight cluster for mobile screens */
+  .virtual-joystick-touchzone {
+    width: 50vw;
+    height: 70vh;
   }
-  .touch-actions.brutalist-actions .action-btn {
-    width: 52px !important;
-    height: 44px !important;
+
+  .shadow-fight-cluster {
+    transform-origin: bottom right;
+    transform: scale(0.92);
+    right: calc(10px + env(safe-area-inset-right));
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-height: 420px) {
+  .shadow-fight-cluster {
+    transform: scale(0.82);
+    right: calc(6px + env(safe-area-inset-right));
+    bottom: calc(4px + env(safe-area-inset-bottom));
+  }
+
+  .joystick-base {
+    width: 96px;
+    height: 96px;
+  }
+
+  .joystick-knob {
+    width: 44px;
+    height: 44px;
   }
 }
 
