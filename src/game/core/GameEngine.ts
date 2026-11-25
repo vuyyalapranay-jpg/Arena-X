@@ -299,9 +299,11 @@ export class GameEngine {
       return;
     }
 
-    // Process Hit Freeze (Hitstop for combat impact)
+    // Process Hit Freeze (Hitstop for combat impact - Sakurai 4 Principles)
     if (this.hitFreezeTimer > 0) {
       this.hitFreezeTimer -= deltaTime;
+      // Allow camera shockwave and directional shake to process during impact freeze
+      this.updateCamera(deltaTime);
       this.render();
       return;
     }
@@ -566,7 +568,7 @@ export class GameEngine {
         if (res.hitConnected) {
           this.fighterP2.applyHitResult(res, this.fighterP1.facing);
           this.hitFreezeTimer = res.hitFreezeTime;
-          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration);
+          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration, res.shakeDirX, res.shakeDirY);
 
           if (res.isBlocked) {
             this.vfx.spawnBlockSpark(p1Hitbox.x, p1Hitbox.y);
@@ -586,12 +588,9 @@ export class GameEngine {
               this.arena.triggerUltimateSurge();
               this.vfx.spawnEnergyExplosion(p1Hitbox.x, p1Hitbox.y, '#00e5ff', 32);
               soundManager.playEnergyExplosion();
-              this.addScreenShake(26, 0.55);
               this.vfx.triggerScreenFlash('#ffffff', 0.8);
-              this.hitFreezeTimer = 0.22;
             } else if (p1Hitbox.type === 'SKY_BREAKER' || p1Hitbox.type === 'VOID_IMPACT') {
               this.vfx.spawnShockwave(p1Hitbox.x, this.fighterP1.floorY, '#00e5ff', 200);
-              this.addScreenShake(16, 0.35);
               soundManager.playSpecialAttack();
             } else if (p1Hitbox.type === 'SPECIAL' || p1Hitbox.type === 'ENERGY_PUNCH' || p1Hitbox.type === 'FLASH_DASH') {
               soundManager.playSpecialAttack();
@@ -645,7 +644,7 @@ export class GameEngine {
         if (res.hitConnected) {
           this.fighterP1.applyHitResult(res, this.fighterP2.facing);
           this.hitFreezeTimer = res.hitFreezeTime;
-          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration);
+          this.addScreenShake(res.screenShakeIntensity, res.screenShakeDuration, res.shakeDirX, res.shakeDirY);
 
           if (res.isBlocked) {
             this.vfx.spawnBlockSpark(p2Hitbox.x, p2Hitbox.y);
@@ -664,12 +663,9 @@ export class GameEngine {
               this.arena.triggerUltimateSurge();
               this.vfx.spawnEnergyExplosion(p2Hitbox.x, p2Hitbox.y, '#ba68c8', 32);
               soundManager.playEnergyExplosion();
-              this.addScreenShake(26, 0.55);
               this.vfx.triggerScreenFlash('#ffffff', 0.8);
-              this.hitFreezeTimer = 0.22;
             } else if (p2Hitbox.type === 'SKY_BREAKER' || p2Hitbox.type === 'VOID_IMPACT') {
               this.vfx.spawnShockwave(p2Hitbox.x, this.fighterP2.floorY, '#ba68c8', 200);
-              this.addScreenShake(16, 0.35);
               soundManager.playSpecialAttack();
             } else if (p2Hitbox.type === 'SPECIAL' || p2Hitbox.type === 'SHADOW_STRIKE' || p2Hitbox.type === 'PHANTOM_DASH') {
               soundManager.playSpecialAttack();
@@ -708,8 +704,8 @@ export class GameEngine {
     return px >= box.x && px <= box.x + box.width && py >= box.y && py <= box.y + box.height;
   }
 
-  private addScreenShake(intensity: number, duration: number): void {
-    this.camera.addShake(intensity, duration);
+  private addScreenShake(intensity: number, duration: number, dirX = 1, dirY = 0.3): void {
+    this.camera.addShake(intensity, duration, dirX, dirY);
   }
 
   private updateCamera(dt: number): void {
@@ -727,6 +723,7 @@ export class GameEngine {
       this.camera.x += (targetCamX - this.camera.x) * lerpRate;
       this.camera.y += (targetCamY - this.camera.y) * lerpRate;
       this.camera.zoom += (targetZoom - this.camera.zoom) * lerpRate;
+      this.camera.updateShake(dt);
     } else {
       this.camera.update(
         dt,

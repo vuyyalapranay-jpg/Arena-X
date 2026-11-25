@@ -715,20 +715,63 @@ export class CombatEngine {
         hitbox,
         impactX: hitbox.x,
         impactY: hitbox.y,
-        hitFreezeTime: isGuardBreak ? 0.08 : 0.04,
-        screenShakeIntensity: isGuardBreak ? 10 : 3,
-        screenShakeDuration: isGuardBreak ? 0.3 : 0.15,
+        hitFreezeTime: isGuardBreak ? 0.15 : 0.06,
+        screenShakeIntensity: isGuardBreak ? 16 : 4,
+        screenShakeDuration: isGuardBreak ? 0.32 : 0.12,
+        shakeDirX: hitbox.facing,
+        shakeDirY: 0.2,
       };
     }
 
-    // 3. Clean Hit Resolution
+    // 3. Clean Hit Resolution (ACT Combat Design Tiered Hit-Stop & Directional Shock)
+    const isUltimate = hitbox.type?.startsWith('ULTIMATE');
+    const isSpecial =
+      hitbox.type === 'SPECIAL' ||
+      hitbox.type === 'SKY_BREAKER' ||
+      hitbox.type === 'VOID_IMPACT' ||
+      hitbox.type === 'ENERGY_PUNCH' ||
+      hitbox.type === 'FLASH_DASH' ||
+      hitbox.type === 'SHADOW_STRIKE' ||
+      hitbox.type === 'PHANTOM_DASH';
     const isHeavy =
-      hitbox.damage >= 18 ||
+      isSpecial ||
+      hitbox.damage >= 16 ||
       hitbox.type === 'UPPERCUT' ||
       hitbox.type === 'ROUNDHOUSE' ||
-      hitbox.type === 'SPECIAL';
+      hitbox.type === 'PUNCH_HEAVY' ||
+      hitbox.type === 'KICK_HEAVY';
+    const isMedium = !isHeavy && (hitbox.damage >= 10 || hitbox.type.includes('FORWARD'));
 
-    const isKnockdown = isHeavy && (hitbox.verticalKnockback < -150 || hitbox.knockback >= 260);
+    const isKnockdown = isHeavy && (hitbox.verticalKnockback < -150 || hitbox.knockback >= 240);
+
+    // Hit-stop frames aligned with Sakurai 4 Principles & ACT combat standards:
+    // Light: 3-4f (0.05s) | Medium: 5-6f (0.08s) | Heavy: 8-9f (0.13s - >=50% > light) | Special: 10-12f (0.16s) | Ultimate: 17-20f (0.28s)
+    let hitFreezeTime = 0.05;
+    let screenShakeIntensity = 5;
+    let screenShakeDuration = 0.12;
+
+    if (isUltimate) {
+      hitFreezeTime = 0.28;
+      screenShakeIntensity = 28;
+      screenShakeDuration = 0.55;
+    } else if (isSpecial) {
+      hitFreezeTime = 0.16;
+      screenShakeIntensity = 22;
+      screenShakeDuration = 0.35;
+    } else if (isHeavy) {
+      hitFreezeTime = 0.13;
+      screenShakeIntensity = 16;
+      screenShakeDuration = 0.26;
+    } else if (isMedium) {
+      hitFreezeTime = 0.08;
+      screenShakeIntensity = 9;
+      screenShakeDuration = 0.18;
+    }
+
+    // Directional impulse based on attack vector (e.g. uppercuts shock vertically)
+    const isUppercut = hitbox.type === 'UPPERCUT' || hitbox.verticalKnockback < -180;
+    const shakeDirX = isUppercut ? hitbox.facing * 0.35 : hitbox.facing;
+    const shakeDirY = isUppercut ? -1.0 : 0.3;
 
     return {
       hitConnected: true,
@@ -739,9 +782,11 @@ export class CombatEngine {
       hitbox,
       impactX: hitbox.x,
       impactY: hitbox.y,
-      hitFreezeTime: hitbox.type === 'SPECIAL' ? 0.10 : isHeavy ? 0.07 : 0.04,
-      screenShakeIntensity: hitbox.type === 'SPECIAL' ? 16 : isHeavy ? 9 : 4,
-      screenShakeDuration: hitbox.type === 'SPECIAL' ? 0.35 : isHeavy ? 0.25 : 0.16,
+      hitFreezeTime,
+      screenShakeIntensity,
+      screenShakeDuration,
+      shakeDirX,
+      shakeDirY,
     };
   }
 }

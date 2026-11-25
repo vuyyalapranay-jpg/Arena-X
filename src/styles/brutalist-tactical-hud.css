@@ -1,0 +1,745 @@
+/* src/styles/brutalist-tactical-hud.css */
+/* INDUSTRIAL BRUTALISM & TACTICAL TELEMETRY COMBAT HUD */
+/* Incorporates: industrial-brutalist-ui, oil-ui, team-ui, act-combat-design */
+
+:root {
+  --hud-bg-dark: rgba(7, 10, 16, 0.92);
+  --hud-border-cyan: rgba(0, 240, 255, 0.35);
+  --hud-border-red: rgba(255, 42, 109, 0.35);
+  --hud-phosphor: #eaeaea;
+  --hud-cyan: #00f0ff;
+  --hud-green: #00ff88;
+  --hud-amber: #f0a83a;
+  --hud-hazard-red: #ff2a2a;
+}
+
+/* 1. CRT Scanline Overlay */
+.hud-scanlines-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  z-index: 1;
+  opacity: 0.85;
+}
+
+/* 2. Top Status Bar Container */
+.target-hud-top-bar {
+  margin-top: 24px !important;
+}
+
+.brutalist-tactical-hud {
+  font-family: 'Rajdhani', 'Chakra Petch', monospace, sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--hud-phosphor);
+}
+
+.brutalist-tactical-hud .font-mono {
+  font-family: 'Orbitron', 'Chakra Petch', monospace, sans-serif;
+}
+
+/* 3. Fighter Cards (Rigid 90-degree Geometry) */
+.brutalist-card {
+  background: var(--hud-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 14px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.p1-fighter-card.brutalist-card {
+  border-left: 3px solid var(--hud-cyan);
+}
+
+.p2-fighter-card.brutalist-card {
+  border-right: 3px solid var(--hud-hazard-red);
+}
+
+/* Corner Crosshairs (+) */
+.brutalist-corner-mark {
+  position: absolute;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--hud-cyan);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.brutalist-corner-mark.top-left { top: -6px; left: -3px; }
+.brutalist-corner-mark.top-right { top: -6px; right: -3px; color: var(--hud-hazard-red); }
+
+/* Avatar Frames */
+.avatar-wrapper.p1-avatar-frame,
+.avatar-wrapper.p2-avatar-frame {
+  width: 66px;
+  height: 66px;
+  border-radius: 0 !important;
+  transform: none !important;
+  background: #090d16;
+  border: 1px solid var(--hud-border-cyan);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.avatar-wrapper.p2-avatar-frame {
+  border-color: var(--hud-border-red);
+}
+
+.p1-badge,
+.p2-badge {
+  border-radius: 0 !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  padding: 2px 2px !important;
+  line-height: 1.1 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  color: #ffffff !important;
+}
+
+/* 4. Telemetry Header Line */
+.fighter-tag-callsign {
+  font-family: 'Orbitron', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+}
+
+.fighter-hp-readout {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hud-cyan);
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+}
+
+.p2-fighter-card .fighter-hp-readout {
+  color: #ff7895;
+}
+
+.round-dots-label {
+  font-size: 10px;
+  color: #7d8da6;
+  letter-spacing: 0.06em;
+}
+
+.target-dot {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 0 !important;
+  background: #090d16 !important;
+  border: 1px solid #28374d !important;
+  transform: rotate(45deg);
+}
+
+.target-dot.dot-won-p1 {
+  background: var(--hud-cyan) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 10px var(--hud-cyan);
+}
+
+.target-dot.dot-won-p2 {
+  background: var(--hud-hazard-red) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 10px var(--hud-hazard-red);
+}
+
+/* 5. Life Bar with Telemetry Micro-Notches */
+.target-health-bar {
+  position: relative;
+  width: 100%;
+  height: 18px !important;
+  background: #06090e !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.target-health-ghost {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--hud-amber);
+  opacity: 0.8;
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1;
+}
+
+.p1-health-bar .target-health-ghost { left: 0; }
+.p2-health-bar .target-health-ghost { right: 0; }
+
+.target-health-fill.p1-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  z-index: 2;
+  transition: width 0.06s linear;
+}
+
+.target-health-fill.p2-fill {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(270deg, #00ff88 0%, #00d4ff 100%);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  z-index: 2;
+  transition: width 0.06s linear;
+}
+
+/* Critical Health Pulse */
+.health-critical-pulse .target-health-fill {
+  background: linear-gradient(90deg, #ff1744 0%, #ff5252 100%) !important;
+  animation: healthWarnPulse 0.5s infinite alternate;
+}
+
+@keyframes healthWarnPulse {
+  0% { opacity: 0.75; }
+  100% { opacity: 1; filter: brightness(1.3); }
+}
+
+/* Micro-Notches */
+.health-notch {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.7);
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+  z-index: 4;
+}
+
+.notch-25 { left: 25%; }
+.notch-50 { left: 50%; }
+.notch-75 { left: 75%; }
+
+/* 6. Sub-Meters Row (Guard & 3-Phase Burst) */
+.sub-meters-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 12px;
+  margin-top: 5px;
+  width: 100% !important;
+  align-self: stretch !important;
+  box-sizing: border-box;
+}
+
+.meter-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.meter-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8b9bb4;
+  letter-spacing: 0.06em;
+}
+
+.meter-meta .meter-val {
+  margin-left: auto;
+  color: #ffffff;
+}
+
+.mini-meter-track {
+  height: 5px;
+  background: #06090e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.mini-meter-fill {
+  height: 100%;
+  transition: width 0.1s linear;
+}
+
+.mini-meter-fill.guard-fill-p2 {
+  margin-left: auto;
+}
+
+/* 3-Phase Super Segments */
+.super-segments-track {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3px;
+  height: 5px;
+}
+
+.super-segment {
+  background: #06090e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.segment-fill {
+  height: 100%;
+  background: #0088ff;
+  transition: width 0.08s linear;
+}
+
+.super-segment.p2 .segment-fill {
+  background: #9c27b0;
+}
+
+.super-segment.segment-active .segment-fill {
+  background: var(--hud-cyan);
+  box-shadow: 0 0 8px var(--hud-cyan);
+}
+
+.super-segment.p2.segment-active .segment-fill {
+  background: #ff007f;
+  box-shadow: 0 0 8px #ff007f;
+}
+
+.super-segment.max-phase .segment-fill {
+  background: linear-gradient(90deg, #00f0ff, #fffb00);
+  animation: maxPhaseGlow 0.6s infinite alternate;
+}
+
+@keyframes maxPhaseGlow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.4); }
+}
+
+/* Overdrive Telemetry Banner */
+.overdrive-telemetry-banner {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 3px 8px;
+  background: rgba(240, 168, 58, 0.12);
+  border: 1px solid var(--hud-amber);
+  color: var(--hud-amber);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  width: 100% !important;
+  align-self: stretch !important;
+  box-sizing: border-box;
+  animation: overdrivePulse 0.8s infinite alternate;
+}
+
+@keyframes overdrivePulse {
+  0% { box-shadow: 0 0 8px rgba(240, 168, 58, 0.2); }
+  100% { box-shadow: 0 0 16px rgba(240, 168, 58, 0.6); }
+}
+
+/* 7. Center Telemetry Node (Timer & System Info) */
+.brutalist-center-node {
+  background: var(--hud-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 16px;
+  min-width: 130px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.brutalist-center-node .target-round-pill {
+  border-radius: 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  font-size: 11px;
+  padding: 2px 8px;
+  margin: 3px 0;
+}
+
+.brutalist-center-node .target-match-timer {
+  font-size: 46px !important;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.telemetry-sub-status {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #7d8da6;
+  text-transform: uppercase;
+}
+
+/* 8. Kinetic Combo Telemetry Cards */
+.brutalist-tactical-hud .hud-combos-layer {
+  top: 198px !important;
+}
+
+.brutalist-combo-card {
+  background: var(--hud-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  animation: brutalistPopIn 0.18s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes brutalistPopIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.brutalist-combo-card.p1-combo {
+  border-left: 3px solid var(--hud-cyan);
+}
+
+.brutalist-combo-card.p2-combo {
+  border-right: 3px solid var(--hud-hazard-red);
+  margin-left: auto;
+}
+
+.combo-telemetry-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8b9bb4;
+  margin-bottom: 2px;
+}
+
+.combo-display-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.combo-num-massive {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.p1-combo .combo-num-massive { color: var(--hud-cyan); }
+.p2-combo .combo-num-massive { color: var(--hud-hazard-red); }
+
+.combo-detail-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.combo-hits-unit {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+}
+
+.combo-tier-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--hud-amber);
+  letter-spacing: 0.05em;
+}
+
+/* 9. Utility Toolbar */
+.brutalist-util-bar {
+  position: absolute;
+  top: 6px !important;
+  right: 24px !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--hud-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  height: 34px;
+  box-sizing: border-box;
+  z-index: 25;
+}
+
+.fps-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--hud-green);
+  box-shadow: 0 0 6px var(--hud-green);
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.brutalist-util-bar .hud-icon-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hud-phosphor);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.brutalist-util-bar .hud-icon-btn:hover {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: var(--hud-cyan) !important;
+  color: var(--hud-cyan);
+}
+
+.brutalist-util-bar .fps-indicator {
+  font-size: 10px !important;
+  padding: 0 4px !important;
+  border: none !important;
+  background: none !important;
+  color: var(--hud-green) !important;
+}
+
+/* 10. Tactical Bottom Controls Strip */
+.brutalist-controls-strip {
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: var(--hud-bg-dark) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75) !important;
+  padding: 6px 14px !important;
+  max-width: 96vw !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px 14px !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.brutalist-controls-strip .p1-controls-section,
+.brutalist-controls-strip .p2-controls-section {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px 8px !important;
+}
+
+.controls-telemetry-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--hud-amber);
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+}
+
+.brutalist-controls-strip .key-item {
+  gap: 4px !important;
+  font-size: 10px !important;
+}
+
+.brutalist-controls-strip .key-cap {
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-size: 10px !important;
+  padding: 2px 5px !important;
+  font-weight: 800 !important;
+}
+
+.key-item.key-overdrive .key-cap {
+  border-color: var(--hud-amber) !important;
+  background: rgba(240, 168, 58, 0.25) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(240, 168, 58, 0.6);
+  animation: keyOverdriveGlow 0.6s infinite alternate;
+}
+
+@keyframes keyOverdriveGlow {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+/* 11. Tactical Touch Controls */
+.brutalist-dpad .dpad-btn,
+.brutalist-actions .action-btn {
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: rgba(15, 20, 30, 0.9) !important;
+  color: #ffffff !important;
+}
+
+.brutalist-actions .jump-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.brutalist-actions .punch-btn {
+  background: rgba(255, 75, 75, 0.25) !important;
+  border-color: #ff4b4b !important;
+}
+
+.brutalist-actions .kick-btn {
+  background: rgba(255, 140, 0, 0.25) !important;
+  border-color: #ff8c00 !important;
+}
+
+.brutalist-actions .block-btn {
+  background: rgba(0, 240, 255, 0.2) !important;
+  border-color: var(--hud-cyan) !important;
+}
+
+.brutalist-actions .charge-btn {
+  background: rgba(0, 120, 255, 0.28) !important;
+  border-color: #00aaff !important;
+}
+
+.brutalist-actions .special-btn {
+  background: rgba(168, 85, 247, 0.28) !important;
+  border-color: #ba68c8 !important;
+}
+
+.brutalist-actions .burst-btn {
+  background: rgba(240, 168, 58, 0.22) !important;
+  border-color: rgba(240, 168, 58, 0.6) !important;
+}
+
+.brutalist-actions .action-btn:active {
+  filter: brightness(1.3);
+  transform: scale(0.96);
+}
+
+.brutalist-actions .action-btn.overdrive-pulse {
+  border-color: var(--hud-amber) !important;
+  background: rgba(240, 168, 58, 0.4) !important;
+  box-shadow: 0 0 15px rgba(240, 168, 58, 0.7);
+  animation: keyOverdriveGlow 0.6s infinite alternate;
+}
+
+/* 12. Tactical Modal Dialogs (Pause & Match Over) */
+.pause-modal-card.brutalist-card,
+.match-over-card.brutalist-card {
+  border: 1px solid var(--hud-cyan) !important;
+  border-radius: 0 !important;
+  background: rgba(8, 11, 16, 0.96) !important;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+.pause-modal-card.brutalist-card .modal-title,
+.match-over-card.brutalist-card .modal-title,
+.match-over-card.brutalist-card .winner-title {
+  letter-spacing: 0.12em;
+  color: var(--hud-cyan);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.pause-modal-card.brutalist-card .arena-btn,
+.match-over-card.brutalist-card .arena-btn {
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.pause-modal-card.brutalist-card .arena-btn:hover,
+.match-over-card.brutalist-card .arena-btn:hover {
+  border-color: var(--hud-cyan) !important;
+  background: rgba(0, 240, 255, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+.pause-modal-card.brutalist-card .primary-btn,
+.match-over-card.brutalist-card .primary-btn {
+  border-color: var(--hud-green) !important;
+  color: var(--hud-green) !important;
+  background: rgba(0, 255, 157, 0.12) !important;
+}
+
+.pause-modal-card.brutalist-card .primary-btn:hover,
+.match-over-card.brutalist-card .primary-btn:hover {
+  background: rgba(0, 255, 157, 0.25) !important;
+}
+
+.pause-modal-card.brutalist-card .secondary-btn,
+.match-over-card.brutalist-card .secondary-btn {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #e2e8f0 !important;
+}
+
+.pause-modal-card.brutalist-card .danger-btn {
+  border-color: var(--hud-hazard-red) !important;
+  color: var(--hud-hazard-red) !important;
+  background: rgba(255, 42, 42, 0.12) !important;
+}
+
+.match-over-card.brutalist-card .profile-btn {
+  border-color: var(--hud-cyan) !important;
+  color: var(--hud-cyan) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+}
+
+.match-over-card.brutalist-card .reward-item-badge {
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 13. Responsive Viewports & Mobile Landscape */
+@media (max-width: 860px), (max-height: 520px) {
+  .brutalist-tactical-hud .target-hud-top-bar {
+    margin-top: 6px !important;
+    padding: 0 8px !important;
+  }
+  .avatar-wrapper.p1-avatar-frame,
+  .avatar-wrapper.p2-avatar-frame {
+    width: 46px !important;
+    height: 46px !important;
+  }
+  .p1-fighter-card.brutalist-card,
+  .p2-fighter-card.brutalist-card {
+    padding: 4px 6px !important;
+    min-width: 200px !important;
+  }
+  .brutalist-tactical-hud .hud-combos-layer {
+    top: 130px !important;
+  }
+  .touch-actions.brutalist-actions {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 4px !important;
+    max-width: 260px !important;
+  }
+  .touch-actions.brutalist-actions .action-btn {
+    width: 52px !important;
+    height: 44px !important;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .brutalist-tactical-hud *,
+  .health-critical-pulse .target-health-fill,
+  .overdrive-telemetry-banner,
+  .super-segment.max-phase .segment-fill,
+  .brutalist-combo-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}

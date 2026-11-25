@@ -28,9 +28,12 @@ export class FightCamera2D {
   public minZoom = 0.68;
   public maxZoom = 1.12;
 
-  // Screen Shake
+  // Screen Shake (Directional with Exponential Decay - ACT Combat Baseline)
   private shakeTimer = 0;
+  private shakeTotalDuration = 0.22;
   private shakeIntensity = 0;
+  private shakeDirX = 1;
+  private shakeDirY = 0.3;
   public shakeX = 0;
   public shakeY = 0;
 
@@ -110,12 +113,21 @@ export class FightCamera2D {
     this.y += (targetY - this.y) * lerpRate;
     this.zoom += (desiredZoom - this.zoom) * zoomLerpRate;
 
-    // 6. Screen Shake Processing
+    // 6. Directional Screen Shake with Exponential Decay (ACT Combat Specification)
+    this.updateShake(dt);
+  }
+
+  /**
+   * Updates directional screen shake decay independently of camera positioning.
+   */
+  public updateShake(dt: number): void {
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
-      const progress = Math.max(0, this.shakeTimer / 0.3);
-      this.shakeX = (Math.random() - 0.5) * this.shakeIntensity * 2 * progress;
-      this.shakeY = (Math.random() - 0.5) * this.shakeIntensity * 2 * progress;
+      const progress = Math.max(0, this.shakeTimer / (this.shakeTotalDuration || 0.22));
+      const decay = Math.pow(progress, 1.8);
+      const wave = Math.sin((1 - progress) * 26 * Math.PI);
+      this.shakeX = (this.shakeDirX * wave * 0.75 + (Math.random() - 0.5) * 0.5) * this.shakeIntensity * decay;
+      this.shakeY = (this.shakeDirY * wave * 0.75 + (Math.random() - 0.5) * 0.5) * this.shakeIntensity * decay;
       if (this.shakeTimer <= 0) {
         this.shakeIntensity = 0;
         this.shakeX = 0;
@@ -142,11 +154,15 @@ export class FightCamera2D {
   }
 
   /**
-   * Triggers an authentic fighting-game camera impact shake.
+   * Triggers an authentic fighting-game camera impact shake with directional impulse.
    */
-  public addShake(intensity: number, duration = 0.22): void {
-    this.shakeIntensity = intensity;
-    this.shakeTimer = duration;
+  public addShake(intensity: number, duration = 0.22, dirX = 1, dirY = 0.3): void {
+    this.shakeIntensity = Math.max(this.shakeIntensity * 0.5, intensity);
+    this.shakeTotalDuration = Math.max(0.08, duration);
+    this.shakeTimer = this.shakeTotalDuration;
+    const len = Math.hypot(dirX, dirY) || 1;
+    this.shakeDirX = dirX / len;
+    this.shakeDirY = dirY / len;
   }
 
   public getState(): CameraState2D {

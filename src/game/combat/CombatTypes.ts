@@ -91,4 +91,6 @@ export interface HitResolutionResult {
   hitFreezeTime: number;
   screenShakeIntensity: number;
   screenShakeDuration: number;
+  shakeDirX?: number;
+  shakeDirY?: number;
 }
