@@ -2,7 +2,7 @@
 // INDUSTRIAL BRUTALIST & TACTICAL TELEMETRY COMBAT HUD
 // Synthesizing: act-combat-design, industrial-brutalist-ui, oil-ui, team-ui
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Pause, 
   Play, 
@@ -58,7 +58,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   onTouchInput,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
 
   // Delayed ghost health bar for impactful fighting-game hit feedback (oil-ui & act-combat-design)
@@ -67,6 +67,31 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   const [matchRewards, setMatchRewards] = useState<MatchRewards | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [hasRecordedMatch, setHasRecordedMatch] = useState(false);
+  const resumeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Focus management and Escape key handling for Pause Dashboard
+  useEffect(() => {
+    if (gameState !== 'PAUSED') return;
+    
+    // Focus the Resume button when pause modal opens
+    const focusTimer = setTimeout(() => {
+      resumeBtnRef.current?.focus();
+    }, 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        soundManager.playMenuSelect();
+        onResume();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [gameState, onResume]);
 
   // Auto-record progression on match over
   useEffect(() => {
@@ -150,12 +175,11 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       <div className="hud-scanlines-layer" aria-hidden="true" />
 
       {/* ============================================================== */}
-      {/* 1. TOP TACTICAL TELEMETRY STATUS BAR (INDUSTRIAL BRUTALISM)    */}
+      {/* 1. TOP FIGHTING STATUS BAR (CONSOLE 2D ARCADE HUD)             */}
       {/* ============================================================== */}
-      <header className="target-hud-top-bar">
-        {/* PLAYER 1 TACTICAL FIGHTER CARD */}
-        <div className="p1-fighter-card brutalist-card">
-          <div className="brutalist-corner-mark top-left" aria-hidden="true">+</div>
+      <header className="target-hud-top-bar console-hud-top">
+        {/* PLAYER 1 COMBAT CARD */}
+        <div className="p1-fighter-card console-fighter-card">
           <div className="avatar-wrapper p1-avatar-frame">
             <img 
               src={`/assets/sprites/portraits/portrait_${p1Id.toLowerCase()}.png`} 
@@ -165,46 +189,45 @@ export const FightHUD: React.FC<FightHUDProps> = ({
                 (e.target as HTMLImageElement).src = `/assets/characters_full/${p1Id.toLowerCase()}.png`;
               }}
             />
-            <div className="player-badge p1-badge">P1 // 01</div>
+            <div className="player-badge p1-badge">P1</div>
           </div>
 
           <div className="fighter-status-block">
-            {/* Top Telemetry Line */}
+            {/* Top Name & Health Digits Row */}
             <div className="fighter-meta-line">
-              <span className="fighter-tag-callsign">[{p1Profile.name}]</span>
-              <span className="fighter-subtitle-tag">// {p1Profile.title}</span>
+              <span className="fighter-title-name">{p1Profile.name}</span>
+              <span className="fighter-subtitle-tag">{p1Profile.title}</span>
               <span className="fighter-hp-readout font-mono">
-                HP // {Math.max(0, Math.round(p1Stats.currentHealth))}:{p1Stats.maxHealth}
+                {Math.max(0, Math.round(p1Stats.currentHealth))} <span className="hp-max-divider">/</span> {p1Stats.maxHealth}
               </span>
               
-              {/* Tactical Round Win Indicators */}
-              <div className="round-dots-group">
-                <span className="round-dots-label font-mono">ROUNDS:</span>
-                <span className={`target-dot ${matchState.p1RoundsWon >= 1 ? 'dot-won-p1' : ''}`} />
-                <span className={`target-dot ${matchState.p1RoundsWon >= 2 ? 'dot-won-p1' : ''}`} />
-                <span className={`target-dot ${matchState.p1RoundsWon >= 3 ? 'dot-won-p1' : ''}`} />
+              {/* Sleek Golden Round Gems */}
+              <div 
+                className="round-gems-group" 
+                role="img" 
+                aria-label={`${p1Profile.name} rounds won: ${matchState.p1RoundsWon} of 3`}
+              >
+                <span className={`round-gem ${matchState.p1RoundsWon >= 1 ? 'gem-active' : ''}`} aria-hidden="true" />
+                <span className={`round-gem ${matchState.p1RoundsWon >= 2 ? 'gem-active' : ''}`} aria-hidden="true" />
+                <span className={`round-gem ${matchState.p1RoundsWon >= 3 ? 'gem-active' : ''}`} aria-hidden="true" />
               </div>
             </div>
 
-            {/* Segmented Industrial Life Bar with Micro-Notches (25%, 50%, 75%) */}
+            {/* Slanted Angular Life Bar */}
             <div className={`target-health-bar p1-health-bar ${p1HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
               <div className="target-health-ghost" style={{ width: `${p1GhostPercent}%` }} />
               <div 
                 className="target-health-fill p1-fill" 
                 style={{ width: `${p1HealthPercent}%` }} 
               />
-              <div className="health-notch notch-25" />
-              <div className="health-notch notch-50" />
-              <div className="health-notch notch-75" />
             </div>
 
-            {/* Dual Meter Telemetry Grid: Guard & 3-Phase Tactical Super */}
+            {/* Sub-Meters: Guard & 3-Phase Burst Overdrive */}
             <div className="sub-meters-row">
               <div className="meter-unit guard-unit">
                 <div className="meter-meta font-mono">
                   <Shield size={10} />
                   <span>GUARD</span>
-                  <span className="meter-val">{Math.round(p1Guard)}%</span>
                 </div>
                 <div className="mini-meter-track">
                   <div 
@@ -237,37 +260,29 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               </div>
             </div>
 
-            {/* Tactical Overdrive Banner */}
+            {/* Radiant Overdrive Banner */}
             {p1Super >= 100 && (
               <div className="overdrive-telemetry-banner p1-overdrive font-mono">
-                <span className="overdrive-glitch" aria-hidden="true">▶</span>
+                <span className="overdrive-glitch" aria-hidden="true">★</span>
                 <span>OVERDRIVE ACTIVE // [V] {p1Profile.specials.ultimate.name.toUpperCase()}</span>
-                <span className="overdrive-glitch" aria-hidden="true">◀</span>
+                <span className="overdrive-glitch" aria-hidden="true">★</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* CENTER MATCH TELEMETRY NODE (INDUSTRIAL CHRONO) */}
-        <div className="target-center-node brutalist-center-node">
-          <div className="target-logo-row font-mono">
-            <span className="logo-arena-text">ARENA_X</span>
-            <span className="telemetry-coord">// T-01</span>
+        {/* FLOATING CENTER CHRONO NODE */}
+        <div className="floating-center-chrono">
+          <div className="round-badge-pill">
+            ROUND {matchState.round}
           </div>
-          <div className="target-round-pill font-mono">
-            [ ROUND {String(matchState.round).padStart(2, '0')} ]
-          </div>
-          <div className={`target-match-timer font-mono ${matchState.timeRemaining <= 10 ? 'timer-danger' : ''}`}>
+          <div className={`chrono-timer-num font-mono ${matchState.timeRemaining <= 10 ? 'timer-danger' : ''}`}>
             {Math.ceil(matchState.timeRemaining).toString().padStart(2, '0')}
-          </div>
-          <div className="telemetry-sub-status font-mono">
-            {matchState.timeRemaining <= 10 ? '! CRITICAL !' : 'LIVE MATCH'}
           </div>
         </div>
 
-        {/* PLAYER 2 TACTICAL FIGHTER CARD */}
-        <div className="p2-fighter-card brutalist-card">
-          <div className="brutalist-corner-mark top-right" aria-hidden="true">+</div>
+        {/* PLAYER 2 COMBAT CARD */}
+        <div className="p2-fighter-card console-fighter-card">
           <div className="avatar-wrapper p2-avatar-frame">
             <img 
               src={`/assets/sprites/portraits/portrait_${p2Id.toLowerCase()}.png`} 
@@ -277,46 +292,45 @@ export const FightHUD: React.FC<FightHUDProps> = ({
                 (e.target as HTMLImageElement).src = `/assets/characters_full/${p2Id.toLowerCase()}.png`;
               }}
             />
-            <div className="player-badge p2-badge">P2 // 02</div>
+            <div className="player-badge p2-badge">P2</div>
           </div>
 
           <div className="fighter-status-block reversed">
-            {/* Top Telemetry Line */}
+            {/* Top Name & Health Digits Row */}
             <div className="fighter-meta-line reversed">
-              <span className="fighter-tag-callsign">[{p2Profile.name}]</span>
-              <span className="fighter-subtitle-tag">// {p2Profile.title}</span>
+              <span className="fighter-title-name">{p2Profile.name}</span>
+              <span className="fighter-subtitle-tag">{p2Profile.title}</span>
               <span className="fighter-hp-readout font-mono">
-                HP // {Math.max(0, Math.round(p2Stats.currentHealth))}:{p2Stats.maxHealth}
+                {Math.max(0, Math.round(p2Stats.currentHealth))} <span className="hp-max-divider">/</span> {p2Stats.maxHealth}
               </span>
               
-              {/* Tactical Round Win Indicators */}
-              <div className="round-dots-group">
-                <span className="round-dots-label font-mono">ROUNDS:</span>
-                <span className={`target-dot ${matchState.p2RoundsWon >= 1 ? 'dot-won-p2' : ''}`} />
-                <span className={`target-dot ${matchState.p2RoundsWon >= 2 ? 'dot-won-p2' : ''}`} />
-                <span className={`target-dot ${matchState.p2RoundsWon >= 3 ? 'dot-won-p2' : ''}`} />
+              {/* Sleek Golden Round Gems */}
+              <div 
+                className="round-gems-group reversed" 
+                role="img" 
+                aria-label={`${p2Profile.name} rounds won: ${matchState.p2RoundsWon} of 3`}
+              >
+                <span className={`round-gem ${matchState.p2RoundsWon >= 1 ? 'gem-active' : ''}`} aria-hidden="true" />
+                <span className={`round-gem ${matchState.p2RoundsWon >= 2 ? 'gem-active' : ''}`} aria-hidden="true" />
+                <span className={`round-gem ${matchState.p2RoundsWon >= 3 ? 'gem-active' : ''}`} aria-hidden="true" />
               </div>
             </div>
 
-            {/* Segmented Industrial Life Bar */}
+            {/* Slanted Angular Life Bar */}
             <div className={`target-health-bar p2-health-bar ${p2HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
               <div className="target-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
               <div 
                 className="target-health-fill p2-fill" 
                 style={{ width: `${p2HealthPercent}%` }} 
               />
-              <div className="health-notch notch-25" />
-              <div className="health-notch notch-50" />
-              <div className="health-notch notch-75" />
             </div>
 
-            {/* Dual Meter Telemetry Grid */}
+            {/* Sub-Meters: Guard & 3-Phase Burst Overdrive */}
             <div className="sub-meters-row reversed">
               <div className="meter-unit guard-unit">
                 <div className="meter-meta font-mono">
                   <Shield size={10} />
                   <span>GUARD</span>
-                  <span className="meter-val">{Math.round(p2Guard)}%</span>
                 </div>
                 <div className="mini-meter-track">
                   <div 
@@ -349,12 +363,12 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               </div>
             </div>
 
-            {/* Tactical Overdrive Banner */}
+            {/* Radiant Overdrive Banner */}
             {p2Super >= 100 && (
               <div className="overdrive-telemetry-banner p2-overdrive font-mono">
-                <span className="overdrive-glitch" aria-hidden="true">▶</span>
+                <span className="overdrive-glitch" aria-hidden="true">★</span>
                 <span>OVERDRIVE ACTIVE // [P2] {p2Profile.specials.ultimate.name.toUpperCase()}</span>
-                <span className="overdrive-glitch" aria-hidden="true">◀</span>
+                <span className="overdrive-glitch" aria-hidden="true">★</span>
               </div>
             )}
           </div>
@@ -531,41 +545,132 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       )}
 
       {/* ============================================================== */}
-      {/* 7. PAUSE MODAL                                                 */}
+      {/* 7. CONSOLE-GRADE PAUSE DASHBOARD & MOVES REFERENCE             */}
       {/* ============================================================== */}
       {gameState === 'PAUSED' && (
-        <div className="modal-backdrop">
-          <div className="pause-modal-card brutalist-card font-mono" role="dialog" aria-modal="true" aria-labelledby="pause-modal-heading">
-            <h2 id="pause-modal-heading" className="modal-title">[ MATCH PAUSED ]</h2>
-            <div className="modal-divider" />
-            <div className="modal-button-stack">
-              <button 
-                className="arena-btn primary-btn"
-                onClick={() => {
-                  soundManager.playMenuSelect();
-                  onResume();
-                }}
-              >
-                <Play size={18} /> RESUME FIGHT
-              </button>
-              <button 
-                className="arena-btn secondary-btn"
-                onClick={() => {
-                  soundManager.playMenuSelect();
-                  onRestart();
-                }}
-              >
-                <RotateCcw size={18} /> RESTART MATCH
-              </button>
-              <button 
-                className="arena-btn danger-btn"
-                onClick={() => {
-                  soundManager.playMenuSelect();
-                  onMainMenu();
-                }}
-              >
-                <Home size={18} /> RETURN TO MAIN MENU
-              </button>
+        <div className="modal-backdrop console-pause-backdrop">
+          <div className="console-pause-card" role="dialog" aria-modal="true" aria-labelledby="pause-modal-heading">
+            {/* Header: Title and Match Telemetry */}
+            <div className="pause-card-header">
+              <div className="pause-top-badge font-mono">ARENA X // BATTLE SUSPENDED</div>
+              <h1 id="pause-modal-heading" className="pause-hero-title">MATCH PAUSED</h1>
+              
+              {/* Match Versus Banner */}
+              <div className="pause-vs-banner">
+                <div className="pause-fighter-pill p1">
+                  <img 
+                    src={`/assets/sprites/portraits/portrait_${p1Id.toLowerCase()}.png`} 
+                    alt="" 
+                    className="pause-portrait-mini"
+                    onError={(e) => { 
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `/assets/characters_full/${p1Id.toLowerCase()}.png`; 
+                    }}
+                  />
+                  <span className="name">{p1Profile.name}</span>
+                  <span className="score font-mono">[{matchState.p1RoundsWon}]</span>
+                </div>
+                <div className="pause-vs-badge font-mono">VS</div>
+                <div className="pause-fighter-pill p2">
+                  <span className="score font-mono">[{matchState.p2RoundsWon}]</span>
+                  <span className="name">{p2Profile.name}</span>
+                  <img 
+                    src={`/assets/sprites/portraits/portrait_${p2Id.toLowerCase()}.png`} 
+                    alt="" 
+                    className="pause-portrait-mini"
+                    onError={(e) => { 
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `/assets/characters_full/${p2Id.toLowerCase()}.png`; 
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pause-grid-layout">
+              {/* Left Column: Actions */}
+              <div className="pause-actions-col">
+                <button 
+                  ref={resumeBtnRef}
+                  className="pause-btn resume-btn"
+                  onClick={() => {
+                    soundManager.playMenuSelect();
+                    onResume();
+                  }}
+                >
+                  <Play size={20} className="btn-icon" />
+                  <div className="btn-text-block">
+                    <span className="primary-text">RESUME BATTLE</span>
+                    <span className="sub-text">Return to active fight</span>
+                  </div>
+                </button>
+
+                <button 
+                  className="pause-btn restart-btn"
+                  onClick={() => {
+                    soundManager.playMenuSelect();
+                    onRestart();
+                  }}
+                >
+                  <RotateCcw size={18} className="btn-icon" />
+                  <div className="btn-text-block">
+                    <span className="primary-text">RESTART MATCH</span>
+                    <span className="sub-text">Reset rounds & health</span>
+                  </div>
+                </button>
+
+                <button 
+                  className="pause-btn quit-btn"
+                  onClick={() => {
+                    soundManager.playMenuSelect();
+                    onMainMenu();
+                  }}
+                >
+                  <Home size={18} className="btn-icon" />
+                  <div className="btn-text-block">
+                    <span className="primary-text">MAIN MENU</span>
+                    <span className="sub-text">Exit to lobby deck</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Right Column: Fighter Command / Moves Reference */}
+              <div className="pause-moves-col">
+                <div className="moves-header">
+                  <span className="title">COMBAT COMMANDS</span>
+                  <span className="char-tag">[{p1Profile.name}]</span>
+                </div>
+                <div className="moves-list-table font-mono">
+                  <div className="move-row">
+                    <span className="move-name">Light / Heavy Strike</span>
+                    <span className="move-keys"><kbd>F</kbd> / <kbd>R</kbd></span>
+                  </div>
+                  <div className="move-row">
+                    <span className="move-name">Kick (Front / Roundhouse)</span>
+                    <span className="move-keys"><kbd>G</kbd></span>
+                  </div>
+                  <div className="move-row">
+                    <span className="move-name">Low Shin Sweep</span>
+                    <span className="move-keys"><kbd>S</kbd> + <kbd>G</kbd></span>
+                  </div>
+                  <div className="move-row">
+                    <span className="move-name">Anti-Air Uppercut</span>
+                    <span className="move-keys"><kbd>S</kbd> + <kbd>F</kbd></span>
+                  </div>
+                  <div className="move-row">
+                    <span className="move-name">Guard / Block Defense</span>
+                    <span className="move-keys"><kbd>H</kbd></span>
+                  </div>
+                  <div className="move-row">
+                    <span className="move-name">Special Technique</span>
+                    <span className="move-keys"><kbd>SPACE</kbd></span>
+                  </div>
+                  <div className="move-row highlight-burst">
+                    <span className="move-name">Overdrive Burst (100% Super)</span>
+                    <span className="move-keys burst-cap"><kbd>V</kbd></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

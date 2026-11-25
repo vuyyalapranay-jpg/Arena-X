@@ -44,132 +44,168 @@
   font-family: 'Orbitron', 'Chakra Petch', monospace, sans-serif;
 }
 
-/* 3. Fighter Cards (Rigid 90-degree Geometry) */
-.brutalist-card {
-  background: var(--hud-bg-dark);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 14px;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+/* 3. Sleek Console Fighter Cards */
+.console-hud-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
 }
 
-.p1-fighter-card.brutalist-card {
-  border-left: 3px solid var(--hud-cyan);
+.console-fighter-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 6px 14px !important;
+  background: linear-gradient(135deg, rgba(8, 14, 24, 0.85) 0%, rgba(12, 18, 30, 0.65) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  min-width: 240px !important;
+  max-width: 480px !important;
+  flex: 1;
 }
 
-.p2-fighter-card.brutalist-card {
-  border-right: 3px solid var(--hud-hazard-red);
+.p1-fighter-card.console-fighter-card {
+  border-left: 3px solid #00f0ff !important;
+  box-shadow: -4px 0 18px rgba(0, 240, 255, 0.25), 0 8px 24px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* Corner Crosshairs (+) */
-.brutalist-corner-mark {
-  position: absolute;
-  font-family: monospace;
-  font-size: 13px;
-  line-height: 1;
-  color: var(--hud-cyan);
-  opacity: 0.85;
-  pointer-events: none;
-  z-index: 5;
+.p2-fighter-card.console-fighter-card {
+  border-right: 3px solid #ff2a5f !important;
+  box-shadow: 4px 0 18px rgba(255, 42, 95, 0.25), 0 8px 24px rgba(0, 0, 0, 0.6) !important;
 }
 
-.brutalist-corner-mark.top-left { top: -6px; left: -3px; }
-.brutalist-corner-mark.top-right { top: -6px; right: -3px; color: var(--hud-hazard-red); }
-
-/* Avatar Frames */
+/* Avatar Frames: Sleek Beveled Combat Crest */
 .avatar-wrapper.p1-avatar-frame,
 .avatar-wrapper.p2-avatar-frame {
-  width: 66px;
-  height: 66px;
-  border-radius: 0 !important;
+  width: 62px;
+  height: 62px;
+  border-radius: 8px !important;
   transform: none !important;
   background: #090d16;
-  border: 1px solid var(--hud-border-cyan);
+  border: 2px solid #00f0ff !important;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+  flex-shrink: 0;
 }
 
 .avatar-wrapper.p2-avatar-frame {
-  border-color: var(--hud-border-red);
+  border-color: #ff2a5f !important;
+  box-shadow: 0 0 14px rgba(255, 42, 95, 0.45) !important;
 }
 
 .p1-badge,
 .p2-badge {
-  border-radius: 0 !important;
-  font-size: 8.5px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.04em !important;
-  padding: 2px 2px !important;
-  line-height: 1.1 !important;
-  bottom: 0 !important;
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 100% !important;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px !important;
+  font-weight: 900 !important;
   text-align: center !important;
-  white-space: nowrap !important;
-  box-sizing: border-box !important;
-  color: #ffffff !important;
+  padding: 1px 0 !important;
+  letter-spacing: 0.1em !important;
+  color: #030812 !important;
+  text-shadow: none !important;
 }
 
-/* 4. Telemetry Header Line */
-.fighter-tag-callsign {
-  font-family: 'Orbitron', monospace;
-  font-size: 16px;
-  font-weight: 800;
+.p1-badge {
+  background: #00f0ff !important;
+}
+
+.p2-badge {
+  background: #ff2a5f !important;
+}
+
+/* 4. Fighter Header Row */
+.fighter-title-name {
+  font-family: 'Orbitron', 'Chakra Petch', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
   color: #ffffff;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.fighter-subtitle-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8fa0ba;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-left: 6px;
 }
 
 .fighter-hp-readout {
   font-size: 12px;
-  font-weight: 700;
-  color: var(--hud-cyan);
-  margin-left: 8px;
+  font-weight: 800;
+  color: #00f0ff;
   letter-spacing: 0.05em;
+  margin-left: auto;
 }
 
 .p2-fighter-card .fighter-hp-readout {
   color: #ff7895;
+  margin-left: 0;
+  margin-right: auto;
 }
 
-.round-dots-label {
-  font-size: 10px;
-  color: #7d8da6;
-  letter-spacing: 0.06em;
+.hp-max-divider {
+  opacity: 0.4;
+  margin: 0 2px;
 }
 
-.target-dot {
-  width: 10px !important;
-  height: 10px !important;
-  border-radius: 0 !important;
-  background: #090d16 !important;
-  border: 1px solid #28374d !important;
+/* Sleek Golden Round Gems */
+.round-gems-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.round-gems-group.reversed {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.round-gem {
+  width: 9px;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   transform: rotate(45deg);
+  transition: all 0.25s ease;
 }
 
-.target-dot.dot-won-p1 {
-  background: var(--hud-cyan) !important;
+.round-gem.gem-active {
+  background: #ffd700 !important;
   border-color: #ffffff !important;
-  box-shadow: 0 0 10px var(--hud-cyan);
+  box-shadow: 0 0 10px #ffd700, 0 0 18px rgba(255, 215, 0, 0.6) !important;
 }
 
-.target-dot.dot-won-p2 {
-  background: var(--hud-hazard-red) !important;
-  border-color: #ffffff !important;
-  box-shadow: 0 0 10px var(--hud-hazard-red);
-}
-
-/* 5. Life Bar with Telemetry Micro-Notches */
+/* 5. Slanted Angular Life Bar */
 .target-health-bar {
   position: relative;
   width: 100%;
   height: 18px !important;
-  background: #06090e !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 0 !important;
-  transform: none !important;
+  background: rgba(8, 12, 20, 0.9) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 2px !important;
+  transform: skewX(-14deg) !important;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.p2-health-bar {
+  transform: skewX(14deg) !important;
 }
 
 .target-health-ghost {
@@ -351,39 +387,53 @@
   100% { box-shadow: 0 0 16px rgba(240, 168, 58, 0.6); }
 }
 
-/* 7. Center Telemetry Node (Timer & System Info) */
-.brutalist-center-node {
-  background: var(--hud-bg-dark);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 6px 16px;
-  min-width: 130px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+/* 7. Floating Center Chrono Node */
+.floating-center-chrono {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 14px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  z-index: 10;
 }
 
-.brutalist-center-node .target-round-pill {
-  border-radius: 0 !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+.floating-center-chrono .round-badge-pill {
+  font-family: 'Rajdhani', 'Orbitron', sans-serif;
   font-size: 11px;
-  padding: 2px 8px;
-  margin: 3px 0;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #f0a83a;
+  background: rgba(10, 15, 25, 0.78);
+  border: 1px solid rgba(240, 168, 58, 0.45);
+  padding: 2px 14px;
+  border-radius: 14px;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(240, 168, 58, 0.25);
+  margin-bottom: 2px;
 }
 
-.brutalist-center-node .target-match-timer {
-  font-size: 46px !important;
+.floating-center-chrono .chrono-timer-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 48px;
   font-weight: 900;
   line-height: 1;
   color: #ffffff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.85), 0 3px 12px rgba(0, 0, 0, 0.95);
   letter-spacing: -0.02em;
 }
 
-.telemetry-sub-status {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: #7d8da6;
-  text-transform: uppercase;
+.floating-center-chrono .chrono-timer-num.timer-danger {
+  color: #ff2a4b !important;
+  text-shadow: 0 0 20px rgba(255, 42, 75, 0.9), 0 3px 12px rgba(0, 0, 0, 0.95);
+  animation: timerWarningPulse 0.5s infinite alternate;
+}
+
+@keyframes timerWarningPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.12); }
 }
 
 /* 8. Kinetic Combo Telemetry Cards */
@@ -797,62 +847,127 @@
   box-shadow: 0 0 12px rgba(0, 140, 255, 0.35) !important;
 }
 
-/* 12. Tactical Modal Dialogs (Pause & Match Over) */
+/* 12. Console Pause & Match Over Modals */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
 .pause-modal-card.brutalist-card,
 .match-over-card.brutalist-card {
-  border: 1px solid var(--hud-cyan) !important;
-  border-radius: 0 !important;
-  background: rgba(8, 11, 16, 0.96) !important;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.8) !important;
+  border: 1.5px solid rgba(0, 240, 255, 0.45) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgba(14, 20, 36, 0.96) 0%, rgba(8, 12, 20, 0.98) 100%) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  padding: 30px 36px !important;
+  width: 90% !important;
+  max-width: 440px !important;
+  text-align: center;
+  animation: modalScaleUp 0.18s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes modalScaleUp {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .pause-modal-card.brutalist-card .modal-title,
-.match-over-card.brutalist-card .modal-title,
+.match-over-card.brutalist-card .modal-title {
+  font-family: 'Orbitron', 'Chakra Petch', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.18em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.7), 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  margin-bottom: 12px !important;
+}
+
 .match-over-card.brutalist-card .winner-title {
-  letter-spacing: 0.12em;
-  color: var(--hud-cyan);
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 24px !important;
+  letter-spacing: 0.12em !important;
+  margin: 10px 0 !important;
+}
+
+.pause-modal-card.brutalist-card .modal-divider,
+.match-over-card.brutalist-card .modal-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.6), transparent) !important;
+  margin-bottom: 20px !important;
+}
+
+.pause-modal-card.brutalist-card .modal-button-stack,
+.match-over-card.brutalist-card .modal-button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .pause-modal-card.brutalist-card .arena-btn,
 .match-over-card.brutalist-card .arena-btn {
-  border-radius: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.pause-modal-card.brutalist-card .arena-btn:hover,
-.match-over-card.brutalist-card .arena-btn:hover {
-  border-color: var(--hud-cyan) !important;
-  background: rgba(0, 240, 255, 0.15) !important;
-  transform: translateY(-1px);
+  border-radius: 8px !important;
+  padding: 12px 20px !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.16s ease;
 }
 
 .pause-modal-card.brutalist-card .primary-btn,
 .match-over-card.brutalist-card .primary-btn {
-  border-color: var(--hud-green) !important;
-  color: var(--hud-green) !important;
-  background: rgba(0, 255, 157, 0.12) !important;
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.2), rgba(0, 240, 255, 0.2)) !important;
+  border: 1.5px solid #00ff88 !important;
+  color: #00ff88 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.3) !important;
 }
 
 .pause-modal-card.brutalist-card .primary-btn:hover,
 .match-over-card.brutalist-card .primary-btn:hover {
-  background: rgba(0, 255, 157, 0.25) !important;
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.35), rgba(0, 240, 255, 0.35)) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.6) !important;
+  color: #ffffff !important;
 }
 
 .pause-modal-card.brutalist-card .secondary-btn,
 .match-over-card.brutalist-card .secondary-btn {
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   color: #e2e8f0 !important;
 }
 
+.pause-modal-card.brutalist-card .secondary-btn:hover,
+.match-over-card.brutalist-card .secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  transform: translateY(-2px);
+}
+
 .pause-modal-card.brutalist-card .danger-btn {
-  border-color: var(--hud-hazard-red) !important;
-  color: var(--hud-hazard-red) !important;
-  background: rgba(255, 42, 42, 0.12) !important;
+  background: rgba(255, 42, 42, 0.14) !important;
+  border: 1.5px solid rgba(255, 42, 42, 0.6) !important;
+  color: #ff5252 !important;
+}
+
+.pause-modal-card.brutalist-card .danger-btn:hover {
+  background: rgba(255, 42, 42, 0.28) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 42, 42, 0.5) !important;
 }
 
 .match-over-card.brutalist-card .profile-btn {
@@ -862,9 +977,296 @@
 }
 
 .match-over-card.brutalist-card .reward-item-badge {
-  border-radius: 0 !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Console Pause Dashboard */
+.console-pause-backdrop {
+  background: rgba(3, 6, 14, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.console-pause-card {
+  width: 90% !important;
+  max-width: 680px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: linear-gradient(135deg, rgba(14, 20, 36, 0.98) 0%, rgba(8, 12, 22, 0.99) 100%) !important;
+  border: 1.5px solid rgba(0, 240, 255, 0.45) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 240, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  padding: 24px 32px !important;
+  animation: modalScaleUp 0.18s cubic-bezier(0.1, 0.9, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.pause-card-header {
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.pause-top-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--hud-amber);
+  text-transform: uppercase;
+}
+
+.pause-hero-title {
+  font-family: 'Orbitron', 'Chakra Petch', sans-serif !important;
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.15em !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 24px rgba(0, 240, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+  margin: 4px 0 12px 0 !important;
+}
+
+.pause-vs-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pause-fighter-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.pause-fighter-pill.p1 {
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.pause-fighter-pill.p2 {
+  border-color: rgba(255, 42, 95, 0.4);
+}
+
+.pause-portrait-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ffffff;
+}
+
+.pause-fighter-pill .name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.06em;
+}
+
+.pause-fighter-pill .score {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--hud-amber);
+}
+
+.pause-vs-badge {
+  font-size: 12px;
+  font-weight: 900;
+  color: #7d8da6;
+  letter-spacing: 0.1em;
+}
+
+/* 2-Column Grid Layout */
+.pause-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.pause-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+}
+
+.pause-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.pause-btn:hover {
+  transform: translateY(-2px);
+}
+
+.pause-btn .btn-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.pause-btn .primary-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.pause-btn .sub-text {
+  font-size: 10px;
+  color: #cbd5e1;
+  opacity: 1;
+  margin-top: 1px;
+}
+
+.pause-btn.resume-btn {
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.22) 0%, rgba(0, 240, 255, 0.15) 100%) !important;
+  border-color: #00ff88 !important;
+  color: #00ff88 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.25);
+}
+
+.pause-btn.resume-btn .sub-text {
+  color: #a7f3d0 !important;
+}
+
+.pause-btn.resume-btn:hover {
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.35) 0%, rgba(0, 240, 255, 0.25) 100%) !important;
+  box-shadow: 0 0 24px rgba(0, 255, 136, 0.5);
+  color: #ffffff !important;
+}
+
+.pause-btn.restart-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #e2e8f0 !important;
+}
+
+.pause-btn.restart-btn .sub-text {
+  color: #cbd5e1 !important;
+}
+
+.pause-btn.restart-btn:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.pause-btn.quit-btn {
+  background: rgba(255, 42, 42, 0.12) !important;
+  border-color: rgba(255, 42, 42, 0.5) !important;
+  color: #ff5252 !important;
+}
+
+.pause-btn.quit-btn .sub-text {
+  color: #fecdd3 !important;
+}
+
+.pause-btn.quit-btn:hover {
+  background: rgba(255, 42, 42, 0.25) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(255, 42, 42, 0.4);
+}
+
+/* Moves Reference Panel */
+.pause-moves-col {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.moves-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.moves-header .title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #00f0ff;
+}
+
+.moves-header .char-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--hud-amber);
+}
+
+.moves-list-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.move-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #cad5e2;
+  padding: 2px 0;
+}
+
+.move-row.highlight-burst {
+  color: var(--hud-amber);
+  font-weight: 700;
+  border-top: 1px dashed rgba(240, 168, 58, 0.3);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.move-keys kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.move-keys.burst-cap kbd {
+  background: rgba(240, 168, 58, 0.3);
+  border-color: var(--hud-amber);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(240, 168, 58, 0.5);
+}
+
+@media (max-width: 680px), (max-height: 520px) {
+  .console-pause-card {
+    padding: 16px 20px !important;
+    max-height: 92vh !important;
+  }
+
+  .pause-hero-title {
+    font-size: 22px !important;
+  }
+
+  .pause-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
 /* 13. Responsive Mobile Viewports & Screen-Packed Optimization */
@@ -885,10 +1287,13 @@
     height: 44px !important;
   }
 
+  .p1-fighter-card.console-fighter-card,
+  .p2-fighter-card.console-fighter-card,
   .p1-fighter-card.brutalist-card,
   .p2-fighter-card.brutalist-card {
     padding: 3px 6px !important;
-    min-width: 175px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
     gap: 6px !important;
   }
 
@@ -896,6 +1301,7 @@
     display: none !important;
   }
 
+  .fighter-title-name,
   .fighter-tag-callsign {
     font-size: 11px !important;
   }
@@ -914,6 +1320,22 @@
 
   .sub-meters-row {
     gap: 6px !important;
+  }
+
+  .floating-center-chrono {
+    padding: 2px 8px !important;
+    min-width: 60px !important;
+    gap: 2px !important;
+  }
+
+  .floating-center-chrono .round-badge-pill {
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+  }
+
+  .floating-center-chrono .chrono-timer-num {
+    font-size: 26px !important;
+    line-height: 1 !important;
   }
 
   .target-center-node.brutalist-center-node {
