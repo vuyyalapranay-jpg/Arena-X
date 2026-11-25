@@ -58,7 +58,6 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   onTouchInput,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
-  const [showControls, setShowControls] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
 
   // Delayed ghost health bar for impactful fighting-game hit feedback (oil-ui & act-combat-design)
@@ -440,10 +439,9 @@ export const FightHUD: React.FC<FightHUDProps> = ({
         </button>
         <button 
           className="hud-icon-btn" 
-          onClick={() => setShowControls(!showControls)} 
-          aria-label="Toggle Controls Guide"
-          aria-pressed={showControls}
-          title="Toggle Controls Guide"
+          onClick={onPause} 
+          aria-label="View Combat Commands & Pause"
+          title="Command List / Pause"
         >
           <HelpCircle size={15} />
         </button>
@@ -486,49 +484,7 @@ export const FightHUD: React.FC<FightHUDProps> = ({
       )}
 
       {/* ============================================================== */}
-      {/* 5. TACTICAL COMBAT OPERATION STRIP (TEAM-UI & INDUSTRIAL)      */}
-      {/* ============================================================== */}
-      {showControls && !showTouchControls && (
-        <footer className="target-bottom-controls-bar brutalist-controls-strip font-mono">
-          <div className="controls-telemetry-tag">[ TACTICAL INPUTS ]</div>
-          <div className="p1-controls-section">
-            <span className="p1-label">P1:</span>
-            <div className="key-item"><span className="key-cap">A/D</span> MOVE</div>
-            <div className="key-item"><span className="key-cap">W</span> JUMP</div>
-            <div className="key-item"><span className="key-cap">S</span> CROUCH</div>
-            <div className="key-item"><span className="key-cap">H</span> GUARD</div>
-            <div className="key-item"><span className="key-cap">C</span> CHARGE</div>
-            <div className="key-item"><span className="key-cap">F</span> STRIKE</div>
-            <div className="key-item"><span className="key-cap">R</span> HEAVY</div>
-            <div className="key-item"><span className="key-cap">G</span> KICK</div>
-            <div className="key-item"><span className="key-cap">SPACE</span> SPECIAL</div>
-            <div className={`key-item ${p1Super >= 100 ? 'key-overdrive' : ''}`}>
-              <span className="key-cap">V</span> BURST
-            </div>
-          </div>
-
-          <div className="controls-glow-divider" />
-
-          <div className="p2-controls-section">
-            <span className="p2-label">P2:</span>
-            <div className="key-item"><span className="key-cap">← / →</span> MOVE</div>
-            <div className="key-item"><span className="key-cap">↑</span> JUMP</div>
-            <div className="key-item"><span className="key-cap">↓</span> CROUCH</div>
-            <div className="key-item"><span className="key-cap">L</span> GUARD</div>
-            <div className="key-item"><span className="key-cap">P</span> CHARGE</div>
-            <div className="key-item"><span className="key-cap">J</span> STRIKE</div>
-            <div className="key-item"><span className="key-cap">U</span> HEAVY</div>
-            <div className="key-item"><span className="key-cap">K</span> KICK</div>
-            <div className="key-item"><span className="key-cap">O</span> SPECIAL</div>
-            <div className={`key-item ${p2Super >= 100 ? 'key-overdrive' : ''}`}>
-              <span className="key-cap">]</span> BURST
-            </div>
-          </div>
-        </footer>
-      )}
-
-      {/* ============================================================== */}
-      {/* 6. VIRTUAL TOUCH CONTROLS FOR MOBILE / TABLET                  */}
+      {/* 5. VIRTUAL TOUCH CONTROLS FOR MOBILE / TABLET                  */}
       {/* ============================================================== */}
       {showTouchControls && (
         <div className="touch-controls-layer sf-touch-controls-layer font-mono">

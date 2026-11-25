@@ -564,68 +564,7 @@
   color: var(--hud-green) !important;
 }
 
-/* 10. Tactical Bottom Controls Strip */
-.brutalist-controls-strip {
-  border-radius: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  background: var(--hud-bg-dark) !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75) !important;
-  padding: 6px 14px !important;
-  max-width: 96vw !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 6px 14px !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-.brutalist-controls-strip .p1-controls-section,
-.brutalist-controls-strip .p2-controls-section {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 4px 8px !important;
-}
-
-.controls-telemetry-tag {
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--hud-amber);
-  letter-spacing: 0.1em;
-  display: flex;
-  align-items: center;
-}
-
-.brutalist-controls-strip .key-item {
-  gap: 4px !important;
-  font-size: 10px !important;
-}
-
-.brutalist-controls-strip .key-cap {
-  border-radius: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  font-size: 10px !important;
-  padding: 2px 5px !important;
-  font-weight: 800 !important;
-}
-
-.key-item.key-overdrive .key-cap {
-  border-color: var(--hud-amber) !important;
-  background: rgba(240, 168, 58, 0.25) !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 10px rgba(240, 168, 58, 0.6);
-  animation: keyOverdriveGlow 0.6s infinite alternate;
-}
-
-@keyframes keyOverdriveGlow {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.08); }
-}
-
-/* 11. Modern Floating Virtual Joystick & Shadow Fight Touch Cluster */
+/* 10. Modern Floating Virtual Joystick & Shadow Fight Touch Cluster */
 .sf-touch-controls-layer {
   position: absolute !important;
   inset: 0 !important;

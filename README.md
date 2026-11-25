@@ -33,12 +33,12 @@
   - Exponential decay curve ($\text{progress}^{1.8}$) with 26Hz vibration decay for heavy, physical feedback.
   - Camera shake updates continuously through freeze frames and cinematic ultimate zooms.
 
-### 3. 📟 Industrial Brutalist & Tactical Telemetry HUD
-- **Tactical Telemetry Aesthetic**: Rigid 90° framing, monospace data readouts (`HP // 1000:1000`, `ARENA_X // T-01`, `P1 // 01`), corner crosshair marks (`+`), and subtle CRT scanlines.
-- **Segmented Health Bars**: 25%, 50%, and 75% micro-notches with 350ms cubic delayed ghost trailing bars for clear peripheral vision damage assessment.
-- **3-Phase Segmented Burst Meter**: Discrete tactical phases (Phase 1: Overdrive 33%, Phase 2: Hyper 66%, Phase 3: Max Burst 100%) with pulsing golden overdrive indicators.
-- **Kinetic Combo Telemetry**: Dynamic combo counter cards featuring tiered ranks (`BRUTAL`, `SAVAGE`, `TACTICAL`).
-- **Tactical Modals**: Pause and match-over overlays with neon borders and monospace operational actions.
+### 3. 📟 Console Arcade Fighting HUD & Clean Battle Arena
+- **Sleek Console Arcade Aesthetic**: Angled status cards, bold typography (`KAI`, `SHADOW`), golden round victory gems (`◆ ◆ ◆`), and a floating center chrono node (`ROUND 1` badge + glowing `99` timer).
+- **Slanted Angular Life Bars**: High-visibility health bars with trailing ghost damage buffer for visceral hit registration.
+- **Unobstructed Arena Floor**: Zero in-match keyboard banners or bottom text strips covering the arena floor, fighters' feet, or shadows.
+- **Console-Grade Pause Dashboard**: Pressing Pause or the Help button opens an arcade dashboard featuring match context, high-contrast action cards (`RESUME BATTLE`, `RESTART MATCH`, `MAIN MENU`), and an integrated command list with fighter moves (Strike, Kick, Sweep, Uppercut, Guard, Special, and Overdrive Burst).
+- **Full Accessibility & Contrast**: Meets WCAG AA contrast standards, includes screen-reader role labels, auto-focuses the primary action, and supports `Escape` dismissal.
 
 ### 4. 📱 Mobile-First Controls & Screen Optimization
 - **Dynamic Floating Virtual Joystick**: Left side of the screen features an invisible/translucent touch zone. Touching anywhere anchors a dynamic joystick with smooth directional clamping for walking, jumping, crouching, and diagonal dashes.
