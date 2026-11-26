@@ -61,6 +61,7 @@ export class GameEngine {
   private p1Combo = 0;
   private p2Combo = 0;
   private comboResetTimer = 0;
+  private hasFirstStrikeOccurred = false;
 
   private animationFrameId: number | null = null;
   private lastTime = 0;
@@ -253,6 +254,7 @@ export class GameEngine {
     this.projectiles = [];
     this.p1Combo = 0;
     this.p2Combo = 0;
+    this.hasFirstStrikeOccurred = false;
     this.finisherAnnouncementTimer = 0;
     this.finisherVignetteTimer = 0;
     this.finisherWinnerName = '';
@@ -580,6 +582,26 @@ export class GameEngine {
             const isPunch = p1Hitbox.type.includes('PUNCH');
             this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#00b4ff', isPunch ? 48 : 58);
 
+            // Shadow Fight 2: First Strike Mechanic
+            if (!this.hasFirstStrikeOccurred) {
+              this.hasFirstStrikeOccurred = true;
+              this.fighterP1.superMeter = Math.min(100, this.fighterP1.superMeter + 15);
+              this.matchState.announcement = 'FIRST STRIKE!';
+              this.callbacks.onMatchStateUpdate({ ...this.matchState });
+              setTimeout(() => {
+                if (this.matchState.announcement === 'FIRST STRIKE!') {
+                  this.matchState.announcement = null;
+                  this.callbacks.onMatchStateUpdate({ ...this.matchState });
+                }
+              }, 900);
+            }
+
+            // Shadow Fight 2: Head Hit Bonus
+            if (res.isHeadHit) {
+              this.fighterP1.superMeter = Math.min(100, this.fighterP1.superMeter + 5);
+              this.vfx.spawnHitSpark(p1Hitbox.x, p1Hitbox.y, '#ffd700', 72);
+            }
+
             // Phase 7: Environmental background & ground reaction to combat impacts
             this.arena.triggerImpactReaction(p1Hitbox.x, p1Hitbox.y, res.hitbox.knockback > 200 || p1Hitbox.type.startsWith('ULTIMATE'));
 
@@ -654,6 +676,26 @@ export class GameEngine {
             this.fighterP2.superMeter = Math.min(100, this.fighterP2.superMeter + 10);
             const isPunch = p2Hitbox.type.includes('PUNCH');
             this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#ff1a4b', isPunch ? 48 : 58);
+
+            // Shadow Fight 2: First Strike Mechanic
+            if (!this.hasFirstStrikeOccurred) {
+              this.hasFirstStrikeOccurred = true;
+              this.fighterP2.superMeter = Math.min(100, this.fighterP2.superMeter + 15);
+              this.matchState.announcement = 'FIRST STRIKE!';
+              this.callbacks.onMatchStateUpdate({ ...this.matchState });
+              setTimeout(() => {
+                if (this.matchState.announcement === 'FIRST STRIKE!') {
+                  this.matchState.announcement = null;
+                  this.callbacks.onMatchStateUpdate({ ...this.matchState });
+                }
+              }, 900);
+            }
+
+            // Shadow Fight 2: Head Hit Bonus
+            if (res.isHeadHit) {
+              this.fighterP2.superMeter = Math.min(100, this.fighterP2.superMeter + 5);
+              this.vfx.spawnHitSpark(p2Hitbox.x, p2Hitbox.y, '#ffd700', 72);
+            }
 
             // Phase 7: Environmental background & ground reaction to combat impacts
             this.arena.triggerImpactReaction(p2Hitbox.x, p2Hitbox.y, res.hitbox.knockback > 200 || p2Hitbox.type.startsWith('ULTIMATE'));

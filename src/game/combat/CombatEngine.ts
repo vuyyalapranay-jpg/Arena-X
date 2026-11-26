@@ -773,12 +773,22 @@ export class CombatEngine {
     const shakeDirX = isUppercut ? hitbox.facing * 0.35 : hitbox.facing;
     const shakeDirY = isUppercut ? -1.0 : 0.3;
 
+    // Shadow Fight 2 STRIKE_ZONE_HEAD detection (+25% critical damage & enhanced hit-freeze)
+    const headBoundaryY = hurtbox.y + hurtbox.height * 0.32;
+    const isHeadHit = hitbox.height === 'HIGH' || hitbox.y <= headBoundaryY;
+    const damageDealt = isHeadHit ? Math.round(hitbox.damage * 1.25) : hitbox.damage;
+    if (isHeadHit) {
+      hitFreezeTime = Math.min(0.35, hitFreezeTime + 0.04);
+      screenShakeIntensity += 4;
+    }
+
     return {
       hitConnected: true,
       isBlocked: false,
       isGuardBreak: false,
       isKnockdown,
-      damageDealt: hitbox.damage,
+      isHeadHit,
+      damageDealt,
       hitbox,
       impactX: hitbox.x,
       impactY: hitbox.y,

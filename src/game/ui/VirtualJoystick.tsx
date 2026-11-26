@@ -103,7 +103,19 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ player, onTouc
         const rawDy = currentY - basePos.y;
 
         const maxRadius = 48;
+        const extensionZone = maxRadius * 1.8; // Shadow Fight 2 SetTouchZoneExtensionFactor
         const distance = Math.hypot(rawDx, rawDy);
+
+        // Dynamically shift base position if dragged beyond the extension zone
+        if (distance > extensionZone) {
+          const excess = distance - extensionZone;
+          const pullAngle = Math.atan2(rawDy, rawDx);
+          setBasePos(prev => ({
+            x: prev.x + Math.cos(pullAngle) * excess,
+            y: prev.y + Math.sin(pullAngle) * excess,
+          }));
+        }
+
         const clampedDist = Math.min(distance, maxRadius);
         const angle = Math.atan2(rawDy, rawDx);
 

@@ -20,7 +20,7 @@
 - **Accurate Hitbox & Hurtbox Physics**: Tuned collision detection calibrated for high-precision spacing, active attack frames, whiff punishes, and grounded foot alignment.
 - **High-Visibility Rendering**: Dual ambient outlines and grounded drop shadows ensure fighters remain distinct across vibrant stages (Ancient Temple, Cyber City, Dojo, and more).
 
-### 2. 💥 ACT Combat Feel Engine
+### 2. 💥 ACT Combat Feel Engine & Shadow Fight 2 Architecture
 - **Sakurai 4 Hit-Stop Tiers**: Symmetric frame freezes for authentic fighting impact:
   - **Light Attacks**: 3–4 frames (`0.05s`)
   - **Medium Attacks**: 5–6 frames (`0.08s`)
@@ -28,6 +28,12 @@
   - **Special Attacks**: 10–12 frames (`0.16s`)
   - **Cinematic Ultimates**: 17–20 frames (`0.28s`)
   - **Guard Blocks**: `0.06s` | **Guard Breaks**: `0.15s`
+- **Strike Zones & Head-Hit Mechanics (Reverse-Engineered from SF2 `STRIKE_ZONE_HEAD`)**:
+  - Attacks targeting the upper 32% of the opponent's hurtbox trigger `HEAD_HIT` multipliers (+25% bonus critical damage, golden sparks, and hit-freeze extensions).
+- **First Strike Bonus (SF2 `CreateFirstStrike`)**:
+  - The first clean strike connecting in any round rewards the initiator with +15% bonus Super meter and an on-screen `FIRST STRIKE!` banner.
+- **Dynamic Combat Style Ratings (SF2 `ComboModel`)**:
+  - Combo chains dynamically evaluate martial arts performance: `AGGRESSIVE` (2 hits), `HARD` (3–4 hits), `BRUTAL` (5–6 hits), `FANTASTIC` (7–9 hits), and `CRAZY STYLE` (10+ hits).
 - **Directional Camera Shockwave with Exponential Decay**:
   - Attacks impart directional force vectors (e.g. uppercuts deliver vertical impulses `[facing * 0.35, -1.0]`).
   - Exponential decay curve ($\text{progress}^{1.8}$) with 26Hz vibration decay for heavy, physical feedback.

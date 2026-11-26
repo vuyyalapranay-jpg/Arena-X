@@ -389,9 +389,10 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               <div className="combo-detail-col">
                 <span className="combo-hits-unit">STRIKES</span>
                 <span className="combo-tier-badge">
-                  {p1Stats.comboCount >= 10 ? '★ LETHAL OVERKILL' :
-                   p1Stats.comboCount >= 7 ? '★ HYPER ASSAULT' :
-                   p1Stats.comboCount >= 4 ? '★ CRITICAL CHAIN' : '★ TACTICAL HIT'}
+                  {p1Stats.comboCount >= 10 ? '★ CRAZY STYLE' :
+                   p1Stats.comboCount >= 7 ? '★ FANTASTIC' :
+                   p1Stats.comboCount >= 5 ? '★ BRUTAL' :
+                   p1Stats.comboCount >= 3 ? '★ HARD' : '★ AGGRESSIVE'}
                 </span>
               </div>
             </div>
@@ -409,9 +410,10 @@ export const FightHUD: React.FC<FightHUDProps> = ({
               <div className="combo-detail-col">
                 <span className="combo-hits-unit">STRIKES</span>
                 <span className="combo-tier-badge">
-                  {p2Stats.comboCount >= 10 ? '★ LETHAL OVERKILL' :
-                   p2Stats.comboCount >= 7 ? '★ HYPER ASSAULT' :
-                   p2Stats.comboCount >= 4 ? '★ CRITICAL CHAIN' : '★ TACTICAL HIT'}
+                  {p2Stats.comboCount >= 10 ? '★ CRAZY STYLE' :
+                   p2Stats.comboCount >= 7 ? '★ FANTASTIC' :
+                   p2Stats.comboCount >= 5 ? '★ BRUTAL' :
+                   p2Stats.comboCount >= 3 ? '★ HARD' : '★ AGGRESSIVE'}
                 </span>
               </div>
             </div>

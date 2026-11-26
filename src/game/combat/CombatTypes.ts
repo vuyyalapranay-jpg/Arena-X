@@ -84,6 +84,8 @@ export interface HitResolutionResult {
   isBlocked: boolean;
   isGuardBreak: boolean;
   isKnockdown: boolean;
+  isHeadHit?: boolean;
+  isFirstStrike?: boolean;
   damageDealt: number;
   hitbox: HitboxInstance;
   impactX: number;
