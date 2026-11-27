@@ -1,26 +1,46 @@
-# ARENA X — 2D/2.5D High-Impact Fighting Game
+# ARENA X — 2D/2.5D High-Impact Fighting Game & Shadow Fight 2 Clone
 
 ![Arena X Logo](public/arena-x-icon.svg)
 
-> **Competitive Action Combat • 16 Animated Fighters • Industrial Brutalist HUD • Autonomous AI • 16-Player Tournaments**  
-> Built with React 18, TypeScript, Vite, Three.js, Canvas 2D, and Web Audio API.
+> **Competitive Action Combat • Shadow Fight 2 Sunset Silhouettes • 2–16 Player Custom Multiplayer Rooms • Autonomous AI**  
+> Built with React 18, TypeScript, Vite, Three.js, Canvas 2D, Cloudflare Workers & Durable Objects, and Web Audio API.
 
 ---
 
 ## 🎮 Overview
 
-**Arena X** is a competitive fighting game combining classical 2D arcade martial arts combat with modern web rendering. Featuring 16 animated fighters, an ACT combat feel engine (Sakurai 4 hit-stop methodology and directional camera shockwaves), an industrial brutalist tactical telemetry HUD, autonomous AI opponents with humanized reaction pacing, mobile touch controls with a dynamic floating virtual joystick and *Shadow Fight*-style circular action cluster, and 4–16 player private room tournaments.
+**Arena X** is a competitive fighting game combining classical 2D arcade martial arts combat with modern web rendering and authentic *Shadow Fight 2* mechanics. It features iconic sunset dusk silhouette fighters with radiant neon cyan and crimson rim auras, a minimalist clean battle HUD, an ACT combat feel engine (Sakurai 4 hit-stop methodology and directional camera shockwaves), autonomous AI opponents with humanized reaction pacing, mobile touch controls with a floating virtual joystick and circular thumb cluster, and custom multiplayer rooms supporting **2 to 16 players** with Room IDs (`SF2-XXXX`), optional password protection, and 1-click shareable invitation links.
 
 ---
 
 ## ⚡ Core Systems & Features
 
-### 1. 🥋 16 Animated Fighters Roster
+### 1. 🌅 Shadow Fight 2 Sunset Silhouette Aesthetics & Clean HUD
+- **Iconic Sunset Horizon (`SHADOW_SUNSET`)**: Radiant setting sun sitting over layered plum and charcoal mountain ridges with a multi-stop twilight dusk gradient.
+- **Inky Black Ninja Silhouettes**: Pure shadow silhouettes with high-impact neon rim lighting (electric cyan for Player 1 / YOU, vibrant crimson for Player 2 / SHADOW) that pop with martial arts intensity.
+- **Minimalist Shadow Fight 2 Combat HUD**:
+  - **Left**: Solid cyan health bar with a crisp white border, trailing ghost damage bar, and `YOU` tag with circular round-win pips.
+  - **Right**: Solid coral red health bar with a crisp white border, trailing ghost damage bar, and `SHADOW` tag with circular round-win pips.
+  - **Center**: Bold, clean white countdown timer (`99` / `59`) positioned between the life bars with zero visual clutter.
+  - **Unobstructed Battleground**: Clean floor and stage with no distracting avatars or bulky telemetry boxes covering the martial artists.
+
+### 2. 🌐 Custom Multiplayer Mode (2 to 16 Players)
+- **Flexible Room Capacity**: Host a direct 1v1 duel (2 players) or expand up to a 16-player single-elimination tournament bracket (`Min: 2, Max: 16`).
+- **Room IDs**: Clean room identifiers supporting `SF2-XXXX` and `AXT-XXXX` formats.
+- **Password Protection**: Hosts can optionally lock rooms with a password to keep lobbies private among friends.
+- **1-Click Shareable Invitation Links**: Instantly copy room links (`?room=SF2-XXXX&key=...`) that automatically populate the room ID and password when friends click to join.
+- **Dynamic Tournament Brackets**:
+  - **2 Players**: Single round Championship match (`r1m1`).
+  - **3–4 Players**: 2 rounds (Semifinals & Final).
+  - **5–8 Players**: 3 rounds (Quarterfinals, Semifinals & Final).
+  - **9–16 Players**: 4 rounds (Round of 16, Quarterfinals, Semifinals & Final) with automatic bye progression.
+- **Real-Time Synchronization**: Durable Object architecture on Cloudflare Workers orchestrates live entrant readiness, bracket progression, and match outcomes.
+
+### 3. 🥋 16 Animated Fighters Roster
 - **Rich Diverse Roster**: Kai (Crimson Striker), Shadow (Phantom Shinobi), Blaze (Infernal Monk), Frost (Cryo Blade), Ronin (Exiled Blade), Storm (Lightning Brawler), Titan (Heavy Colossus), Viper (Venom Assassin), Huntress, Kenji, Samurai Mack, and more.
 - **Accurate Hitbox & Hurtbox Physics**: Tuned collision detection calibrated for high-precision spacing, active attack frames, whiff punishes, and grounded foot alignment.
-- **High-Visibility Rendering**: Dual ambient outlines and grounded drop shadows ensure fighters remain distinct across vibrant stages (Ancient Temple, Cyber City, Dojo, and more).
 
-### 2. 💥 ACT Combat Feel Engine & Shadow Fight 2 Architecture
+### 4. 💥 ACT Combat Feel Engine & Shadow Fight 2 Architecture
 - **Sakurai 4 Hit-Stop Tiers**: Symmetric frame freezes for authentic fighting impact:
   - **Light Attacks**: 3–4 frames (`0.05s`)
   - **Medium Attacks**: 5–6 frames (`0.08s`)

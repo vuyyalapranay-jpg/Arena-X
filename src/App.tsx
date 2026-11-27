@@ -19,7 +19,7 @@ import './styles/tournament.css';
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'MENU' | 'ONLINE' | 'TOURNAMENT' | 'ARENA'>('MENU');
   const [gameMode, setGameMode] = useState<GameMode>('VERSUS');
-  const [selectedStage, setSelectedStage] = useState<StageId>('ANCIENT_TEMPLE');
+  const [selectedStage, setSelectedStage] = useState<StageId>('SHADOW_SUNSET');
   const [selectedP1, setSelectedP1] = useState<FighterId>('KAI');
   const [selectedP2, setSelectedP2] = useState<FighterId>('SHADOW');
   const [showStageSelect, setShowStageSelect] = useState<boolean>(false);
@@ -28,20 +28,33 @@ export const App: React.FC = () => {
   const [settings, setSettings] = useState<GameSettings>(GAME_CONFIG.DEFAULT_SETTINGS);
   const [initialRoomCode, setInitialRoomCode] = useState<string | null>(null);
   const [initialTournamentCode, setInitialTournamentCode] = useState<string | null>(null);
+  const [initialTournamentPassword, setInitialTournamentPassword] = useState<string | null>(null);
 
-  // Check URL query param ?room=AX-XXXX on mount
+  // Check URL query param ?room=... or ?tournament=... or ?key=... on mount
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
       const tournamentParam = params.get('tournament');
-      if (roomParam) {
-        setInitialRoomCode(roomParam.toUpperCase());
-        setCurrentPage('ONLINE');
+      const keyParam = params.get('key') || params.get('password');
+
+      if (keyParam) {
+        setInitialTournamentPassword(keyParam);
       }
+
       if (tournamentParam) {
         setInitialTournamentCode(tournamentParam.toUpperCase());
         setCurrentPage('TOURNAMENT');
+      } else if (roomParam) {
+        const cleanRoom = roomParam.toUpperCase().trim();
+        // If room code starts with SF2- or AXT-, it routes to the 2-16 custom tournament/room system
+        if (/^(SF2|AXT)-/i.test(cleanRoom)) {
+          setInitialTournamentCode(cleanRoom);
+          setCurrentPage('TOURNAMENT');
+        } else {
+          setInitialRoomCode(cleanRoom);
+          setCurrentPage('ONLINE');
+        }
       }
     } catch (e) {}
   }, []);
@@ -107,7 +120,11 @@ export const App: React.FC = () => {
       )}
 
       {currentPage === 'TOURNAMENT' && (
-        <TournamentLobby onBack={handleReturnToMenu} initialCode={initialTournamentCode} />
+        <TournamentLobby
+          onBack={handleReturnToMenu}
+          initialCode={initialTournamentCode}
+          initialPassword={initialTournamentPassword}
+        />
       )}
 
       {currentPage === 'ARENA' && (

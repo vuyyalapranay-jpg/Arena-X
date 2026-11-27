@@ -100,14 +100,14 @@ export class SpriteCharacterRenderer2D {
       scale *= 1.15;
     }
 
-    // High visibility rim lighting & edge definition
-    // Guarantees characters pop distinctly against any stage background
-    const rimColor = isP1 ? 'rgba(0, 240, 255, 0.65)' : 'rgba(255, 50, 100, 0.65)';
-    ctx.filter = `drop-shadow(0 0 2px rgba(255,255,255,0.95)) drop-shadow(0 2px 10px ${rimColor}) contrast(1.15) brightness(1.1)`;
+    // SHADOW FIGHT 2 SILHOUETTE FILTER:
+    // Transforms the animated fighter into an inky ninja silhouette with vibrant glowing neon outline
+    const glowColor = isP1 ? '#00f0ff' : '#ff4757';
+    ctx.filter = `brightness(0) drop-shadow(0 0 4px ${glowColor}) drop-shadow(0 0 12px ${glowColor}) drop-shadow(0 0 1px #ffffff)`;
 
-    // Hit Flash Effect (High impact visual on clean strikes overrides rim)
+    // Hit Flash Effect (High impact visual on clean strikes overrides silhouette)
     if (isHitFlashing) {
-      ctx.filter = 'brightness(3.5) contrast(1.5) drop-shadow(0 0 20px #ffffff)';
+      ctx.filter = 'brightness(4) contrast(2) drop-shadow(0 0 24px #ffffff)';
     }
 
     // Directional facing

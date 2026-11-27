@@ -169,208 +169,68 @@ export const FightHUD: React.FC<FightHUDProps> = ({
   const p2Guard = Math.min(100, Math.max(0, p2Stats.guardMeter ?? 100));
 
   return (
-    <div className="fight-hud-root brutalist-tactical-hud">
-      {/* Subtle CRT scanline overlay */}
-      <div className="hud-scanlines-layer" aria-hidden="true" />
+    <div className="fight-hud-root sf2-hud-root">
 
       {/* ============================================================== */}
-      {/* 1. TOP FIGHTING STATUS BAR (CONSOLE 2D ARCADE HUD)             */}
+      {/* AUTHENTIC SHADOW FIGHT 2 MINIMALIST COMBAT HUD                 */}
+      {/* (Identical layout to user's uploaded reference image)          */}
       {/* ============================================================== */}
-      <header className="target-hud-top-bar console-hud-top">
-        {/* PLAYER 1 COMBAT CARD */}
-        <div className="p1-fighter-card console-fighter-card">
-          <div className="avatar-wrapper p1-avatar-frame">
-            <img 
-              src={`/assets/sprites/portraits/portrait_${p1Id.toLowerCase()}.png`} 
-              alt={p1Profile.name} 
-              className="avatar-img"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = `/assets/characters_full/${p1Id.toLowerCase()}.png`;
-              }}
-            />
-            <div className="player-badge p1-badge">P1</div>
+      <header className="sf2-minimal-hud-top" aria-label="Combat status">
+        {/* P1 HEALTH BAR (YOU) */}
+        <div className="sf2-bar-container sf2-p1">
+          <div className="sf2-health-track">
+            <div className="sf2-health-ghost" style={{ width: `${p1GhostPercent}%` }} />
+            <div className="sf2-health-fill sf2-p1-fill" style={{ width: `${p1HealthPercent}%` }} />
           </div>
-
-          <div className="fighter-status-block">
-            {/* Top Name & Health Digits Row */}
-            <div className="fighter-meta-line">
-              <span className="fighter-title-name">{p1Profile.name}</span>
-              <span className="fighter-subtitle-tag">{p1Profile.title}</span>
-              <span className="fighter-hp-readout font-mono">
-                {Math.max(0, Math.round(p1Stats.currentHealth))} <span className="hp-max-divider">/</span> {p1Stats.maxHealth}
-              </span>
-              
-              {/* Sleek Golden Round Gems */}
-              <div 
-                className="round-gems-group" 
-                role="img" 
-                aria-label={`${p1Profile.name} rounds won: ${matchState.p1RoundsWon} of 3`}
-              >
-                <span className={`round-gem ${matchState.p1RoundsWon >= 1 ? 'gem-active' : ''}`} aria-hidden="true" />
-                <span className={`round-gem ${matchState.p1RoundsWon >= 2 ? 'gem-active' : ''}`} aria-hidden="true" />
-                <span className={`round-gem ${matchState.p1RoundsWon >= 3 ? 'gem-active' : ''}`} aria-hidden="true" />
-              </div>
+          <div className="sf2-name-row">
+            <span className="sf2-player-label">YOU</span>
+            <div className="sf2-win-dots" title={`YOU rounds won: ${matchState.p1RoundsWon}`}>
+              <span className={`sf2-dot ${matchState.p1RoundsWon >= 1 ? 'dot-won' : ''}`} />
+              <span className={`sf2-dot ${matchState.p1RoundsWon >= 2 ? 'dot-won' : ''}`} />
             </div>
-
-            {/* Slanted Angular Life Bar */}
-            <div className={`target-health-bar p1-health-bar ${p1HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
-              <div className="target-health-ghost" style={{ width: `${p1GhostPercent}%` }} />
-              <div 
-                className="target-health-fill p1-fill" 
-                style={{ width: `${p1HealthPercent}%` }} 
-              />
-            </div>
-
-            {/* Sub-Meters: Guard & 3-Phase Burst Overdrive */}
-            <div className="sub-meters-row">
-              <div className="meter-unit guard-unit">
-                <div className="meter-meta font-mono">
-                  <Shield size={10} />
-                  <span>GUARD</span>
-                </div>
-                <div className="mini-meter-track">
-                  <div 
-                    className="mini-meter-fill guard-fill" 
-                    style={{ 
-                      width: `${p1Guard}%`,
-                      background: p1Guard < 30 ? '#ff2a2a' : '#00f0ff' 
-                    }} 
-                  />
-                </div>
-              </div>
-
-              <div className="meter-unit super-unit">
-                <div className="meter-meta font-mono">
-                  <Zap size={10} />
-                  <span>BURST</span>
-                  <span className="meter-val">{p1Super >= 100 ? 'OVERDRIVE' : `${Math.round(p1Super)}%`}</span>
-                </div>
-                <div className="super-segments-track">
-                  <div className={`super-segment ${p1Super >= 33 ? 'segment-active' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, (p1Super / 33.33) * 100)}%` }} />
-                  </div>
-                  <div className={`super-segment ${p1Super >= 66 ? 'segment-active' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, Math.max(0, ((p1Super - 33.33) / 33.33) * 100))}%` }} />
-                  </div>
-                  <div className={`super-segment ${p1Super >= 100 ? 'segment-active max-phase' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, Math.max(0, ((p1Super - 66.66) / 33.34) * 100))}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Radiant Overdrive Banner */}
-            {p1Super >= 100 && (
-              <div className="overdrive-telemetry-banner p1-overdrive font-mono">
-                <span className="overdrive-glitch" aria-hidden="true">★</span>
-                <span>OVERDRIVE ACTIVE // [V] {p1Profile.specials.ultimate.name.toUpperCase()}</span>
-                <span className="overdrive-glitch" aria-hidden="true">★</span>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* FLOATING CENTER CHRONO NODE */}
-        <div className="floating-center-chrono">
-          <div className="round-badge-pill">
-            ROUND {matchState.round}
-          </div>
-          <div className={`chrono-timer-num font-mono ${matchState.timeRemaining <= 10 ? 'timer-danger' : ''}`}>
+        {/* CENTER MATCH CHRONO */}
+        <div className="sf2-center-timer">
+          <span className="sf2-timer-digits">
             {Math.ceil(matchState.timeRemaining).toString().padStart(2, '0')}
+          </span>
+        </div>
+
+        {/* P2 HEALTH BAR (SHADOW) */}
+        <div className="sf2-bar-container sf2-p2">
+          <div className="sf2-health-track">
+            <div className="sf2-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
+            <div className="sf2-health-fill sf2-p2-fill" style={{ width: `${p2HealthPercent}%` }} />
+          </div>
+          <div className="sf2-name-row sf2-p2-name">
+            <div className="sf2-win-dots" title={`SHADOW rounds won: ${matchState.p2RoundsWon}`}>
+              <span className={`sf2-dot ${matchState.p2RoundsWon >= 1 ? 'dot-won' : ''}`} />
+              <span className={`sf2-dot ${matchState.p2RoundsWon >= 2 ? 'dot-won' : ''}`} />
+            </div>
+            <span className="sf2-player-label">SHADOW</span>
           </div>
         </div>
 
-        {/* PLAYER 2 COMBAT CARD */}
-        <div className="p2-fighter-card console-fighter-card">
-          <div className="avatar-wrapper p2-avatar-frame">
-            <img 
-              src={`/assets/sprites/portraits/portrait_${p2Id.toLowerCase()}.png`} 
-              alt={p2Profile.name} 
-              className="avatar-img"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = `/assets/characters_full/${p2Id.toLowerCase()}.png`;
-              }}
-            />
-            <div className="player-badge p2-badge">P2</div>
-          </div>
-
-          <div className="fighter-status-block reversed">
-            {/* Top Name & Health Digits Row */}
-            <div className="fighter-meta-line reversed">
-              <span className="fighter-title-name">{p2Profile.name}</span>
-              <span className="fighter-subtitle-tag">{p2Profile.title}</span>
-              <span className="fighter-hp-readout font-mono">
-                {Math.max(0, Math.round(p2Stats.currentHealth))} <span className="hp-max-divider">/</span> {p2Stats.maxHealth}
-              </span>
-              
-              {/* Sleek Golden Round Gems */}
-              <div 
-                className="round-gems-group reversed" 
-                role="img" 
-                aria-label={`${p2Profile.name} rounds won: ${matchState.p2RoundsWon} of 3`}
-              >
-                <span className={`round-gem ${matchState.p2RoundsWon >= 1 ? 'gem-active' : ''}`} aria-hidden="true" />
-                <span className={`round-gem ${matchState.p2RoundsWon >= 2 ? 'gem-active' : ''}`} aria-hidden="true" />
-                <span className={`round-gem ${matchState.p2RoundsWon >= 3 ? 'gem-active' : ''}`} aria-hidden="true" />
-              </div>
-            </div>
-
-            {/* Slanted Angular Life Bar */}
-            <div className={`target-health-bar p2-health-bar ${p2HealthPercent < 25 ? 'health-critical-pulse' : ''}`}>
-              <div className="target-health-ghost" style={{ width: `${p2GhostPercent}%` }} />
-              <div 
-                className="target-health-fill p2-fill" 
-                style={{ width: `${p2HealthPercent}%` }} 
-              />
-            </div>
-
-            {/* Sub-Meters: Guard & 3-Phase Burst Overdrive */}
-            <div className="sub-meters-row reversed">
-              <div className="meter-unit guard-unit">
-                <div className="meter-meta font-mono">
-                  <Shield size={10} />
-                  <span>GUARD</span>
-                </div>
-                <div className="mini-meter-track">
-                  <div 
-                    className="mini-meter-fill guard-fill-p2" 
-                    style={{ 
-                      width: `${p2Guard}%`,
-                      background: p2Guard < 30 ? '#ff2a2a' : '#ff0055' 
-                    }} 
-                  />
-                </div>
-              </div>
-
-              <div className="meter-unit super-unit">
-                <div className="meter-meta font-mono">
-                  <Zap size={10} />
-                  <span>BURST</span>
-                  <span className="meter-val">{p2Super >= 100 ? 'OVERDRIVE' : `${Math.round(p2Super)}%`}</span>
-                </div>
-                <div className="super-segments-track">
-                  <div className={`super-segment ${p2Super >= 33 ? 'segment-active p2' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, (p2Super / 33.33) * 100)}%` }} />
-                  </div>
-                  <div className={`super-segment ${p2Super >= 66 ? 'segment-active p2' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, Math.max(0, ((p2Super - 33.33) / 33.33) * 100))}%` }} />
-                  </div>
-                  <div className={`super-segment ${p2Super >= 100 ? 'segment-active p2 max-phase' : ''}`}>
-                    <div className="segment-fill" style={{ width: `${Math.min(100, Math.max(0, ((p2Super - 66.66) / 33.34) * 100))}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Radiant Overdrive Banner */}
-            {p2Super >= 100 && (
-              <div className="overdrive-telemetry-banner p2-overdrive font-mono">
-                <span className="overdrive-glitch" aria-hidden="true">★</span>
-                <span>OVERDRIVE ACTIVE // [P2] {p2Profile.specials.ultimate.name.toUpperCase()}</span>
-                <span className="overdrive-glitch" aria-hidden="true">★</span>
-              </div>
-            )}
-          </div>
+        {/* Floating Minimal Controls (Top Right corner) */}
+        <div className="sf2-quick-actions">
+          <button
+            type="button"
+            className="sf2-icon-btn"
+            onClick={toggleMute}
+            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+          >
+            {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+          </button>
+          <button
+            type="button"
+            className="sf2-icon-btn"
+            onClick={onPause}
+            title="Pause Match (ESC)"
+          >
+            <Pause size={15} />
+          </button>
         </div>
       </header>
 

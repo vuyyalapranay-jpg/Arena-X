@@ -1,4 +1,4 @@
-// Invite-only tournament coordinator.  One Durable Object owns one 16-player bracket.
+// Invite-only tournament coordinator. Supports 2 to 16 player custom tournament rooms with room ID, password & invite links.
 
 type Entrant = { id: string; name: string; ready: boolean; joinedAt: number };
 type BracketMatch = {
@@ -7,11 +7,12 @@ type BracketMatch = {
 };
 type TournamentState = {
   code: string; hostId: string | null; phase: 'LOBBY' | 'IN_PROGRESS' | 'COMPLETE';
+  password?: string | null; hasPassword?: boolean;
   entrants: Entrant[]; matches: BracketMatch[]; createdAt: number;
 };
 
 const emptyState = (code: string): TournamentState => ({
-  code, hostId: null, phase: 'LOBBY', entrants: [], matches: [], createdAt: Date.now(),
+  code, hostId: null, phase: 'LOBBY', password: null, hasPassword: false, entrants: [], matches: [], createdAt: Date.now(),
 });
 
 export class TournamentRoomDO {
@@ -35,7 +36,7 @@ export class TournamentRoomDO {
       return Response.json({ error: 'WebSocket upgrade required' }, { status: 426 });
     }
     const code = (url.pathname.split('/').pop() || '').toUpperCase();
-    if (!/^AXT-[A-Z0-9]{4}$/.test(code)) return Response.json({ error: 'Invalid tournament code' }, { status: 400 });
+    if (!/^(AXT|SF2)-[A-Z0-9]{4,8}$/i.test(code)) return Response.json({ error: 'Invalid tournament code format (e.g. SF2-XXXX or AXT-XXXX)' }, { status: 400 });
     const pair = new (globalThis as any).WebSocketPair();
     const client: WebSocket = pair[0];
     const server: WebSocket = pair[1];
@@ -56,9 +57,23 @@ export class TournamentRoomDO {
     const tournament = await this.load(code);
     if (message.type === 'join') {
       const name = String(message.payload?.name || 'Fighter').replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 14) || 'Fighter';
+      const providedPassword = message.payload?.password ? String(message.payload.password).trim() : null;
+
+      // Verify room password if room is password-protected and entrant is not the host
+      if (tournament.password && tournament.hostId && tournament.hostId !== sessionId) {
+        if (!providedPassword || providedPassword !== tournament.password) {
+          return this.error(socket, 'Incorrect room password. Please enter the valid password or use the invitation link.');
+        }
+      }
+
+      // If this is the room creator and they set a password, store it
+      if (!tournament.hostId && providedPassword) {
+        tournament.password = providedPassword;
+      }
+
       const existing = tournament.entrants.find((entrant) => entrant.id === sessionId);
       if (!existing && tournament.phase !== 'LOBBY') return this.error(socket, 'The bracket has already started.');
-      if (!existing && tournament.entrants.length >= 16) return this.error(socket, 'This tournament is full.');
+      if (!existing && tournament.entrants.length >= 16) return this.error(socket, 'This tournament room is full (max 16 players).');
       if (!existing) tournament.entrants.push({ id: sessionId, name, ready: false, joinedAt: Date.now() });
       if (!tournament.hostId) tournament.hostId = sessionId;
       await this.save(tournament);
@@ -74,7 +89,7 @@ export class TournamentRoomDO {
     }
     if (message.type === 'start') {
       if (tournament.hostId !== sessionId) return this.error(socket, 'Only the host can start this bracket.');
-      if (tournament.entrants.length < 4) return this.error(socket, 'At least 4 fighters are required to start a room tournament.');
+      if (tournament.entrants.length < 2) return this.error(socket, 'At least 2 fighters are required to start a custom room battle.');
       if (tournament.entrants.length > 16) return this.error(socket, 'Maximum 16 fighters allowed in one room tournament.');
       if (!tournament.entrants.every((entrant) => entrant.ready)) return this.error(socket, 'Every fighter must be marked ready.');
       tournament.phase = 'IN_PROGRESS';
@@ -86,9 +101,9 @@ export class TournamentRoomDO {
 
   private makeBracket(ids: string[]): BracketMatch[] {
     const n = ids.length;
-    // Dynamic bracket sizing: 4 for 4 players, 8 for 5-8 players, 16 for 9-16 players
-    const bracketSize = n <= 4 ? 4 : n <= 8 ? 8 : 16;
-    const totalRounds = bracketSize === 4 ? 2 : bracketSize === 8 ? 3 : 4;
+    // Dynamic bracket sizing: 2 for 2 players, 4 for 3-4 players, 8 for 5-8 players, 16 for 9-16 players
+    const bracketSize = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 8 : 16;
+    const totalRounds = bracketSize === 2 ? 1 : bracketSize === 4 ? 2 : bracketSize === 8 ? 3 : 4;
     const matches: BracketMatch[] = [];
 
     for (let round = 1, matchCount = bracketSize / 2; round <= totalRounds; round += 1, matchCount /= 2) {
@@ -123,13 +138,15 @@ export class TournamentRoomDO {
       }
     }
 
-    // Auto-advance Round 1 bye winners into Round 2
-    for (const m of matches.filter((m) => m.round === 1 && m.status === 'COMPLETE' && m.winner)) {
-      const next = matches.find((item) => item.round === 2 && item.index === Math.floor(m.index / 2));
-      if (next) {
-        if (m.index % 2 === 0) next.a = m.winner;
-        else next.b = m.winner;
-        if (next.a && next.b) next.status = 'READY';
+    // Auto-advance Round 1 bye winners into Round 2 (when bracket has >1 round)
+    if (totalRounds > 1) {
+      for (const m of matches.filter((m) => m.round === 1 && m.status === 'COMPLETE' && m.winner)) {
+        const next = matches.find((item) => item.round === 2 && item.index === Math.floor(m.index / 2));
+        if (next) {
+          if (m.index % 2 === 0) next.a = m.winner;
+          else next.b = m.winner;
+          if (next.a && next.b) next.status = 'READY';
+        }
       }
     }
 
@@ -151,7 +168,14 @@ export class TournamentRoomDO {
 
   private async load(code: string): Promise<TournamentState> { return (await this.state.storage.get<TournamentState>('tournament')) || emptyState(code); }
   private save(tournament: TournamentState) { return this.state.storage.put('tournament', tournament); }
-  private publicState(tournament: TournamentState) { return { ...tournament, entrants: tournament.entrants.map(({ id, ...entrant }) => ({ ...entrant, id })) }; }
+  private publicState(tournament: TournamentState) {
+    const { password, ...safe } = tournament;
+    return {
+      ...safe,
+      hasPassword: Boolean(password),
+      entrants: tournament.entrants.map(({ id, ...entrant }) => ({ ...entrant, id })),
+    };
+  }
   private broadcast(message: unknown) { const text = JSON.stringify(message); this.sockets.forEach((socket) => { if (socket.readyState === 1) socket.send(text); }); }
   private error(socket: WebSocket, message: string) { socket.send(JSON.stringify({ type: 'error', payload: { message } })); }
 }

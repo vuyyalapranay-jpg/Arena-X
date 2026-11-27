@@ -1,6 +1,14 @@
 export type TournamentEntrant = { id: string; name: string; ready: boolean; joinedAt: number };
 export type TournamentMatch = { id: string; round: number; index: number; a: string | null; b: string | null; winner: string | null; loser: string | null; status: 'WAITING' | 'READY' | 'COMPLETE' };
-export type TournamentState = { code: string; hostId: string | null; phase: 'LOBBY' | 'IN_PROGRESS' | 'COMPLETE'; entrants: TournamentEntrant[]; matches: TournamentMatch[]; createdAt: number };
+export type TournamentState = {
+  code: string;
+  hostId: string | null;
+  phase: 'LOBBY' | 'IN_PROGRESS' | 'COMPLETE';
+  hasPassword?: boolean;
+  entrants: TournamentEntrant[];
+  matches: TournamentMatch[];
+  createdAt: number;
+};
 
 export class TournamentClient {
   private socket: WebSocket | null = null;
@@ -8,11 +16,11 @@ export class TournamentClient {
   private errorListeners = new Set<(message: string) => void>();
   public sessionId: string | null = null;
 
-  connect(code: string, fighterName?: string) {
+  connect(code: string, fighterName?: string, password?: string) {
     this.disconnect();
     const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.socket = new WebSocket(`${scheme}//${window.location.host}/api/tournament/${code}`);
-    this.socket.onopen = () => { if (fighterName) this.join(fighterName); };
+    this.socket.onopen = () => { if (fighterName) this.join(fighterName, password); };
     this.socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'connected') this.sessionId = message.payload.sessionId;
@@ -22,7 +30,7 @@ export class TournamentClient {
     this.socket.onerror = () => this.errorListeners.forEach((listener) => listener('Tournament connection failed. Check your network and try again.'));
   }
   disconnect() { this.socket?.close(); this.socket = null; this.sessionId = null; }
-  join(name: string) { this.send('join', { name }); }
+  join(name: string, password?: string) { this.send('join', { name, password }); }
   setReady(ready: boolean) { this.send('ready', { ready }); }
   start() { this.send('start', {}); }
   onState(listener: (state: TournamentState) => void) { this.listeners.add(listener); return () => this.listeners.delete(listener); }

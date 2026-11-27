@@ -5,27 +5,34 @@ import {
   Check,
   Copy,
   Crown,
+  Lock,
   LogOut,
   RefreshCw,
   Shield,
   Swords,
   Trophy,
+  Unlock,
   Users,
   Zap,
 } from 'lucide-react';
-import { TournamentClient, TournamentState } from '../multiplayer/TournamentClient';
+import { TournamentClient, TournamentMatch, TournamentState } from '../multiplayer/TournamentClient';
 
 interface TournamentLobbyProps {
   onBack: () => void;
   initialCode?: string | null;
+  initialPassword?: string | null;
 }
 
-const ROOM_CODE_PATTERN = /^AXT-[A-Z0-9]{4}$/;
-const newCode = () => `AXT-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-const roundName = (round: number) => ['Round of 16', 'Quarterfinals', 'Semifinals', 'Final'][round - 1] || 'Match';
+const ROOM_CODE_PATTERN = /^(SF2|AXT)-[A-Z0-9]{4,8}$/i;
+const newCode = () => `SF2-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initialCode }) => {
+export const TournamentLobby: React.FC<TournamentLobbyProps> = ({
+  onBack,
+  initialCode,
+  initialPassword,
+}) => {
   const [code, setCode] = useState(() => (initialCode ? initialCode.toUpperCase().trim() : newCode()));
+  const [password, setPassword] = useState(() => initialPassword || '');
   const [name, setName] = useState(
     () => localStorage.getItem('arena_x_player_name') || `Fighter ${Math.floor(100 + Math.random() * 900)}`
   );
@@ -36,6 +43,12 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
   const [copied, setCopied] = useState(false);
   const shellRef = useRef<HTMLElement>(null);
   const copyTimeoutRef = useRef<number | null>(null);
+
+  // If initialCode or initialPassword changes via URL, update state
+  useEffect(() => {
+    if (initialCode) setCode(initialCode.toUpperCase().trim());
+    if (initialPassword) setPassword(initialPassword);
+  }, [initialCode, initialPassword]);
 
   useEffect(() => {
     const offState = client.onState((s) => {
@@ -59,20 +72,21 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
   const handleConnect = () => {
     const trimmedName = name.trim();
     const normalizedCode = code.toUpperCase().trim();
+    const cleanPassword = password.trim();
 
     if (!trimmedName) {
       setError('Please enter a valid fighter tag.');
       return;
     }
     if (!ROOM_CODE_PATTERN.test(normalizedCode)) {
-      setError('Room code must be in the format AXT-XXXX (4 letters or digits).');
+      setError('Room code must be in the format SF2-XXXX or AXT-XXXX.');
       return;
     }
 
     setError('');
     setCode(normalizedCode);
     localStorage.setItem('arena_x_player_name', trimmedName);
-    client.connect(normalizedCode, trimmedName);
+    client.connect(normalizedCode, trimmedName, cleanPassword || undefined);
     setJoined(true);
 
     if (shellRef.current) {
@@ -94,7 +108,9 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
   };
 
   const me = state?.entrants.find((entrant) => entrant.id === client.sessionId);
-  const invite = `${window.location.origin}${window.location.pathname}?tournament=${encodeURIComponent(code)}`;
+  const invite = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}${
+    password.trim() ? `&key=${encodeURIComponent(password.trim())}` : ''
+  }`;
 
   const copyInvite = async () => {
     if (copyTimeoutRef.current) {
@@ -116,7 +132,7 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
       setCopied(true);
       copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1600);
     } catch {
-      setError('Could not auto-copy link. You can share room code: ' + code);
+      setError(`Could not auto-copy link. You can share room code: ${code}`);
     }
   };
 
@@ -124,25 +140,51 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
     () => new Map(state?.entrants.map((entrant) => [entrant.id, entrant.name]) || []),
     [state]
   );
-  const matchesByRound = [1, 2, 3, 4].map(
-    (round) => state?.matches.filter((match) => match.round === round) || []
-  );
+
+  // Group matches by round dynamically
+  const maxRound = useMemo(() => {
+    if (!state?.matches || state.matches.length === 0) return 1;
+    return Math.max(...state.matches.map((m) => m.round));
+  }, [state?.matches]);
+
+  const matchesByRound = useMemo(() => {
+    const rounds: TournamentMatch[][] = [];
+    for (let r = 1; r <= maxRound; r += 1) {
+      rounds.push(state?.matches.filter((m) => m.round === r) || []);
+    }
+    return rounds;
+  }, [state?.matches, maxRound]);
+
+  const getRoundLabel = (round: number, totalRounds: number) => {
+    if (totalRounds === 1) return 'Championship Match';
+    if (round === totalRounds) return 'Final';
+    if (round === totalRounds - 1) return 'Semifinals';
+    if (round === totalRounds - 2) return 'Quarterfinals';
+    return 'Round of 16';
+  };
+
   const isHost = state?.hostId === client.sessionId;
+  const roomHasPassword = Boolean(state?.hasPassword || password.trim());
 
   return (
-    <main className="tournament-shell" ref={shellRef}>
+    <main className="tournament-shell sf2-theme" ref={shellRef}>
+      {/* Shadow Fight Atmospheric Background Kanji Motif */}
+      <div className="sf2-kanji-watermark" aria-hidden="true">
+        <span>陰</span>
+      </div>
+
       {/* Sleek Top Navigation Bar */}
       <header className="tournament-nav">
         <button className="t-nav-back" onClick={onBack}>
           <ArrowLeft size={16} aria-hidden="true" /> Back to play
         </button>
         <div className="t-brand">
-          <span className="t-brand-mark">AX</span>
-          <span>Arena X</span>
+          <span className="t-brand-mark sf2-mark">SF</span>
+          <span>Shadow Fight 2 · Custom Room</span>
         </div>
         <div className="t-live">
           <div className="t-live-dot" aria-hidden="true" />
-          <span>Invite-only bracket</span>
+          <span>2–16 Contenders</span>
         </div>
       </header>
 
@@ -153,27 +195,27 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
             {/* Overview Card */}
             <section className="t-overview-card" aria-labelledby="tournament-title">
               <div className="t-badge-row">
-                <span className="t-kicker">Championship Series</span>
-                <span className="t-badge">Dynamic Bracket</span>
+                <span className="t-kicker">Custom Battles & Bracket</span>
+                <span className="t-badge">Min 2 · Max 16</span>
               </div>
-              <h1 id="tournament-title">4 to 16 Player Fighting Bracket</h1>
+              <h1 id="tournament-title">2 to 16 Player Custom Match</h1>
               <p className="t-overview-desc">
-                Assemble fighters with one invite link. Supports 4 to 16 contenders in an automated championship
-                bracket with automated seeding, round byes, and live bracket progression.
+                Shadow Fight 2 custom multiplayer room. Host an intense 1v1 duel or a 16-player single-elimination tournament
+                with room ID, optional password protection, and 1-click shareable invitation links.
               </p>
 
               <div className="t-feature-list">
                 <div className="t-feature-item">
                   <Users size={16} aria-hidden="true" />
-                  <span>Flexible Contenders: 4 to 16 fighters with automated byes</span>
+                  <span>Flexible Contenders: 2 to 16 players (1v1 duel or 16-fighter tournament)</span>
+                </div>
+                <div className="t-feature-item">
+                  <Lock size={16} aria-hidden="true" />
+                  <span>Private Security: Optional password lock & encrypted invitation links</span>
                 </div>
                 <div className="t-feature-item">
                   <Swords size={16} aria-hidden="true" />
-                  <span>Direct 1v1 match progression on verified combat outcomes</span>
-                </div>
-                <div className="t-feature-item">
-                  <Shield size={16} aria-hidden="true" />
-                  <span>Host privileges, spectator tracking & real-time synchronization</span>
+                  <span>Authentic Combat: Head strikes (+25%), First-Strike bonus & SF2 style ratings</span>
                 </div>
               </div>
 
@@ -182,17 +224,17 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                   <Trophy size={22} aria-hidden="true" />
                 </div>
                 <div className="t-trophy-meta">
-                  <strong>CHAMPIONSHIP TROPHY</strong>
-                  <span>Top 4 placement & podium honors</span>
+                  <strong>CHAMPIONSHIP VICTORY</strong>
+                  <span>Top placement honors & verified combat telemetry</span>
                 </div>
               </div>
             </section>
 
             {/* Interactive Entry Card */}
             <section className="t-form-card" aria-labelledby="entry-title">
-              <span className="t-kicker">Lobby Entrance</span>
-              <h2 id="entry-title">Enter Tournament</h2>
-              <p className="t-form-subtitle">Create a new private tournament room or join a friend's room.</p>
+              <span className="t-kicker">Custom Room Gate</span>
+              <h2 id="entry-title">Enter Custom Room</h2>
+              <p className="t-form-subtitle">Create a new private battle room or join using room ID & password.</p>
 
               <div className="t-fields-group">
                 <div className="t-field">
@@ -204,13 +246,13 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                       onChange={(e) => setName(e.target.value.slice(0, 14))}
                       onKeyDown={handleKeyDown}
                       maxLength={14}
-                      placeholder="e.g. Kai, Kenji, Shadow"
+                      placeholder="e.g. Shadow, Kai, Lynx, Titan"
                     />
                   </div>
                 </div>
 
                 <div className="t-field">
-                  <label htmlFor="room-code-input">Room Code</label>
+                  <label htmlFor="room-code-input">Room ID</label>
                   <div className="t-input-wrap">
                     <input
                       id="room-code-input"
@@ -218,22 +260,40 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                       value={code}
                       onChange={(e) => setCode(e.target.value.toUpperCase().trim())}
                       onKeyDown={handleKeyDown}
-                      maxLength={8}
-                      placeholder="AXT-XXXX"
+                      maxLength={12}
+                      placeholder="SF2-XXXX or AXT-XXXX"
                     />
                     <button
                       type="button"
                       className="t-input-action"
                       onClick={() => setCode(newCode())}
-                      title="Generate new code"
+                      title="Generate new room ID"
                     >
-                      <RefreshCw size={13} aria-hidden="true" /> New Code
+                      <RefreshCw size={13} aria-hidden="true" /> New Room
                     </button>
                   </div>
                 </div>
 
+                <div className="t-field">
+                  <label htmlFor="room-password-input">Room Password (Optional)</label>
+                  <div className="t-input-wrap">
+                    <input
+                      id="room-password-input"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      maxLength={24}
+                      placeholder="Leave blank for public room"
+                    />
+                  </div>
+                  <span className="t-field-hint">
+                    Host can lock room with a password. Players joining via invite link enter automatically.
+                  </span>
+                </div>
+
                 <button type="button" className="t-btn-join" onClick={handleConnect}>
-                  <Swords size={18} aria-hidden="true" /> Join & Enter Lobby
+                  <Swords size={18} aria-hidden="true" /> Join & Enter Battle Room
                 </button>
               </div>
 
@@ -250,11 +310,20 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
             {/* Top Command Bar */}
             <section className="t-command-bar" aria-label="Tournament lobby controls">
               <div className="t-room-badge">
-                <span>Room Code:</span>
+                <span>Room:</span>
                 <strong>{code}</strong>
-                <button className="t-copy-btn" onClick={copyInvite} title="Copy invite link">
+                {roomHasPassword ? (
+                  <span className="t-lock-badge" title="Password protected room">
+                    <Lock size={12} aria-hidden="true" /> Locked
+                  </span>
+                ) : (
+                  <span className="t-lock-badge public" title="Open room">
+                    <Unlock size={12} aria-hidden="true" /> Open
+                  </span>
+                )}
+                <button className="t-copy-btn" onClick={copyInvite} title="Copy 1-click invitation link">
                   {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-                  <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+                  <span>{copied ? 'Link Copied!' : 'Copy Invite Link'}</span>
                 </button>
               </div>
 
@@ -266,7 +335,7 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                   title="Leave this tournament lobby"
                 >
                   <LogOut size={15} aria-hidden="true" />
-                  <span>Leave Lobby</span>
+                  <span>Leave Room</span>
                 </button>
 
                 <button
@@ -285,7 +354,7 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                     type="button"
                     className="t-start-btn"
                     disabled={
-                      (state?.entrants.length || 0) < 4 ||
+                      (state?.entrants.length || 0) < 2 ||
                       (state?.entrants.length || 0) > 16 ||
                       !state?.entrants.every((entrant) => entrant.ready)
                     }
@@ -293,8 +362,8 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                   >
                     <Swords size={16} aria-hidden="true" />
                     <span>
-                      Start Bracket ({state?.entrants.length || 0}/16
-                      {(state?.entrants.length || 0) < 4 ? ' — Min 4' : ''})
+                      Start Match ({state?.entrants.length || 0}/16
+                      {(state?.entrants.length || 0) < 2 ? ' — Min 2' : ''})
                     </span>
                   </button>
                 )}
@@ -306,7 +375,7 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
               <div className="t-roster-header">
                 <h2 id="roster-title">Contenders Roster</h2>
                 <span className="t-roster-badge">
-                  {state?.entrants.length || 0} / 16 Contenders (Min 4 to start)
+                  {state?.entrants.length || 0} / 16 Contenders (Min 2 to start)
                 </span>
               </div>
 
@@ -352,7 +421,7 @@ export const TournamentLobby: React.FC<TournamentLobbyProps> = ({ onBack, initia
                 <div className="t-bracket-scroll">
                   {matchesByRound.map((matches, index) => (
                     <div className="t-round-col" key={index}>
-                      <h3>{roundName(index + 1)}</h3>
+                      <h3>{getRoundLabel(index + 1, maxRound)}</h3>
                       {matches.map((match) => (
                         <div className={`t-match-card t-${match.status.toLowerCase()}`} key={match.id}>
                           <div className={`t-match-row ${match.winner === match.a ? 'winner' : ''}`}>

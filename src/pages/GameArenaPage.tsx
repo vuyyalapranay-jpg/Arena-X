@@ -29,7 +29,7 @@ interface GameArenaPageProps {
 export const GameArenaPage: React.FC<GameArenaPageProps> = ({
   gameMode,
   settings,
-  stageId = 'ANCIENT_TEMPLE',
+  stageId = 'SHADOW_SUNSET',
   fighterP1 = 'KAI',
   fighterP2 = 'SHADOW',
   onReturnToMenu,

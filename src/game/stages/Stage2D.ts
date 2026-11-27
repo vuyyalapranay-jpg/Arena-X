@@ -6,7 +6,7 @@ import { StageParticleSystem } from './StageParticleSystem';
 import { WorldCoordinateSystem } from '../engine/WorldCoordinateSystem';
 
 export class Stage2D {
-  public currentStageId: StageId = 'ANCIENT_TEMPLE';
+  public currentStageId: StageId = 'SHADOW_SUNSET';
   public currentStage: StageDefinition;
   public particleSystem: StageParticleSystem;
 
@@ -22,7 +22,7 @@ export class Stage2D {
   private ultimateSurgeTimer = 0;
   private windGustTimer = 0;
 
-  constructor(initialStageId: StageId = 'ANCIENT_TEMPLE') {
+  constructor(initialStageId: StageId = 'SHADOW_SUNSET') {
     this.currentStageId = initialStageId;
     this.currentStage = STAGES[initialStageId];
     this.particleSystem = new StageParticleSystem(
@@ -107,6 +107,18 @@ export class Stage2D {
     width: number,
     height: number
   ): void {
+    if (this.currentStageId === 'SHADOW_SUNSET') {
+      const grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0, '#241228');   // Deep dusky plum
+      grad.addColorStop(0.35, '#5e1e2d'); // Dusky wine crimson
+      grad.addColorStop(0.62, '#cc543b'); // Warm burnt orange
+      grad.addColorStop(0.82, '#eb8a4a'); // Bright sunset orange
+      grad.addColorStop(1.0, '#f5a764');  // Golden peach horizon
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+      return;
+    }
+
     const sky = this.currentStage.skyGradient;
     const grad = ctx.createLinearGradient(0, 0, 0, height);
     grad.addColorStop(0, sky[0]);
@@ -129,6 +141,12 @@ export class Stage2D {
     _viewportW: number,
     _viewportH: number
   ): void {
+    if (this.currentStageId === 'SHADOW_SUNSET') {
+      this.renderShadowSunsetBackdrop(ctx, camX, camY);
+      this.renderStageFloor(ctx);
+      return;
+    }
+
     const img = this.bgImages.get(this.currentStageId);
     const isLoaded = img && img.complete && img.naturalWidth > 0;
 
@@ -187,7 +205,19 @@ export class Stage2D {
     ctx.fillRect(left, floorY, right - left, floorDepth);
 
     // Stage-specific 2D Perspective Floor Artwork
-    if (stage.groundType === 'WET_ASPHALT') {
+    if (stage.id === 'SHADOW_SUNSET') {
+      // Pure sleek dark silhouette floor
+      ctx.fillStyle = '#140915';
+      ctx.fillRect(left, floorY, right - left, floorDepth);
+
+      // Subtle warm horizon line
+      ctx.strokeStyle = 'rgba(255, 138, 74, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(left, floorY);
+      ctx.lineTo(right, floorY);
+      ctx.stroke();
+    } else if (stage.groundType === 'WET_ASPHALT') {
       // Neon City: Wet asphalt reflections & road markings
       this.renderWetStreetFloor(ctx, floorY, left, right);
     } else if (stage.groundType === 'ANCIENT_STONE') {
@@ -384,6 +414,99 @@ export class Stage2D {
     ctx.fillStyle = stage.ambientOverlay;
     ctx.globalCompositeOperation = stage.ambientOverlayBlendMode;
     ctx.fillRect(-600, -200, this.stageWidth + 1200, 1600);
+    ctx.restore();
+  }
+
+  private renderShadowSunsetBackdrop(
+    ctx: CanvasRenderingContext2D,
+    camX: number,
+    camY: number
+  ): void {
+    const floorY = this.floorY;
+    const pX = (camX - 1200) * 0.08;
+    const pY = (camY - 525) * 0.03;
+
+    ctx.save();
+
+    // 1. Full horizon sky gradient
+    const skyGrad = ctx.createLinearGradient(0, -100, 0, floorY);
+    skyGrad.addColorStop(0, '#26122a');    // Deep plum purple
+    skyGrad.addColorStop(0.35, '#5e1e2d'); // Dusky wine crimson
+    skyGrad.addColorStop(0.60, '#c84e36'); // Warm burnt orange
+    skyGrad.addColorStop(0.82, '#eb8a4a'); // Bright sunset orange
+    skyGrad.addColorStop(1.0, '#f5a764');  // Golden peach horizon
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(-600, -200, this.stageWidth + 1200, floorY + 200);
+
+    // 2. The Iconic Glowing Setting Sun (Sits majestically behind the mountain peaks on the horizon)
+    const sunX = 1200 - pX * 0.4;
+    const sunY = floorY - 148 - pY * 0.4;
+    const sunRadius = 175;
+
+    // Soft outer radial corona glow
+    const sunAura = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.2, sunX, sunY, sunRadius * 1.8);
+    sunAura.addColorStop(0, 'rgba(255, 246, 204, 0.95)');
+    sunAura.addColorStop(0.4, 'rgba(255, 222, 138, 0.45)');
+    sunAura.addColorStop(0.7, 'rgba(235, 138, 74, 0.18)');
+    sunAura.addColorStop(1, 'transparent');
+    ctx.fillStyle = sunAura;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunRadius * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Solid core sun orb
+    ctx.fillStyle = '#fff6cb';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Far Mountain Silhouette Range (Deep Plum/Purple)
+    ctx.fillStyle = '#44203a';
+    ctx.beginPath();
+    ctx.moveTo(-600, floorY);
+    const farPoints: [number, number][] = [
+      [-600, floorY],
+      [-300, floorY - 120],
+      [0, floorY - 80],
+      [350, floorY - 210],
+      [680, floorY - 100],
+      [980, floorY - 180],
+      [1350, floorY - 230],
+      [1680, floorY - 110],
+      [2050, floorY - 190],
+      [2400, floorY - 130],
+      [this.stageWidth + 600, floorY],
+    ];
+    for (const [x, y] of farPoints) {
+      ctx.lineTo(x - pX * 0.6, y - pY * 0.6);
+    }
+    ctx.lineTo(this.stageWidth + 600, floorY);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. Near Mountain Silhouette Range (Darker Charcoal Violet)
+    ctx.fillStyle = '#261228';
+    ctx.beginPath();
+    ctx.moveTo(-600, floorY);
+    const nearPoints: [number, number][] = [
+      [-600, floorY],
+      [-200, floorY - 150],
+      [180, floorY - 70],
+      [520, floorY - 185],
+      [860, floorY - 60],
+      [1180, floorY - 170],
+      [1520, floorY - 50],
+      [1860, floorY - 180],
+      [2200, floorY - 75],
+      [this.stageWidth + 600, floorY],
+    ];
+    for (const [x, y] of nearPoints) {
+      ctx.lineTo(x - pX * 0.8, y - pY * 0.8);
+    }
+    ctx.lineTo(this.stageWidth + 600, floorY);
+    ctx.closePath();
+    ctx.fill();
+
     ctx.restore();
   }
 

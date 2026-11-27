@@ -2,6 +2,7 @@
 // COMPREHENSIVE CONFIGURATION & METADATA FOR ALL SIX ARENA X FIGHTING ARENAS
 
 export type StageId = 
+  | 'SHADOW_SUNSET'
   | 'NEON_CITY'
   | 'ANCIENT_TEMPLE'
   | 'VOLCANIC_BATTLEFIELD'
@@ -48,6 +49,44 @@ export interface StageDefinition {
 }
 
 export const STAGES: Record<StageId, StageDefinition> = {
+  SHADOW_SUNSET: {
+    id: 'SHADOW_SUNSET',
+    name: 'SHADOW SUNSET',
+    kanji: '黄昏の影',
+    subtitle: 'TWILIGHT DUSK • ICONIC SHADOW FIGHT SILHOUETTES',
+    description: 'Iconic Shadow Fight 2 sunset horizon with radiant glowing sun, purple-plum mountain silhouettes, and pure dark silhouette arena floor.',
+    bgImage: '',
+    thumbnail: '',
+    skyGradient: ['#241228', '#5e1e2d', '#cc543b', '#eb8a4a'],
+    ambientOverlay: 'rgba(255, 140, 60, 0.05)',
+    ambientOverlayBlendMode: 'screen',
+    groundType: 'ANCIENT_STONE',
+    groundDustColor: '#ff8a50',
+    groundReflection: false,
+    groundReflectionAlpha: 0,
+    groundFloorColor: '#120914',
+    particleRules: [
+      {
+        type: 'LEAVES',
+        count: 20,
+        colors: ['#4a1c2a', '#2d111c', '#63253b'],
+        baseSpeedX: 40,
+        baseSpeedY: 25,
+        sizeRange: [4, 8],
+        hasWind: true,
+        windStrength: 30,
+        groundReaction: false,
+      },
+    ],
+    parallaxFactorX: 0.1,
+    parallaxFactorY: 0.04,
+    bgReactivity: {
+      flickerOnImpact: false,
+      surgeOnUltimate: true,
+      blastParticlesOnKnockdown: true,
+    },
+  },
+
   NEON_CITY: {
     id: 'NEON_CITY',
     name: 'NEON CITY',

@@ -842,3 +842,62 @@
     transition: none !important;
   }
 }
+
+/* ========================================================
+   SHADOW FIGHT 2 THEME & CUSTOM ROOM ENHANCEMENTS
+   ======================================================== */
+.sf2-theme {
+  position: relative;
+  background: radial-gradient(circle at 50% 30%, #0d111a 0%, #05070a 100%);
+}
+
+.sf2-kanji-watermark {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(220px, 35vw, 420px);
+  font-family: 'Hiragino Mincho Pro', 'Songti SC', serif;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.025);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  line-height: 1;
+}
+
+.sf2-mark {
+  background: linear-gradient(135deg, #f0a83a 0%, #d48817 100%);
+  color: #07090e;
+  font-weight: 900;
+}
+
+.t-field-hint {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--t-muted);
+  margin-top: 4px;
+}
+
+.t-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(240, 168, 58, 0.15);
+  color: #f0a83a;
+  border: 1px solid rgba(240, 168, 58, 0.3);
+}
+
+.t-lock-badge.public {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+}
+

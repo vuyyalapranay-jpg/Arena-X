@@ -107,7 +107,7 @@ export class GameEngine {
     // 2. Initialize Subsystems & Centralized 2D Camera/Renderer
     this.inputManager = new InputManager();
     this.aiController = new FighterAIController('NORMAL');
-    this.arena = new Stage2D('ANCIENT_TEMPLE');
+    this.arena = new Stage2D('SHADOW_SUNSET');
     this.vfx = new VFXManager2D();
     this.camera = new FightCamera2D(1200, WorldCoordinateSystem.DEFAULT_CAM_Y);
     this.renderer2D = new Renderer2D(this.canvas, this.ctx, this.camera);
